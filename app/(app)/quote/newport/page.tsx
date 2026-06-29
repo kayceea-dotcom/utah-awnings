@@ -58,7 +58,7 @@ const DEFAULT: NewportInputs = {
   beamLength1: 0, beamLength2: 0,
   beamType1: "3x8", beamType2: "",
   beamEndCut1: "beveled", beamEndCut2: "",
-  gutterType: "roll_form", hangerType: "a_rail",
+  gutterType: "extruded", hangerType: "roll_form",
   posts1: 0, postHeight1: 10,
   posts2: 0, postHeight2: 10,
   colorPans: "White", colorGutterFascia: "White", colorPostsBeam: "White",
