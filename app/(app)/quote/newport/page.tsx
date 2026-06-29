@@ -129,7 +129,8 @@ function NumInput({ label, value, onChange, hint, span }: {
         <input
           type="number"
           className="input"
-          value={value}
+          value={value === 0 ? "" : value}
+          placeholder="0"
           onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
         />
       </Field>
