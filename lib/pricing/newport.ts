@@ -55,6 +55,8 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   } else {
     items.push(li("Extruded Gutter", 1, gutterLen, RATES.gutter_extruded_ft, "", inp.colorGutterFascia));
     items.push(li("Extruded Side Fascia", 2, inp.projection1, RATES.fascia_extruded_ft, "", inp.colorGutterFascia));
+    // Front plate runs the full gutter length across the front of the cover
+    items.push(li("Extruded Front Plate", 1, gutterLen, RATES.fascia_extruded_ft, "", inp.colorGutterFascia));
   }
 
   // ── BEAMS ──
