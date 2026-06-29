@@ -62,7 +62,7 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     const fasciaStock = nextStockLength(inp.projection1);
     items.push(li("Extruded Gutter",      1, gutterStock, RATES.gutter_extruded_ft,  "", inp.colorGutterFascia));
     // Sheet shows qty=1 for side fascia (one piece covers both sides at stock length)
-    items.push(li("Extruded Side Fascia", 1, fasciaStock, RATES.fascia_extruded_ft,  "", inp.colorGutterFascia));
+    items.push(li("Extruded Side Fascia", 2, fasciaStock, RATES.fascia_extruded_ft,  "", inp.colorGutterFascia));
     items.push(li("Extruded Front Plate", 1, gutterStock, RATES.fascia_extruded_ft,  "", inp.colorGutterFascia));
   }
 
