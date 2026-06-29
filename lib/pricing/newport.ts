@@ -113,7 +113,7 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
 
   // Downspouts
   if (inp.downspouts > 0) {
-    items.push(li("Downspouts 2x3 10ft", inp.downspouts, 10, RATES.downspout_2x3_10, "", inp.colorGutterFascia));
+    items.push(li("Downspouts 2x3 10ft", inp.downspouts, 0, RATES.downspout_2x3_10, "", inp.colorGutterFascia));
     items.push(li("Elbows 2x3", inp.downspouts * 3, 0, RATES.elbow_2x3, "", inp.colorGutterFascia));
     items.push(li("Dropouts", inp.downspouts, 0, RATES.dropout));
     items.push(li("Downspout Straps", inp.downspouts * 2, 0, RATES.downspout_strap, "", inp.colorGutterFascia));
