@@ -48,6 +48,7 @@ const GUTTERS = [
 
 const POST_HEIGHTS = [8, 10, 12, 14, 16, 20];
 const WRAPS = [{ value: "3x8", label: "3x8" }, { value: "2x6", label: "2x6" }];
+const COLOR_OPTS = COLORS.map((c) => ({ value: c, label: c }));
 
 const DEFAULT: NewportInputs = {
   jobName: "", salesman: "",
@@ -73,6 +74,117 @@ const DEFAULT: NewportInputs = {
 
 type SectionId = "job" | "dimensions" | "structure" | "posts" | "colors" | "extras" | "pricing";
 
+// ── Standalone components (outside main component to prevent remounting) ──
+
+function SectionCard({
+  id, title, open, onToggle, children
+}: {
+  id: SectionId; title: string; open: boolean;
+  onToggle: (id: SectionId) => void; children: React.ReactNode;
+}) {
+  return (
+    <div className="card overflow-hidden">
+      <button
+        onClick={() => onToggle(id)}
+        className="w-full flex items-center justify-between px-5 py-3.5 text-left hover:bg-slate-50 transition"
+      >
+        <span className="text-sm font-semibold text-slate-700">{title}</span>
+        {open
+          ? <ChevronUp size={16} className="text-slate-400" />
+          : <ChevronDown size={16} className="text-slate-400" />
+        }
+      </button>
+      {open && (
+        <div className="px-5 pb-5 pt-1 grid grid-cols-2 gap-4">{children}</div>
+      )}
+    </div>
+  );
+}
+
+function TextInput({ label, value, onChange, hint, span }: {
+  label: string; value: string; onChange: (v: string) => void;
+  hint?: string; span?: number;
+}) {
+  return (
+    <div className={span === 2 ? "col-span-2" : ""}>
+      <Field label={label} hint={hint}>
+        <input
+          type="text"
+          className="input"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      </Field>
+    </div>
+  );
+}
+
+function NumInput({ label, value, onChange, hint, span }: {
+  label: string; value: number; onChange: (v: number) => void;
+  hint?: string; span?: number;
+}) {
+  return (
+    <div className={span === 2 ? "col-span-2" : ""}>
+      <Field label={label} hint={hint}>
+        <input
+          type="number"
+          className="input"
+          value={value}
+          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+        />
+      </Field>
+    </div>
+  );
+}
+
+function SelectInput({ label, value, onChange, options, span }: {
+  label: string; value: string; onChange: (v: string) => void;
+  options: { value: string; label: string }[]; span?: number;
+}) {
+  return (
+    <div className={span === 2 ? "col-span-2" : ""}>
+      <Field label={label}>
+        <div className="relative">
+          <select
+            className="select pr-8"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+          >
+            {options.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2">
+            <ChevronDown size={14} className="text-slate-400" />
+          </div>
+        </div>
+      </Field>
+    </div>
+  );
+}
+
+function ToggleInput({ label, value, onChange, yesLabel }: {
+  label: string; value: boolean; onChange: (v: boolean) => void; yesLabel?: string;
+}) {
+  return (
+    <div>
+      <Field label={label}>
+        <button
+          onClick={() => onChange(!value)}
+          className={"w-full rounded-lg border px-3 py-2 text-sm font-medium transition text-left " +
+            (value
+              ? "border-blue-300 bg-blue-50 text-blue-700"
+              : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50")}
+        >
+          {value ? "Yes" + (yesLabel ? " - " + yesLabel : "") : "No"}
+        </button>
+      </Field>
+    </div>
+  );
+}
+
+// ── Main page component ───────────────────────────────────────────────────
+
 export default function NewportQuotePage() {
   const [inp, setInp] = useState<NewportInputs>(DEFAULT);
   const [open, setOpen] = useState<Set<SectionId>>(
@@ -82,13 +194,8 @@ export default function NewportQuotePage() {
 
   const result = useMemo(() => calcNewport(inp), [inp]);
 
-  function set<K extends keyof NewportInputs>(key: K, val: NewportInputs[K]) {
+  function setField<K extends keyof NewportInputs>(key: K, val: NewportInputs[K]) {
     setInp((p) => ({ ...p, [key]: val }));
-  }
-
-  function numHandler(key: keyof NewportInputs) {
-    return (e: React.ChangeEvent<HTMLInputElement>) =>
-      set(key, (parseFloat(e.target.value) || 0) as never);
   }
 
   function toggleSection(s: SectionId) {
@@ -98,92 +205,6 @@ export default function NewportQuotePage() {
       return next;
     });
   }
-
-  function SectionCard({ id, title, children }: { id: SectionId; title: string; children: React.ReactNode }) {
-    return (
-      <div className="card overflow-hidden">
-        <button
-          onClick={() => toggleSection(id)}
-          className="w-full flex items-center justify-between px-5 py-3.5 text-left hover:bg-slate-50 transition"
-        >
-          <span className="text-sm font-semibold text-slate-700">{title}</span>
-          {open.has(id)
-            ? <ChevronUp size={16} className="text-slate-400" />
-            : <ChevronDown size={16} className="text-slate-400" />
-          }
-        </button>
-        {open.has(id) && (
-          <div className="px-5 pb-5 pt-1 grid grid-cols-2 gap-4">{children}</div>
-        )}
-      </div>
-    );
-  }
-
-  function InputField({ label, field, type = "number", hint, span = 1 }: {
-    label: string; field: keyof NewportInputs; type?: string; hint?: string; span?: number;
-  }) {
-    return (
-      <div className={span === 2 ? "col-span-2" : ""}>
-        <Field label={label} hint={hint}>
-          <input
-            type={type}
-            className="input"
-            value={inp[field] as string | number}
-            onChange={type === "number" ? numHandler(field) : (e) => set(field, e.target.value as never)}
-          />
-        </Field>
-      </div>
-    );
-  }
-
-  function SelectField({ label, field, options, span = 1 }: {
-    label: string; field: keyof NewportInputs;
-    options: { value: string; label: string }[]; span?: number;
-  }) {
-    return (
-      <div className={span === 2 ? "col-span-2" : ""}>
-        <Field label={label}>
-          <div className="relative">
-            <select
-              className="select pr-8"
-              value={inp[field] as string}
-              onChange={(e) => set(field, e.target.value as never)}
-            >
-              {options.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2">
-              <ChevronDown size={14} className="text-slate-400" />
-            </div>
-          </div>
-        </Field>
-      </div>
-    );
-  }
-
-  function ToggleField({ label, field, yesLabel }: {
-    label: string; field: keyof NewportInputs; yesLabel?: string;
-  }) {
-    const active = inp[field] as boolean;
-    return (
-      <div>
-        <Field label={label}>
-          <button
-            onClick={() => set(field, !active as never)}
-            className={"w-full rounded-lg border px-3 py-2 text-sm font-medium transition text-left " +
-              (active
-                ? "border-blue-300 bg-blue-50 text-blue-700"
-                : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50")}
-          >
-            {active ? "Yes" + (yesLabel ? " - " + yesLabel : "") : "No"}
-          </button>
-        </Field>
-      </div>
-    );
-  }
-
-  const colorOpts = COLORS.map((c) => ({ value: c, label: c }));
 
   return (
     <>
@@ -199,66 +220,66 @@ export default function NewportQuotePage() {
 
             <div className="flex-1 min-w-0 space-y-3">
 
-              <SectionCard id="job" title="Job Information">
-                <InputField label="Job Name" field="jobName" type="text" span={2} />
-                <InputField label="Salesman" field="salesman" type="text" />
+              <SectionCard id="job" title="Job Information" open={open.has("job")} onToggle={toggleSection}>
+                <TextInput label="Job Name" value={inp.jobName} onChange={(v) => setField("jobName", v)} span={2} />
+                <TextInput label="Salesman" value={inp.salesman} onChange={(v) => setField("salesman", v)} />
               </SectionCard>
 
-              <SectionCard id="dimensions" title="Dimensions">
-                <InputField label="Projection #1 (ft)" field="projection1" hint="Depth of the cover" />
-                <InputField label="Width #1 (ft)" field="width1" hint="Along the house" />
-                <InputField label="Projection #2 (ft)" field="projection2" hint="Leave 0 if single run" />
-                <InputField label="Width #2 (ft)" field="width2" />
-                <SelectField label="Panel Type #1" field="panelType1" options={PANEL_TYPES} />
-                <SelectField label="Panel Type #2" field="panelType2"
+              <SectionCard id="dimensions" title="Dimensions" open={open.has("dimensions")} onToggle={toggleSection}>
+                <NumInput label="Projection #1 (ft)" value={inp.projection1} onChange={(v) => setField("projection1", v)} hint="Depth of the cover" />
+                <NumInput label="Width #1 (ft)" value={inp.width1} onChange={(v) => setField("width1", v)} hint="Along the house" />
+                <NumInput label="Projection #2 (ft)" value={inp.projection2} onChange={(v) => setField("projection2", v)} hint="Leave 0 if single run" />
+                <NumInput label="Width #2 (ft)" value={inp.width2} onChange={(v) => setField("width2", v)} />
+                <SelectInput label="Panel Type #1" value={inp.panelType1} onChange={(v) => setField("panelType1", v as never)} options={PANEL_TYPES} />
+                <SelectInput label="Panel Type #2" value={inp.panelType2} onChange={(v) => setField("panelType2", v as never)}
                   options={[{ value: "", label: "None (single run)" }, ...PANEL_TYPES]} />
-                <InputField label="Beam Length #1 (ft)" field="beamLength1" hint="Usually width + overhang" />
-                <InputField label="Beam Length #2 (ft)" field="beamLength2" />
+                <NumInput label="Beam Length #1 (ft)" value={inp.beamLength1} onChange={(v) => setField("beamLength1", v)} hint="Usually width + overhang" />
+                <NumInput label="Beam Length #2 (ft)" value={inp.beamLength2} onChange={(v) => setField("beamLength2", v)} />
               </SectionCard>
 
-              <SectionCard id="structure" title="Structure">
-                <SelectField label="Beam Type #1" field="beamType1" options={BEAM_TYPES} />
-                <SelectField label="End Cut #1" field="beamEndCut1" options={END_CUTS} />
-                <SelectField label="Beam Type #2" field="beamType2"
+              <SectionCard id="structure" title="Structure" open={open.has("structure")} onToggle={toggleSection}>
+                <SelectInput label="Beam Type #1" value={inp.beamType1} onChange={(v) => setField("beamType1", v as never)} options={BEAM_TYPES} />
+                <SelectInput label="End Cut #1" value={inp.beamEndCut1} onChange={(v) => setField("beamEndCut1", v as never)} options={END_CUTS} />
+                <SelectInput label="Beam Type #2" value={inp.beamType2} onChange={(v) => setField("beamType2", v as never)}
                   options={[{ value: "", label: "None" }, ...BEAM_TYPES]} />
-                <SelectField label="End Cut #2" field="beamEndCut2"
+                <SelectInput label="End Cut #2" value={inp.beamEndCut2} onChange={(v) => setField("beamEndCut2", v as never)}
                   options={[{ value: "", label: "N/A" }, ...END_CUTS]} />
-                <SelectField label="Hanger Type" field="hangerType" options={HANGERS} />
-                <SelectField label="Gutter Type" field="gutterType" options={GUTTERS} />
-                <SelectField label="Wrap Type" field="wrapType" options={WRAPS} />
-                <ToggleField label="Rafter Tails" field="rafterTails" />
+                <SelectInput label="Hanger Type" value={inp.hangerType} onChange={(v) => setField("hangerType", v as never)} options={HANGERS} />
+                <SelectInput label="Gutter Type" value={inp.gutterType} onChange={(v) => setField("gutterType", v as never)} options={GUTTERS} />
+                <SelectInput label="Wrap Type" value={inp.wrapType} onChange={(v) => setField("wrapType", v as never)} options={WRAPS} />
+                <ToggleInput label="Rafter Tails" value={inp.rafterTails} onChange={(v) => setField("rafterTails", v)} />
               </SectionCard>
 
-              <SectionCard id="posts" title="Posts">
-                <InputField label="Posts #1 (qty)" field="posts1" />
-                <SelectField label="Height #1 (ft)" field="postHeight1"
+              <SectionCard id="posts" title="Posts" open={open.has("posts")} onToggle={toggleSection}>
+                <NumInput label="Posts #1 (qty)" value={inp.posts1} onChange={(v) => setField("posts1", v)} />
+                <SelectInput label="Height #1 (ft)" value={String(inp.postHeight1)} onChange={(v) => setField("postHeight1", Number(v))}
                   options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))} />
-                <InputField label="Posts #2 (qty)" field="posts2" />
-                <SelectField label="Height #2 (ft)" field="postHeight2"
+                <NumInput label="Posts #2 (qty)" value={inp.posts2} onChange={(v) => setField("posts2", v)} />
+                <SelectInput label="Height #2 (ft)" value={String(inp.postHeight2)} onChange={(v) => setField("postHeight2", Number(v))}
                   options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))} />
-                <InputField label="Downspouts" field="downspouts" />
-                <ToggleField label="Spray Paint" field="sprayPaint" yesLabel="include spray paint" />
+                <NumInput label="Downspouts" value={inp.downspouts} onChange={(v) => setField("downspouts", v)} />
+                <ToggleInput label="Spray Paint" value={inp.sprayPaint} onChange={(v) => setField("sprayPaint", v)} yesLabel="include spray paint" />
               </SectionCard>
 
-              <SectionCard id="colors" title="Colors">
-                <SelectField label="Pan Color" field="colorPans" options={colorOpts} />
-                <SelectField label="Gutter / Fascia Color" field="colorGutterFascia" options={colorOpts} />
-                <SelectField label="Posts / Beam Color" field="colorPostsBeam" options={colorOpts} />
+              <SectionCard id="colors" title="Colors" open={open.has("colors")} onToggle={toggleSection}>
+                <SelectInput label="Pan Color" value={inp.colorPans} onChange={(v) => setField("colorPans", v as never)} options={COLOR_OPTS} />
+                <SelectInput label="Gutter / Fascia Color" value={inp.colorGutterFascia} onChange={(v) => setField("colorGutterFascia", v as never)} options={COLOR_OPTS} />
+                <SelectInput label="Posts / Beam Color" value={inp.colorPostsBeam} onChange={(v) => setField("colorPostsBeam", v as never)} options={COLOR_OPTS} />
               </SectionCard>
 
-              <SectionCard id="extras" title="Fan Beam / Shade Beam">
-                <InputField label="Fan Beam Qty" field="fanBeamQty" />
-                <InputField label="Fan Beam Length (ft)" field="fanBeamLength" />
-                <InputField label="Shade Beam Qty" field="shadeBeamQty" />
+              <SectionCard id="extras" title="Fan Beam / Shade Beam" open={open.has("extras")} onToggle={toggleSection}>
+                <NumInput label="Fan Beam Qty" value={inp.fanBeamQty} onChange={(v) => setField("fanBeamQty", v)} />
+                <NumInput label="Fan Beam Length (ft)" value={inp.fanBeamLength} onChange={(v) => setField("fanBeamLength", v)} />
+                <NumInput label="Shade Beam Qty" value={inp.shadeBeamQty} onChange={(v) => setField("shadeBeamQty", v)} />
               </SectionCard>
 
-              <SectionCard id="pricing" title="Pricing Adjustments">
-                <InputField label="Markup" field="markup" hint="1.8 = 80% above cost" />
-                <InputField label="Tax Rate" field="taxRate" hint="e.g. 0.0745 for 7.45%" />
-                <InputField label="Price Increase (decimal)" field="priceIncrease" hint="e.g. 0.10 = 10%" />
-                <InputField label="Footings ($)" field="footings" />
-                <InputField label="Roof Mounts ($)" field="roofMounts" />
-                <InputField label="Misc ($)" field="misc" />
+              <SectionCard id="pricing" title="Pricing Adjustments" open={open.has("pricing")} onToggle={toggleSection}>
+                <NumInput label="Markup" value={inp.markup} onChange={(v) => setField("markup", v)} hint="1.8 = 80% above cost" />
+                <NumInput label="Tax Rate" value={inp.taxRate} onChange={(v) => setField("taxRate", v)} hint="e.g. 0.0745 for 7.45%" />
+                <NumInput label="Price Increase (decimal)" value={inp.priceIncrease} onChange={(v) => setField("priceIncrease", v)} hint="e.g. 0.10 = 10%" />
+                <NumInput label="Footings ($)" value={inp.footings} onChange={(v) => setField("footings", v)} />
+                <NumInput label="Roof Mounts ($)" value={inp.roofMounts} onChange={(v) => setField("roofMounts", v)} />
+                <NumInput label="Misc ($)" value={inp.misc} onChange={(v) => setField("misc", v)} />
               </SectionCard>
 
               <button
