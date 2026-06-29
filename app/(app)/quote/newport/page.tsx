@@ -195,6 +195,13 @@ export default function NewportQuotePage() {
 
   const result = useMemo(() => calcNewport(inp), [inp]);
 
+  function handleWidth1Change(v: number) {
+    setInp((p) => ({ ...p, width1: v, beamLength1: Math.max(0, v - 0.5) }));
+  }
+  function handleWidth2Change(v: number) {
+    setInp((p) => ({ ...p, width2: v, beamLength2: Math.max(0, v - 0.5) }));
+  }
+
   function setField<K extends keyof NewportInputs>(key: K, val: NewportInputs[K]) {
     setInp((p) => ({ ...p, [key]: val }));
   }
@@ -228,9 +235,9 @@ export default function NewportQuotePage() {
 
               <SectionCard id="dimensions" title="Dimensions" open={open.has("dimensions")} onToggle={toggleSection}>
                 <NumInput label="Projection #1 (ft)" value={inp.projection1} onChange={(v) => setField("projection1", v)} hint="Depth of the cover" />
-                <NumInput label="Width #1 (ft)" value={inp.width1} onChange={(v) => setField("width1", v)} hint="Along the house" />
+                <NumInput label="Width #1 (ft)" value={inp.width1} onChange={handleWidth1Change} hint="Along the house" />
                 <NumInput label="Projection #2 (ft)" value={inp.projection2} onChange={(v) => setField("projection2", v)} hint="Leave 0 if single run" />
-                <NumInput label="Width #2 (ft)" value={inp.width2} onChange={(v) => setField("width2", v)} />
+                <NumInput label="Width #2 (ft)" value={inp.width2} onChange={handleWidth2Change} />
                 <SelectInput label="Panel Type #1" value={inp.panelType1} onChange={(v) => setField("panelType1", v as never)} options={PANEL_TYPES} />
                 <SelectInput label="Panel Type #2" value={inp.panelType2} onChange={(v) => setField("panelType2", v as never)}
                   options={[{ value: "", label: "None (single run)" }, ...PANEL_TYPES]} />
