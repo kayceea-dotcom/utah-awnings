@@ -13,7 +13,8 @@ export const RATES = {
   // Beams (per linear ft)
   beam_3x8:    10.10,
   beam_2x6:     6.59,
-  beam_3x3:     3.63,
+  beam_3x3:     4.71,
+  steel_3x3_g_beam_ft: 12.0075,
 
   // Steel inserts (per ft)
   steel_3x8_14ga_ft:  15.26,

@@ -74,16 +74,25 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("Sideplates Cut One Side", 2, sideLen, sideRate, "", inp.colorPostsBeam));
   }
 
-  // ── BEAMS ──
+  // ── BEAMS — rate depends on selected beam type ──
+  function beamMaterialRate(beamType: string): number {
+    if (beamType === "3x3") return RATES.beam_3x3;
+    return RATES.beam_3x8; // 3x8, 4_i_beam, 7_i_beam all use 3x8 wrap rate for now
+  }
+  function steelInsertRate(beamType: string): number {
+    if (beamType === "3x3") return RATES.steel_3x3_g_beam_ft;
+    return RATES.steel_3x8_14ga_ft;
+  }
+
   if (inp.beamLength1 > 0) {
-    items.push(li("Beam #1 (" + inp.beamType1 + ")", 1, inp.beamLength1, RATES.beam_3x8, "", inp.colorPostsBeam));
+    items.push(li("Beam #1 (" + inp.beamType1 + ")", 1, inp.beamLength1, beamMaterialRate(inp.beamType1), "", inp.colorPostsBeam));
     const steelStock = nextStockLength(inp.beamLength1 + 1.5);
-    items.push(li("Steel Insert #1", 1, steelStock, RATES.steel_3x8_14ga_ft));
+    items.push(li("Steel Insert #1", 1, steelStock, steelInsertRate(inp.beamType1)));
   }
   if (inp.beamLength2 > 0 && inp.beamType2) {
-    items.push(li("Beam #2 (" + inp.beamType2 + ")", 1, inp.beamLength2, RATES.beam_3x8, "", inp.colorPostsBeam));
+    items.push(li("Beam #2 (" + inp.beamType2 + ")", 1, inp.beamLength2, beamMaterialRate(inp.beamType2), "", inp.colorPostsBeam));
     const steelStock2 = nextStockLength(inp.beamLength2 + 1.5);
-    items.push(li("Steel Insert #2", 1, steelStock2, RATES.steel_3x8_14ga_ft));
+    items.push(li("Steel Insert #2", 1, steelStock2, steelInsertRate(inp.beamType2)));
   }
 
   // ── POSTS ──
