@@ -203,7 +203,7 @@ export default function FlatPanQuotePage() {
 
   return (
     <>
-      <TopBar title="Flat Pan Cover" subtitle="T6 or 8in flat pan roof system - live pricing">
+      <TopBar title="Modern" subtitle="Sleek flat pan roof system - live pricing">
         <button onClick={() => setInp(DEFAULT)} className="btn-secondary text-xs">
           <RefreshCw size={13} /> Reset
         </button>
