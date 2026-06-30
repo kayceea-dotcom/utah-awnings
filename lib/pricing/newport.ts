@@ -62,9 +62,9 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("Extruded Side Fascia", 2, fasciaLen, fasciaRate, "", inp.colorGutterFascia));
   }
 
-  // ── FRONT PLATE — extruded gutter only; length = width + 1, rounded to stock ──
+  // ── FRONT PLATE — extruded gutter only; exact length = width + 1 (custom cut, no stock rounding) ──
   if (inp.gutterType === "extruded" && inp.width1 > 0) {
-    const frontPlateLen = nextStockLength(inp.width1 + 1);
+    const frontPlateLen = inp.width1 + 1;
     items.push(li("Front Plate Gutter", 1, frontPlateLen, wrapRate, "", inp.colorGutterFascia));
   }
 
