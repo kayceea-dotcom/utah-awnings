@@ -34,20 +34,22 @@ export const RATES = {
 
   // Post plates / brackets / caps
   post_plate_3x8_ft:   10.10,
-  post_plate_2x6_ft:    5.08,
+  post_plate_2x6_ft:    6.59,
   mitered_cap_3x8:      5.47,
-  mitered_cap_2x6:      3.90,
+  mitered_cap_2x6:      3.84,
   rafter_tail_3x8_ft:  10.10,
-  rafter_tail_2x6_ft:   5.08,
+  rafter_tail_2x6_ft:   6.59,
   sideplate_3x8_ft:    10.10,
-  sideplate_2x6_ft:     5.08,
+  sideplate_2x6_ft:     6.59,
   inside_brkt_3x8:      4.09,
-  inside_brkt_2x6:      1.62,
+  inside_brkt_2x6:      2.12,
   outside_brkt_3x8:     5.17,
   post_brkt:            7.85,
   endcap_3x8:           5.47,
   endcap_2x6:           3.84,
-  endcap_3x3:           2.74,
+  endcap_3x3:           3.30,
+  fascia_extruded_2x6_ft: 6.59,
+  fascia_extruded_3x8_ft: 7.12,
 
   // Fan beam
   fan_beam_ft:      8.8895,

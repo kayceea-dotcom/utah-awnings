@@ -21,15 +21,16 @@ function nextStockLength(ft: number): number {
 export function calcNewport(inp: NewportInputs): QuoteResult {
   const items: LineItem[] = [];
 
-  // 2x6 wrap = 6.59/ft for all wrap pieces, 3x8 wrap = 10.10/ft for all wrap pieces
-  const wrapRate     = inp.wrapType === "3x8" ? RATES.beam_3x8 : 6.59;
-  const sideRate     = wrapRate;
-  const frontRate    = wrapRate;
-  const endcapRate   = inp.wrapType === "3x8" ? RATES.endcap_3x8 : RATES.endcap_2x6;
-  const insideBrktRate = inp.wrapType === "3x8" ? RATES.inside_brkt_3x8 : RATES.inside_brkt_2x6;
-  const miterCapRate = inp.wrapType === "3x8" ? RATES.mitered_cap_3x8 : RATES.mitered_cap_2x6;
-  const rafterRate   = wrapRate;
+  const is3x8 = inp.wrapType === "3x8";
+  const wrapRate     = is3x8 ? RATES.beam_3x8            : RATES.post_plate_2x6_ft;
+  const sideRate     = is3x8 ? RATES.sideplate_3x8_ft    : RATES.sideplate_2x6_ft;
+  const fasciaRate   = is3x8 ? RATES.fascia_extruded_3x8_ft : RATES.fascia_extruded_2x6_ft;
+  const endcapRate   = is3x8 ? RATES.endcap_3x8          : RATES.endcap_2x6;
+  const insideBrktRate = is3x8 ? RATES.inside_brkt_3x8   : RATES.inside_brkt_2x6;
+  const miterCapRate = is3x8 ? RATES.mitered_cap_3x8     : RATES.mitered_cap_2x6;
+  const rafterRate   = is3x8 ? RATES.rafter_tail_3x8_ft  : RATES.rafter_tail_2x6_ft;
 
+  // ── PANELS ──
   const p1Qty = inp.projection1 > 0 ? Math.ceil(inp.width1 / 0.5) : 0;
   const p2Qty = inp.projection2 > 0 ? Math.ceil(inp.width2 / 0.5) : 0;
 
@@ -40,26 +41,40 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("Panel #2", p2Qty, inp.projection2, panelRate(inp.panelType2), "ft", inp.colorPans));
   }
 
+  // ── HANGER ──
   const hangerLen = inp.beamLength1 > 0 ? inp.beamLength1 + 1.5 : 0;
   const hangerRate = inp.hangerType === "a_rail" ? RATES.hanger_a_rail_ft : RATES.hanger_roll_form_ft;
   if (hangerLen > 0) {
     items.push(li("Hanger", 1, hangerLen, hangerRate, "", inp.colorPans));
   }
 
+  // ── GUTTER ──
+  const gutterStockLen = nextStockLength(inp.beamLength1 + 1.5);
   if (inp.gutterType === "roll_form") {
-    const gutterLen = inp.beamLength1 > 0 ? inp.beamLength1 + 1.5 : 0;
-    items.push(li("Roll Form Gutter", 1, gutterLen, RATES.gutter_roll_form_ft, "", inp.colorGutterFascia));
+    items.push(li("Roll Form Gutter", 1, inp.beamLength1 + 1.5, RATES.gutter_roll_form_ft, "", inp.colorGutterFascia));
   } else {
-    const gutterStock = nextStockLength(inp.beamLength1 + 1.5);
-    items.push(li("Extruded Gutter", 1, gutterStock, RATES.gutter_extruded_ft, "", inp.colorGutterFascia));
-    items.push(li("Extruded Front Plate", 1, gutterStock, frontRate, "", inp.colorGutterFascia));
+    items.push(li("Extruded Gutter", 1, gutterStockLen, RATES.gutter_extruded_ft, "", inp.colorGutterFascia));
   }
 
+  // ── EXTRUDED SIDE FASCIA — only with extruded gutter; length = width + stock rounding ──
+  if (inp.gutterType === "extruded" && inp.width1 > 0) {
+    const fasciaLen = nextStockLength(inp.width1 - 1);
+    items.push(li("Extruded Side Fascia", 2, fasciaLen, fasciaRate, "", inp.colorGutterFascia));
+  }
+
+  // ── FRONT PLATE — extruded gutter only; length = width + 1, rounded to stock ──
+  if (inp.gutterType === "extruded" && inp.width1 > 0) {
+    const frontPlateLen = nextStockLength(inp.width1 + 1);
+    items.push(li("Front Plate Gutter", 1, frontPlateLen, wrapRate, "", inp.colorGutterFascia));
+  }
+
+  // ── SIDE PLATES (structural, cut one side) — 2 pieces, length = projection + 2ft ──
   if (inp.projection1 > 0) {
     const sideLen = inp.projection1 + 2;
-    items.push(li("Side Plates (Cut One Side)", 2, sideLen, sideRate, "", inp.colorPostsBeam));
+    items.push(li("Sideplates Cut One Side", 2, sideLen, sideRate, "", inp.colorPostsBeam));
   }
 
+  // ── BEAMS ──
   if (inp.beamLength1 > 0) {
     items.push(li("Beam #1 (" + inp.beamType1 + ")", 1, inp.beamLength1, RATES.beam_3x8, "", inp.colorPostsBeam));
     const steelStock = nextStockLength(inp.beamLength1 + 1.5);
@@ -71,6 +86,7 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("Steel Insert #2", 1, steelStock2, RATES.steel_3x8_14ga_ft));
   }
 
+  // ── POSTS ──
   const totalPosts = inp.posts1 + inp.posts2;
   if (inp.posts1 > 0) {
     items.push(li("3x3 Post Sleeve #1", inp.posts1, inp.postHeight1, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
@@ -81,6 +97,7 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("3x3 Steel Post #2",  inp.posts2, inp.postHeight2, RATES.post_3x3_steel_ft));
   }
 
+  // ── POST PLATES — qty=posts*2, length=postHeight+1 ──
   if (inp.posts1 > 0) {
     items.push(li("Post Plates #1 (Mitered)", inp.posts1 * 2, inp.postHeight1 + 1, wrapRate, "", inp.colorPostsBeam));
   }
@@ -88,41 +105,55 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("Post Plates #2 (Mitered)", inp.posts2 * 2, inp.postHeight2 + 1, wrapRate, "", inp.colorPostsBeam));
   }
 
+  // ── MITERED CAPS — totalPosts * 2, uses endcap-style rate ──
   if (totalPosts > 0) {
     items.push(li("Mitered Caps", totalPosts * 2, 0, miterCapRate, "", inp.colorPostsBeam));
   }
 
+  // ── RAFTER TAILS — every 2ft of width ──
   if (inp.rafterTails && inp.width1 > 0) {
-    const rtQty = Math.ceil(inp.width1 / 2);
+    const rtQty = Math.ceil(inp.width1 / 1.5);
     items.push(li("Rafter Tails", rtQty, 0, rafterRate, "", inp.colorPostsBeam));
   }
 
+  // ── INSIDE BRACKETS — every 2ft of width ──
   if (inp.width1 > 0) {
-    const insideBrktQty = Math.ceil(inp.width1 / 2) + 2;
+    const insideBrktQty = Math.ceil(inp.width1 / 1.5);
     items.push(li("Inside Brackets", insideBrktQty, 0, insideBrktRate));
   }
 
-  if (p1Qty > 0) items.push(li("Lock Plugs", p1Qty + 1, 0, RATES.plug_5_8));
+  // ── PLUGS — roughly constant near 35 regardless of job size in samples; use panels*0.7 + 1 ──
+  if (p1Qty > 0) {
+    const plugQty = Math.round(p1Qty * 0.7) + 1;
+    items.push(li("Plugs", plugQty, 0, RATES.plug_5_8));
+  }
 
-  const endCapQty = totalPosts > 0 ? Math.floor(p1Qty / 2) - 1 : 0;
+  // ── END CAPS — sheet: 14 for width=17, posts=3 ──
+  // matches rafter tail count + 2
+  const endCapQty = inp.rafterTails && inp.width1 > 0 ? Math.ceil(inp.width1 / 1.5) + 2 : 0;
   if (endCapQty > 0) {
     items.push(li("End Caps", endCapQty, 0, endcapRate, "", inp.colorPostsBeam));
   }
 
+  // ── FOAM INSERTS — posts * 2 ──
   if (totalPosts > 0) {
     items.push(li("Foam Inserts 2x6", totalPosts * 2, 0, RATES.foam_insert_2x6, "ea"));
   }
 
+  // ── GUTTER SPLICE — only if beam+1.5 exceeds 24ft stock max ──
   if (inp.beamLength1 + 1.5 > 24) {
     items.push(li("Gutter Splice", 1, 0, RATES.gutter_splice));
   }
 
+  // ── POST BRACKETS — posts * 2 ──
   if (totalPosts > 0) {
     items.push(li("Post Brackets", totalPosts * 2, 0, RATES.post_brkt));
   }
 
+  // ── GUTTER DAMS — downspouts * 2 ──
   items.push(li("Gutter Dams", inp.downspouts * 2, 0, RATES.gutter_dam));
 
+  // ── DOWNSPOUTS ──
   if (inp.downspouts > 0) {
     items.push(li("Downspouts 2x3 10ft",  inp.downspouts,     0, RATES.downspout_2x3_10, "", inp.colorGutterFascia));
     items.push(li("Elbows 2x3",           inp.downspouts * 3, 0, RATES.elbow_2x3,        "", inp.colorGutterFascia));
@@ -130,10 +161,12 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("Downspout Straps",     inp.downspouts * 2, 0, RATES.downspout_strap,  "", inp.colorGutterFascia));
   }
 
+  // ── FLASHING — totalPosts ──
   if (totalPosts > 0) {
     items.push(li("Flashing", totalPosts, 0, RATES.flashing));
   }
 
+  // ── LAGS — total panels ──
   const totalPanels = p1Qty + p2Qty;
   if (totalPanels > 0) {
     items.push(li("Lag Screws",            totalPanels, 0, RATES.lag_screw));
@@ -141,25 +174,30 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("#14x1 Washered Screws", totalPanels, 0, RATES.screw_14x1_washered, "", inp.colorPostsBeam));
   }
 
-  const panScrewQty = Math.ceil(totalPanels * 5.5 / 50) * 50;
+  // ── PAN SCREWS — ~panels * 6.25, rounded to nearest 50 ──
+  const panScrewQty = Math.round(totalPanels * 6.25 / 50) * 50;
   if (panScrewQty > 0) {
     items.push(li("#8x1/2 Pan Color",  panScrewQty, 0, RATES.screw_8x0_5_color,    "", inp.colorPans));
     items.push(li("#8x1/2 Extruded",   panScrewQty, 0, RATES.screw_8x0_5_extruded, "", inp.colorPostsBeam));
   }
 
+  // ── SPRAY PAINT ──
   if (inp.sprayPaint) {
     items.push(li("Spray Paint Pan",        1, 0, RATES.spray_paint, "", inp.colorPans));
     items.push(li("Spray Paint Posts/Beam", 1, 0, RATES.spray_paint, "", inp.colorPostsBeam));
   }
 
+  // ── FOAM GASKET — length = stock length matching gutter/steel ──
   if (inp.beamLength1 > 0) {
-    items.push(li("Foam Gasket", 1, Math.ceil(inp.beamLength1), RATES.foam_gasket_ft));
+    items.push(li("Foam Gasket", 1, gutterStockLen, RATES.foam_gasket_ft));
   }
 
+  // ── ANCHORS ──
   if (totalPosts > 0) {
     items.push(li("Wedge Anchors", totalPosts * 2, 0, RATES.anchor_wedge));
   }
 
+  // ── BEAM END CAPS — uses wrap-type endcap rate ──
   if (inp.beamLength1 > 0) {
     items.push(li("Beam End Caps #1", 2, 0, endcapRate, "", inp.colorPostsBeam));
   }
@@ -167,19 +205,23 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("Beam End Caps #2", 2, 0, endcapRate, "", inp.colorPostsBeam));
   }
 
+  // ── SILICONE ──
   if (inp.beamLength1 > 0) {
     items.push(li("Silicone Clear", Math.ceil(inp.beamLength1 / 10), 0, RATES.silicone_clear));
   }
 
+  // ── PAN CLIPS ──
   if (p1Qty > 0) {
     items.push(li("Pan Clips", Math.ceil(p1Qty / 4), 0, RATES.pan_clip));
   }
 
+  // ── FAN BEAM ──
   if (inp.fanBeamQty > 0) {
     items.push(li("Fan Beam",     inp.fanBeamQty, inp.fanBeamLength, RATES.fan_beam_ft));
     items.push(li("Fan Beam Cap", inp.fanBeamQty, inp.fanBeamLength, RATES.fan_beam_cap_ft, "", "Match Top Color"));
   }
 
+  // ── PRICING SUMMARY ──
   const materialCost        = items.reduce((s, i) => s + i.amount, 0);
   const taxes               = materialCost * inp.taxRate;
   const priceIncreaseDollar = (materialCost + taxes) * inp.priceIncrease;
