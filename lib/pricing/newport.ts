@@ -107,16 +107,16 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("3x3 Steel Post #2",  inp.posts2, inp.postHeight2, RATES.post_3x3_steel_ft));
   }
 
-  // ── POST PLATES — qty=posts*2, length=postHeight+1 ──
-  if (inp.posts1 > 0) {
+  // ── POST PLATES — only with wrap kit; qty=posts*2, length=postHeight+1 ──
+  if (hasWrap && inp.posts1 > 0) {
     items.push(li("Post Plates #1 (Mitered)", inp.posts1 * 2, inp.postHeight1 + 1, wrapRate, "", inp.colorPostsBeam));
   }
-  if (inp.posts2 > 0) {
+  if (hasWrap && inp.posts2 > 0) {
     items.push(li("Post Plates #2 (Mitered)", inp.posts2 * 2, inp.postHeight2 + 1, wrapRate, "", inp.colorPostsBeam));
   }
 
-  // ── MITERED CAPS — totalPosts * 2, uses endcap-style rate ──
-  if (totalPosts > 0) {
+  // ── MITERED CAPS — only with wrap kit; totalPosts * 2, uses endcap-style rate ──
+  if (hasWrap && totalPosts > 0) {
     items.push(li("Mitered Caps", totalPosts * 2, 0, miterCapRate, "", inp.colorPostsBeam));
   }
 
@@ -152,8 +152,8 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("Foam Inserts 2x6", totalPosts * 2, 0, RATES.foam_insert_2x6, "ea"));
   }
 
-  // ── GUTTER SPLICE — only if beam+1.5 exceeds 24ft stock max ──
-  if (inp.beamLength1 + 1.5 > 24) {
+  // ── GUTTER SPLICE — only when extruded gutter and beam+1.5 exceeds max stock length (24ft) ──
+  if (inp.gutterType === "extruded" && inp.beamLength1 + 1.5 > 24) {
     items.push(li("Gutter Splice", 1, 0, RATES.gutter_splice));
   }
 
