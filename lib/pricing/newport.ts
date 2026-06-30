@@ -56,9 +56,9 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("Extruded Gutter", 1, gutterStockLen, RATES.gutter_extruded_ft, "", inp.colorGutterFascia));
   }
 
-  // ── EXTRUDED SIDE FASCIA — only with extruded gutter; length = width + stock rounding ──
-  if (inp.gutterType === "extruded" && inp.width1 > 0) {
-    const fasciaLen = nextStockLength(inp.width1 - 1);
+  // ── EXTRUDED SIDE FASCIA — only with extruded gutter; length tied to PROJECTION (depth) ──
+  if (inp.gutterType === "extruded" && inp.projection1 > 0) {
+    const fasciaLen = nextStockLength(inp.projection1);
     items.push(li("Extruded Side Fascia", 2, fasciaLen, fasciaRate, "", inp.colorGutterFascia));
   }
 
@@ -110,15 +110,17 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("Mitered Caps", totalPosts * 2, 0, miterCapRate, "", inp.colorPostsBeam));
   }
 
-  // ── RAFTER TAILS — every 2ft of width ──
+  // ── RAFTER TAILS — spaced every ~2ft along width ──
+  let rtQty = 0;
   if (inp.rafterTails && inp.width1 > 0) {
-    const rtQty = Math.ceil(inp.width1 / 1.5);
+    rtQty = Math.round(inp.width1 / 2);
     items.push(li("Rafter Tails", rtQty, 0, rafterRate, "", inp.colorPostsBeam));
   }
 
-  // ── INSIDE BRACKETS — every 2ft of width ──
+  // ── INSIDE BRACKETS — same spacing as rafter tails, plus 2 for corners ──
   if (inp.width1 > 0) {
-    const insideBrktQty = Math.ceil(inp.width1 / 1.5);
+    const spacingQty = Math.round(inp.width1 / 2);
+    const insideBrktQty = spacingQty + 2;
     items.push(li("Inside Brackets", insideBrktQty, 0, insideBrktRate));
   }
 
@@ -128,10 +130,10 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("Plugs", plugQty, 0, RATES.plug_5_8));
   }
 
-  // ── END CAPS — sheet: 14 for width=17, posts=3 ──
-  // matches rafter tail count + 2
-  const endCapQty = inp.rafterTails && inp.width1 > 0 ? Math.ceil(inp.width1 / 1.5) + 2 : 0;
-  if (endCapQty > 0) {
+  // ── END CAPS — same spacing as rafter tails, plus 2 for corners ──
+  if (inp.width1 > 0) {
+    const spacingQty = Math.round(inp.width1 / 2);
+    const endCapQty = spacingQty + 2;
     items.push(li("End Caps", endCapQty, 0, endcapRate, "", inp.colorPostsBeam));
   }
 
