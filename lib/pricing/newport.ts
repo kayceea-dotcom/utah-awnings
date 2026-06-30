@@ -21,6 +21,7 @@ function nextStockLength(ft: number): number {
 export function calcNewport(inp: NewportInputs): QuoteResult {
   const items: LineItem[] = [];
 
+  const hasWrap = inp.wrapType === "3x8" || inp.wrapType === "2x6";
   const is3x8 = inp.wrapType === "3x8";
   const wrapRate     = is3x8 ? RATES.beam_3x8            : RATES.post_plate_2x6_ft;
   const sideRate     = is3x8 ? RATES.sideplate_3x8_ft    : RATES.sideplate_2x6_ft;
@@ -62,14 +63,14 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("Extruded Side Fascia", 2, fasciaLen, fasciaRate, "", inp.colorGutterFascia));
   }
 
-  // ── FRONT PLATE — extruded gutter only; exact length = width + 1 (custom cut, no stock rounding) ──
-  if (inp.gutterType === "extruded" && inp.width1 > 0) {
+  // ── FRONT PLATE — only with wrap kit + extruded gutter; exact length = width + 1 ──
+  if (hasWrap && inp.gutterType === "extruded" && inp.width1 > 0) {
     const frontPlateLen = inp.width1 + 1;
     items.push(li("Front Plate Gutter", 1, frontPlateLen, wrapRate, "", inp.colorGutterFascia));
   }
 
-  // ── SIDE PLATES (structural, cut one side) — 2 pieces, length = projection + 2ft ──
-  if (inp.projection1 > 0) {
+  // ── SIDE PLATES (structural, cut one side) — only with wrap kit; length = projection + 2ft ──
+  if (hasWrap && inp.projection1 > 0) {
     const sideLen = inp.projection1 + 2;
     items.push(li("Sideplates Cut One Side", 2, sideLen, sideRate, "", inp.colorPostsBeam));
   }
@@ -119,28 +120,28 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("Mitered Caps", totalPosts * 2, 0, miterCapRate, "", inp.colorPostsBeam));
   }
 
-  // ── RAFTER TAILS — spaced every ~2ft along width ──
+  // ── RAFTER TAILS — only with wrap kit, spaced every ~2ft along width ──
   let rtQty = 0;
-  if (inp.rafterTails && inp.width1 > 0) {
+  if (hasWrap && inp.rafterTails && inp.width1 > 0) {
     rtQty = Math.round(inp.width1 / 2);
     items.push(li("Rafter Tails", rtQty, 0, rafterRate, "", inp.colorPostsBeam));
   }
 
-  // ── INSIDE BRACKETS — same spacing as rafter tails, plus 2 for corners ──
-  if (inp.width1 > 0) {
+  // ── INSIDE BRACKETS — only with wrap kit, same spacing as rafter tails plus 2 ──
+  if (hasWrap && inp.width1 > 0) {
     const spacingQty = Math.round(inp.width1 / 2);
     const insideBrktQty = spacingQty + 2;
     items.push(li("Inside Brackets", insideBrktQty, 0, insideBrktRate));
   }
 
-  // ── PLUGS — roughly constant near 35 regardless of job size in samples; use panels*0.7 + 1 ──
-  if (p1Qty > 0) {
+  // ── PLUGS — only with wrap kit; roughly panels*0.7 + 1 ──
+  if (hasWrap && p1Qty > 0) {
     const plugQty = Math.round(p1Qty * 0.7) + 1;
     items.push(li("Plugs", plugQty, 0, RATES.plug_5_8));
   }
 
-  // ── END CAPS — same spacing as rafter tails, plus 2 for corners ──
-  if (inp.width1 > 0) {
+  // ── END CAPS — only with wrap kit; same spacing as rafter tails plus 2 ──
+  if (hasWrap && inp.width1 > 0) {
     const spacingQty = Math.round(inp.width1 / 2);
     const endCapQty = spacingQty + 2;
     items.push(li("End Caps", endCapQty, 0, endcapRate, "", inp.colorPostsBeam));

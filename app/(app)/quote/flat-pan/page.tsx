@@ -47,7 +47,7 @@ const GUTTERS = [
 ];
 
 const POST_HEIGHTS = [8, 10, 12, 14, 16, 20];
-const WRAPS = [{ value: "3x8", label: "3x8" }, { value: "2x6", label: "2x6" }];
+const WRAPS = [{ value: "none", label: "None (no wrap kit)" }, { value: "3x8", label: "3x8" }, { value: "2x6", label: "2x6" }];
 const COLOR_OPTS = COLORS.map((c) => ({ value: c, label: c }));
 
 const DEFAULT: NewportInputs = {
@@ -56,13 +56,13 @@ const DEFAULT: NewportInputs = {
   projection2: 0, width2: 0,
   panelType1: "T6_024", panelType2: "",
   beamLength1: 0, beamLength2: 0,
-  beamType1: "3x8", beamType2: "",
+  beamType1: "3x3", beamType2: "",
   beamEndCut1: "scallop", beamEndCut2: "",
   gutterType: "extruded", hangerType: "roll_form",
   posts1: 0, postHeight1: 8,
   posts2: 0, postHeight2: 8,
   colorPans: "White", colorGutterFascia: "White", colorPostsBeam: "White",
-  wrapType: "2x6",
+  wrapType: "none",
   rafterTails: false, bayWindowPopout: false,
   downspouts: 1, sprayPaint: false,
   groundMountPosts1: false, groundMountPosts2: false,

@@ -47,7 +47,7 @@ const GUTTERS = [
 ];
 
 const POST_HEIGHTS = [8, 10, 12, 14, 16, 20];
-const WRAPS = [{ value: "3x8", label: "3x8" }, { value: "2x6", label: "2x6" }];
+const WRAPS = [{ value: "none", label: "None (no wrap kit)" }, { value: "3x8", label: "3x8" }, { value: "2x6", label: "2x6" }];
 const COLOR_OPTS = COLORS.map((c) => ({ value: c, label: c }));
 
 const DEFAULT: NewportInputs = {

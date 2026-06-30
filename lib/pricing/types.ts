@@ -11,7 +11,7 @@ export type PanelType =
 export type AwningColor =
   | "White" | "Siennawood" | "Slate" | "Driftwood"
   | "Beechwood" | "Pewter" | "Maplewood" | "Ebony" | "Sandalwood";
-export type WrapType = "2x6" | "3x8";
+export type WrapType = "none" | "2x6" | "3x8";
 
 export interface NewportInputs {
   jobName: string;
