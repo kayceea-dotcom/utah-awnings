@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+export const dynamic = "force-dynamic";
+
+import { useState, useMemo, useEffect } from "react";
 import { calcNewport } from "@/lib/pricing/newport";
 import type { NewportInputs } from "@/lib/pricing/types";
 import TopBar from "@/components/TopBar";
@@ -8,6 +10,7 @@ import Field from "@/components/quote/Field";
 import PriceSummary from "@/components/quote/PriceSummary";
 import MaterialList from "@/components/quote/MaterialList";
 import { ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
+import { useProfile } from "@/lib/hooks/useProfile";
 
 const COLORS = ["White","Siennawood","Slate","Driftwood","Beechwood","Pewter","Maplewood","Ebony","Sandalwood"];
 
@@ -193,6 +196,15 @@ export default function NewportQuotePage() {
   );
   const [showMaterials, setShowMaterials] = useState(false);
 
+  const { profile } = useProfile();
+
+  // Auto-populate salesman name from logged-in profile
+  useEffect(() => {
+    if (profile?.full_name) {
+      setInp((p) => ({ ...p, salesman: profile.full_name }));
+    }
+  }, [profile]);
+
   const result = useMemo(() => calcNewport(inp), [inp]);
 
   function handleWidth1Change(v: number) {
@@ -230,7 +242,16 @@ export default function NewportQuotePage() {
 
               <SectionCard id="job" title="Job Information" open={open.has("job")} onToggle={toggleSection}>
                 <TextInput label="Job Name" value={inp.jobName} onChange={(v) => setField("jobName", v)} span={2} />
-                <TextInput label="Salesman" value={inp.salesman} onChange={(v) => setField("salesman", v)} />
+                <div>
+                  <Field label="Salesman">
+                    <input
+                      type="text"
+                      className="input bg-slate-50 text-slate-500 cursor-not-allowed"
+                      value={inp.salesman}
+                      readOnly
+                    />
+                  </Field>
+                </div>
               </SectionCard>
 
               <SectionCard id="dimensions" title="Dimensions" open={open.has("dimensions")} onToggle={toggleSection}>

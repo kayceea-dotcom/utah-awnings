@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Calculator, Users, Briefcase, FileText, BarChart2, Settings, ChevronRight } from "lucide-react";
+import UserMenu from "@/components/UserMenu";
 
 const nav = [
   { href: "/quote",     icon: Calculator, label: "Quote Builder" },
@@ -44,9 +45,7 @@ export default function Sidebar() {
           );
         })}
       </nav>
-      <div className="px-5 py-4 border-t border-slate-800">
-        <p className="text-slate-500 text-xs">v1.0 - Phase 1</p>
-      </div>
+      <UserMenu />
     </aside>
   );
 }

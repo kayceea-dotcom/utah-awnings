@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import TopBar from "@/components/TopBar";
 export default function Page() {
   return (
