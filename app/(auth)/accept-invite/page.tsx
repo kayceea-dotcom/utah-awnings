@@ -33,8 +33,8 @@ export default function AcceptInvitePage() {
             setError("Invalid or expired invite link. Please request a new invite.");
             return;
           }
-          if (data.user?.user_metadata?.full_name) {
-            setName(data.user.user_metadata.full_name);
+          if (sessionData.user?.user_metadata?.full_name) {
+            setName(sessionData.user.user_metadata.full_name);
           }
           setReady(true);
           return;
