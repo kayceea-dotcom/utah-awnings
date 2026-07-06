@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create user directly without triggering Supabase email
-    const { data: newUser, error } = await adminClient.auth.admin.createUser({
+    const { error } = await adminClient.auth.admin.createUser({
       email,
       email_confirm: false,
       user_metadata: { full_name, role: role || "sales_rep" },
