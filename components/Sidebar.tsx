@@ -68,18 +68,20 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="px-5 py-5 border-b border-charcoal-700 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden"
-               style={{ backgroundColor: logoUrl ? "transparent" : "#CC2229" }}>
-            {logoUrl ? (
-              <Image src={logoUrl} alt="Logo" width={36} height={36} className="object-contain w-full h-full" />
-            ) : (
-              <span className="text-white text-sm font-black">UA</span>
-            )}
-          </div>
-          <div>
-            <p className="text-white text-sm font-bold leading-none">{companyName}</p>
-            <p className="text-charcoal-400 text-xs mt-0.5">Sales Platform</p>
-          </div>
+          {logoUrl ? (
+            <Image src={logoUrl} alt="Logo" width={140} height={48} className="object-contain max-h-12" />
+          ) : (
+            <>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                   style={{ backgroundColor: "#CC2229" }}>
+                <span className="text-white text-sm font-black">UA</span>
+              </div>
+              <div>
+                <p className="text-white text-sm font-bold leading-none">{companyName}</p>
+                <p className="text-charcoal-400 text-xs mt-0.5">Sales Platform</p>
+              </div>
+            </>
+          )}
         </div>
         {/* Close button — mobile only */}
         <button
