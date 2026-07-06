@@ -35,15 +35,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email and name are required" }, { status: 400 });
     }
 
-    // Create the invite via Supabase (generates the token)
-    const { error } = await adminClient.auth.admin.inviteUserByEmail(email, {
-      data: { full_name, role: role || "sales_rep" },
-      redirectTo: "https://uaquotepro.com/accept-invite",
+    // Create user directly without triggering Supabase email
+    const { data: newUser, error } = await adminClient.auth.admin.createUser({
+      email,
+      email_confirm: false,
+      user_metadata: { full_name, role: role || "sales_rep" },
     });
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
+
+    // Generate invite link manually
+    const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
+      type: "invite",
+      email,
+      options: {
+        redirectTo: "https://uaquotepro.com/accept-invite",
+        data: { full_name, role: role || "sales_rep" },
+      },
+    });
+
+    if (linkError || !linkData) {
+      return NextResponse.json({ error: "Failed to generate invite link" }, { status: 400 });
+    }
+
+    const inviteLink = linkData.properties?.action_link || "https://uaquotepro.com/accept-invite";
 
     // Role display label
     const roleLabel = role === "admin" ? "Admin"
@@ -60,7 +77,6 @@ export async function POST(request: NextRequest) {
 <html>
 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f4f4f4;">
   <div style="background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-
     <div style="text-align: center; margin-bottom: 32px;">
       <div style="display: inline-block; background: #CC2229; border-radius: 12px; padding: 12px 20px;">
         <span style="color: white; font-size: 22px; font-weight: 900;">UA</span>
@@ -68,8 +84,7 @@ export async function POST(request: NextRequest) {
       <h1 style="color: #1a1a1a; margin: 16px 0 4px;">Utah Awnings</h1>
       <p style="color: #666; margin: 0; font-size: 14px;">Sales Platform</p>
     </div>
-
-    <h2 style="color: #1a1a1a; font-size: 20px; margin-bottom: 8px;">Hi ${full_name}, you've been invited!</h2>
+    <h2 style="color: #1a1a1a; font-size: 20px; margin-bottom: 8px;">Hi ${full_name}, you have been invited!</h2>
     <p style="color: #444; line-height: 1.6; margin-bottom: 8px;">
       <strong>${profile.full_name}</strong> has added you to the
       <strong>Utah Awnings Sales Platform</strong> as a <strong>${roleLabel}</strong>.
@@ -77,20 +92,17 @@ export async function POST(request: NextRequest) {
     <p style="color: #444; line-height: 1.6; margin-bottom: 24px;">
       Click the button below to set your password and get started building quotes.
     </p>
-
     <div style="text-align: center; margin: 32px 0;">
-      <a href="https://uaquotepro.com/accept-invite"
+      <a href="${inviteLink}"
          style="background: #CC2229; color: white; padding: 14px 32px; border-radius: 10px;
                 text-decoration: none; font-weight: 700; font-size: 16px; display: inline-block;">
         Activate My Account
       </a>
     </div>
-
     <p style="color: #888; font-size: 13px; margin-top: 32px; border-top: 1px solid #eee; padding-top: 16px;">
-      If you weren't expecting this invite, you can safely ignore this email.<br>
+      If you were not expecting this invite, you can safely ignore this email.<br>
       Questions? Reply to this email or contact your manager.
     </p>
-
     <p style="color: #bbb; font-size: 12px; text-align: center; margin-top: 16px;">
       uaquotepro.com &middot; Utah Awnings Sales Platform
     </p>
