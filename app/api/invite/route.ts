@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the invite via Supabase (generates the token)
-    const { data, error } = await adminClient.auth.admin.inviteUserByEmail(email, {
+    const { error } = await adminClient.auth.admin.inviteUserByEmail(email, {
       data: { full_name, role: role || "sales_rep" },
       redirectTo: "https://uaquotepro.com/accept-invite",
     });
