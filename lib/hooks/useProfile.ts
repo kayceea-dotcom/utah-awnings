@@ -15,15 +15,17 @@ export function useProfile() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      console.log("useProfile - user:", user?.id, "error:", userError);
       if (!user) { setLoading(false); return; }
 
-      const { data } = await supabase
+      const { data, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
         .single();
 
+      console.log("useProfile - profile:", data, "error:", profileError);
       setProfile(data);
       setLoading(false);
     }
