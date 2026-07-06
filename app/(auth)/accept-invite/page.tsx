@@ -12,12 +12,10 @@ export default function AcceptInvitePage() {
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
+    const supabase = createClient();
+
     async function exchangeToken() {
-      // Get hash from URL and parse it
       const hash = window.location.hash;
       if (hash) {
         const params = new URLSearchParams(hash.substring(1));
@@ -41,7 +39,6 @@ export default function AcceptInvitePage() {
         }
       }
 
-      // No hash — check if already has session
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         if (session.user?.user_metadata?.full_name) {
@@ -55,6 +52,8 @@ export default function AcceptInvitePage() {
 
     exchangeToken();
   }, []);
+
+  const supabase = createClient();
 
   async function handleSetPassword() {
     if (!password || password !== confirm) {
