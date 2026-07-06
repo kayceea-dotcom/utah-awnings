@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     const { data, error } = await adminClient.auth.admin.inviteUserByEmail(email, {
       data: { full_name, role: role || "sales_rep" },
-      redirectTo: "https://uaquotepro.com/quote",
+      redirectTo: "https://uaquotepro.com/accept-invite",
     });
 
     if (error) {
