@@ -43,16 +43,20 @@ export default function TeamPage() {
     setSending(true);
     setMessage(null);
 
-    const { error } = await supabase.auth.admin.inviteUserByEmail(inviteEmail, {
-      data: {
+    const res = await fetch("/api/invite", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: inviteEmail,
         full_name: inviteName,
         role: inviteRole,
-      },
-      redirectTo: "https://uaquotepro.com/quote",
+      }),
     });
 
-    if (error) {
-      setMessage({ type: "error", text: error.message });
+    const data = await res.json();
+
+    if (!res.ok) {
+      setMessage({ type: "error", text: data.error || "Failed to send invite" });
     } else {
       setMessage({ type: "success", text: inviteName + " has been invited! They will receive an email to set up their account." });
       setInviteEmail("");
