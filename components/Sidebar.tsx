@@ -9,6 +9,7 @@ import {
 import { useProfile } from "@/lib/hooks/useProfile";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 const nav = [
   { href: "/quote",     icon: Calculator, label: "Quote Builder" },
@@ -22,9 +23,26 @@ const nav = [
 export default function Sidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [companyName, setCompanyName] = useState("Utah Awnings");
   const { profile } = useProfile();
   const router = useRouter();
   const supabase = createClient();
+
+  useEffect(() => {
+    async function loadCompany() {
+      const { data } = await supabase
+        .from("companies")
+        .select("logo_url, name")
+        .eq("slug", "utah-awnings")
+        .single();
+      if (data) {
+        setLogoUrl(data.logo_url || null);
+        setCompanyName(data.name || "Utah Awnings");
+      }
+    }
+    loadCompany();
+  }, []);
 
   // Close sidebar on route change
   useEffect(() => { setOpen(false); }, [pathname]);
@@ -50,12 +68,16 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="px-5 py-5 border-b border-charcoal-700 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-               style={{ backgroundColor: "#CC2229" }}>
-            <span className="text-white text-sm font-black">UA</span>
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden"
+               style={{ backgroundColor: logoUrl ? "transparent" : "#CC2229" }}>
+            {logoUrl ? (
+              <Image src={logoUrl} alt="Logo" width={36} height={36} className="object-contain w-full h-full" />
+            ) : (
+              <span className="text-white text-sm font-black">UA</span>
+            )}
           </div>
           <div>
-            <p className="text-white text-sm font-bold leading-none">Utah Awnings</p>
+            <p className="text-white text-sm font-bold leading-none">{companyName}</p>
             <p className="text-charcoal-400 text-xs mt-0.5">Sales Platform</p>
           </div>
         </div>
@@ -134,11 +156,15 @@ export default function Sidebar() {
           <Menu size={22} />
         </button>
         <div className="flex items-center gap-2.5 ml-2">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-               style={{ backgroundColor: "#CC2229" }}>
-            <span className="text-white text-xs font-black">UA</span>
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center overflow-hidden"
+               style={{ backgroundColor: logoUrl ? "transparent" : "#CC2229" }}>
+            {logoUrl ? (
+              <Image src={logoUrl} alt="Logo" width={28} height={28} className="object-contain w-full h-full" />
+            ) : (
+              <span className="text-white text-xs font-black">UA</span>
+            )}
           </div>
-          <span className="text-white text-sm font-bold">Utah Awnings</span>
+          <span className="text-white text-sm font-bold">{companyName}</span>
         </div>
         {profile && (
           <div className="ml-auto flex items-center gap-2">
