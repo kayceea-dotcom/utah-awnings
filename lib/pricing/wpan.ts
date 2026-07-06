@@ -76,20 +76,24 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   }
 
   // ── HANGER ──
-  const hangerLen = inp.beamLength1 > 0 ? inp.beamLength1 + 1.5 : 0;
+  // For two-run jobs hanger spans combined width
+  const totalWidth = inp.width1 + (inp.width2 > 0 ? inp.width2 : 0);
+  const hangerLen = totalWidth > 0 ? totalWidth + 1.5 : 0;
   const hangerRate = inp.hangerType === "a_rail" ? RATES.hanger_a_rail_ft : RATES.hanger_roll_form_ft;
   if (hangerLen > 0) {
     items.push(li("Hanger 2.5in", 1, hangerLen, hangerRate, "", inp.colorPans));
   }
 
   // ── GUTTER ──
-  const gutterStockLen = nextStockLength(inp.beamLength1 + 1.5);
+  // Gutter spans combined width, rounded to next stock length
+  const gutterStockLen = nextStockLength(totalWidth + 1.5);
+  const maxProjection = Math.max(inp.projection1, inp.projection2 || 0);
+  const fasciaStockLen = nextStockLength(maxProjection);
   if (inp.gutterType === "roll_form") {
-    items.push(li("Roll Form Gutter", 1, inp.beamLength1 + 1.5, RATES.gutter_roll_form_ft, "", inp.colorGutterFascia));
+    items.push(li("Roll Form Gutter", 1, totalWidth + 1.5, RATES.gutter_roll_form_ft, "", inp.colorGutterFascia));
   } else {
     items.push(li("Extruded Gutter 2.5in", 1, gutterStockLen, RATES.gutter_extruded_ft, "", inp.colorGutterFascia));
-    const fasciaStock = nextStockLength(inp.projection1);
-    items.push(li("Extruded Side Fascia", 2, fasciaStock, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
+    items.push(li("Extruded Side Fascia", 2, fasciaStockLen, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
   }
 
   // ── BEAMS ──
@@ -139,7 +143,7 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   }
 
   // ── GUTTER DAMS ──
-  items.push(li("Gutter Dams", inp.downspouts * 2, 0, RATES.gutter_dam));
+  items.push(li("Gutter Dams", inp.downspouts * 2 + 2, 0, RATES.gutter_dam));
 
   // ── DOWNSPOUTS ──
   if (inp.downspouts > 0) {
@@ -149,25 +153,27 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     items.push(li("Downspout Straps",     inp.downspouts * 2, 0, RATES.downspout_strap,  "", inp.colorGutterFascia));
   }
 
-  // ── FLASHING ──
-  if (totalPosts > 0) {
-    items.push(li("Flashing", totalPosts, 0, RATES.flashing));
+  // ── FLASHING — wall attachment posts only (posts1) ──
+  if (inp.posts1 > 0) {
+    items.push(li("Flashing", inp.posts1, 0, RATES.flashing));
   }
 
   // ── FASTENERS ──
   const totalPanels = p1Qty + p2Qty;
   if (totalPanels > 0) {
-    items.push(li("Lag Screws",            totalPanels, 0, RATES.lag_screw));
-    items.push(li("#14x1 Colored Screws",  totalPanels, 0, RATES.screw_14x1_colored,  "", inp.colorPostsBeam));
-    items.push(li("#14x1 Washered Screws", totalPanels, 0, RATES.screw_14x1_washered, "", inp.colorPostsBeam));
+    const lagQty = totalPanels * 4;
+    items.push(li("Lag Screws",            lagQty, 0, RATES.lag_screw));
+    items.push(li("#14x1 Colored Screws",  lagQty, 0, RATES.screw_14x1_colored,  "", inp.colorPostsBeam));
+    items.push(li("#14x1 Washered Screws", lagQty, 0, RATES.screw_14x1_washered, "", inp.colorPostsBeam));
     const panScrewQty = Math.ceil(totalPanels * 5.5 / 50) * 50;
     items.push(li("#8x1/2 Pan Color",  panScrewQty, 0, RATES.screw_8x0_5_color,    "", inp.colorPans));
     items.push(li("#8x1/2 Extruded",   panScrewQty, 0, RATES.screw_8x0_5_extruded, "", inp.colorPostsBeam));
   }
 
-  // ── FOAM GASKET ──
+  // ── FOAM GASKET — spans combined width ──
   if (inp.beamLength1 > 0) {
-    items.push(li("Foam Gasket", 1, gutterStockLen, RATES.foam_gasket_ft));
+    const gasketLen = inp.beamLength1 + (inp.beamLength2 > 0 ? inp.beamLength2 : 0) + 1.5;
+    items.push(li("Foam Gasket", 1, gasketLen, RATES.foam_gasket_ft));
   }
 
   // ── ANCHORS ──
@@ -183,14 +189,15 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     items.push(li("Beam End Caps #2", 2, 0, RATES.endcap_3x3, "", inp.colorPostsBeam));
   }
 
-  // ── SILICONE ──
+  // ── SILICONE — based on combined beam length ──
   if (inp.beamLength1 > 0) {
-    items.push(li("Silicone Clear", Math.ceil(inp.beamLength1 / 10), 0, RATES.silicone_clear));
+    const combinedBeam = inp.beamLength1 + (inp.beamLength2 > 0 ? inp.beamLength2 : 0);
+    items.push(li("Silicone Clear", Math.ceil(combinedBeam / 10), 0, RATES.silicone_clear));
   }
 
   // ── PAN CLIPS ──
-  if (p1Qty > 0) {
-    items.push(li("Pan Clips", Math.ceil(p1Qty / 4), 0, RATES.pan_clip));
+  if (totalPanels > 0) {
+    items.push(li("Pan Clips", Math.ceil(totalPanels / 2), 0, RATES.pan_clip));
   }
 
   // ── FAN BEAM ──
