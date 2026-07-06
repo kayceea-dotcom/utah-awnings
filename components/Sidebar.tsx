@@ -160,7 +160,7 @@ export default function Sidebar() {
           <div className="w-7 h-7 rounded-lg flex items-center justify-center overflow-hidden"
                style={{ backgroundColor: logoUrl ? "transparent" : "#CC2229" }}>
             {logoUrl ? (
-              <Image src={logoUrl} alt="Logo" width={28} height={28} className="object-contain w-full h-full" />
+              <img src={logoUrl} alt="Logo" style={{ maxHeight: "32px", maxWidth: "100px", objectFit: "contain" }} />
             ) : (
               <span className="text-white text-xs font-black">UA</span>
             )}
