@@ -1,5 +1,5 @@
 import { RATES } from "./rates";
-import type { NewportInputs, LineItem, QuoteResult } from "./types";
+import type { LineItem, QuoteResult } from "./types";
 
 export type WPanType = "wpan_032" | "duraking_025" | "duraking_032" | "duraking_040";
 
