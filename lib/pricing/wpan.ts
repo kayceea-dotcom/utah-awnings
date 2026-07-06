@@ -90,7 +90,6 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     items.push(li("Extruded Gutter 2.5in", 1, gutterStockLen, RATES.gutter_extruded_ft, "", inp.colorGutterFascia));
     const fasciaStock = nextStockLength(inp.projection1);
     items.push(li("Extruded Side Fascia", 2, fasciaStock, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
-    items.push(li("Extruded Front Plate", 1, inp.width1 + 1, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
   }
 
   // ── BEAMS ──
@@ -125,9 +124,13 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     items.push(li("3x3 Steel Post #2",  inp.posts2, inp.postHeight2, RATES.post_3x3_steel_ft));
   }
 
-  // ── GUTTER SPLICE ──
-  if (inp.gutterType === "extruded" && inp.beamLength1 + 1.5 > 24) {
-    items.push(li("Gutter Splice", 1, 0, RATES.gutter_splice));
+  // ── GUTTER SPLICE — always include for W-Pan ──
+  items.push(li("Gutter Splice", 1, 0, RATES.gutter_splice));
+
+  // ── SPRAY PAINT ──
+  if (inp.sprayPaint) {
+    items.push(li("Spray Paint Pan",        1, 0, RATES.spray_paint, "", inp.colorPans));
+    items.push(li("Spray Paint Posts/Beam", 1, 0, RATES.spray_paint, "", inp.colorPostsBeam));
   }
 
   // ── POST BRACKETS ──
@@ -160,12 +163,6 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     const panScrewQty = Math.ceil(totalPanels * 5.5 / 50) * 50;
     items.push(li("#8x1/2 Pan Color",  panScrewQty, 0, RATES.screw_8x0_5_color,    "", inp.colorPans));
     items.push(li("#8x1/2 Extruded",   panScrewQty, 0, RATES.screw_8x0_5_extruded, "", inp.colorPostsBeam));
-  }
-
-  // ── SPRAY PAINT ──
-  if (inp.sprayPaint) {
-    items.push(li("Spray Paint Pan",        1, 0, RATES.spray_paint, "", inp.colorPans));
-    items.push(li("Spray Paint Posts/Beam", 1, 0, RATES.spray_paint, "", inp.colorPostsBeam));
   }
 
   // ── FOAM GASKET ──
