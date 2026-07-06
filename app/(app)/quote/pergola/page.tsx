@@ -54,7 +54,7 @@ const DEFAULT: PergolaInputs = {
   jobName: "", salesman: "",
   projection: 0, width: 0,
   beamLength: 0, beamType: "3x8", beamEndCut: "beveled",
-  rafterGauge: "040",
+  rafterGauge: "032",
   latticeType: "2x2", latticeSpacing: "1x",
   headerBoard: true,
   posts: 0, postHeight: 10,
