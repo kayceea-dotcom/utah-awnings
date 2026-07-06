@@ -45,7 +45,6 @@ const LATTICE_SPACING = [
 
 const RAFTER_GAUGES = [
   { value: "032", label: ".032 Gauge" },
-  { value: "040", label: ".040 Gauge" },
 ];
 
 const POST_HEIGHTS = [8, 10, 12, 14, 16, 20];
