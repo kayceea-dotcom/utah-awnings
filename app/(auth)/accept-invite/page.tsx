@@ -15,9 +15,8 @@ export default function AcceptInvitePage() {
   const supabaseRef = useRef(createClient());
 
   useEffect(() => {
-    const supabase = supabaseRef.current;
-
     async function exchangeToken() {
+      const supabase = supabaseRef.current;
       const hash = window.location.hash;
       if (hash) {
         const params = new URLSearchParams(hash.substring(1));
@@ -25,11 +24,11 @@ export default function AcceptInvitePage() {
         const refreshToken = params.get("refresh_token");
 
         if (accessToken && refreshToken) {
-          const { data, error } = await supabase.auth.setSession({
+          const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           });
-          if (error) {
+          if (sessionError) {
             setError("Invalid or expired invite link. Please request a new invite.");
             return;
           }
@@ -67,9 +66,9 @@ export default function AcceptInvitePage() {
     setLoading(true);
     setError("");
 
-    const { error } = await supabaseRef.current.auth.updateUser({ password });
-    if (error) {
-      setError(error.message);
+    const { error: updateError } = await supabaseRef.current.auth.updateUser({ password });
+    if (updateError) {
+      setError(updateError.message);
       setLoading(false);
     } else {
       router.push("/quote");
@@ -80,7 +79,6 @@ export default function AcceptInvitePage() {
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4"
                style={{ backgroundColor: "#CC2229" }}>
@@ -116,7 +114,6 @@ export default function AcceptInvitePage() {
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
-
               <div>
                 <label className="label">Confirm Password</label>
                 <input
