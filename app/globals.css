@@ -1,36 +1,86 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --red:        #CC2229;
+    --red-dark:   #a81b21;
+    --red-light:  #f9e5e6;
+    --charcoal:   #1a1a1a;
+    --charcoal2:  #2a2a2a;
+    --charcoal3:  #3a3a3a;
+    --surface:    #ffffff;
+    --bg:         #f4f4f4;
+    --border:     #e2e2e2;
+    --text:       #1a1a1a;
+    --muted:      #6b6b6b;
+  }
+
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    @apply antialiased;
     font-family: "Inter", system-ui, sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
 @layer components {
   .card {
-    @apply bg-white rounded-xl border border-slate-200 shadow-sm;
+    @apply bg-white rounded-2xl border border-gray-200 shadow-sm;
   }
+
   .label {
-    @apply block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1;
+    @apply block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5;
   }
+
   .input {
-    @apply w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400;
+    @apply w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm
+           text-gray-900 shadow-sm transition
+           focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent
+           placeholder:text-gray-400;
+    min-height: 48px;
   }
+
   .select {
-    @apply w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm appearance-none cursor-pointer transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+    @apply w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm
+           text-gray-900 shadow-sm appearance-none cursor-pointer transition
+           focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent;
+    min-height: 48px;
   }
+
   .btn-primary {
-    @apply inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3
+           text-sm font-bold text-white shadow-sm transition
+           active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-400;
+    background-color: var(--red);
+    min-height: 48px;
   }
+
+  .btn-primary:hover {
+    background-color: var(--red-dark);
+  }
+
   .btn-secondary {
-    @apply inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200
+           bg-white px-5 py-3 text-sm font-bold text-gray-700 shadow-sm transition
+           hover:bg-gray-50 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-400;
+    min-height: 48px;
   }
+
   .section-heading {
-    @apply text-xs font-bold uppercase tracking-widest text-slate-400 mb-3;
+    @apply text-xs font-bold uppercase tracking-widest text-gray-400 mb-3;
+  }
+
+  /* Mobile-first touch targets */
+  .touch-target {
+    min-height: 48px;
+    min-width: 48px;
   }
 }
