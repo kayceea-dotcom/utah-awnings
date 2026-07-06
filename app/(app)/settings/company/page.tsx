@@ -13,7 +13,8 @@ export default function CompanySettingsPage() {
   const [companyName, setCompanyName] = useState("Utah Awnings");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [address, setAddress] = useState("");
+  const [address1, setAddress1] = useState("");
+  const [address2, setAddress2] = useState("");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -32,7 +33,8 @@ export default function CompanySettingsPage() {
         setCompanyName(data.name || "Utah Awnings");
         setPhone(data.phone || "");
         setEmail(data.email || "");
-        setAddress(data.address || "");
+        setAddress1(data.address || "");
+        setAddress2(data.address2 || "");
         setLogoUrl(data.logo_url || null);
       }
     }
@@ -42,7 +44,6 @@ export default function CompanySettingsPage() {
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setUploading(true);
     setMessage(null);
 
@@ -63,15 +64,21 @@ export default function CompanySettingsPage() {
       .from("logos")
       .getPublicUrl(filename);
 
-    const publicUrl = urlData.publicUrl;
+    const publicUrl = urlData.publicUrl + "?t=" + Date.now();
 
-    await supabase
+    const { error: updateError } = await supabase
       .from("companies")
-      .update({ logo_url: publicUrl })
+      .update({ logo_url: urlData.publicUrl })
       .eq("slug", "utah-awnings");
 
+    if (updateError) {
+      setMessage({ type: "error", text: "Saved to storage but failed to update company: " + updateError.message });
+      setUploading(false);
+      return;
+    }
+
     setLogoUrl(publicUrl);
-    setMessage({ type: "success", text: "Logo uploaded successfully!" });
+    setMessage({ type: "success", text: "Logo uploaded successfully! Refresh the page to see it in the sidebar." });
     setUploading(false);
   }
 
@@ -81,7 +88,7 @@ export default function CompanySettingsPage() {
 
     const { error } = await supabase
       .from("companies")
-      .update({ name: companyName, phone, email, address })
+      .update({ name: companyName, phone, email, address: address1, address2 })
       .eq("slug", "utah-awnings");
 
     if (error) {
@@ -115,9 +122,7 @@ export default function CompanySettingsPage() {
               <Building2 size={18} className="text-gray-500" />
               <h2 className="text-sm font-bold text-gray-800">Company Logo</h2>
             </div>
-
             <div className="flex items-center gap-5">
-              {/* Preview */}
               <div className="w-24 h-24 rounded-2xl border-2 border-dashed border-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden bg-gray-50">
                 {logoUrl ? (
                   <img src={logoUrl} alt="Company logo" className="w-full h-full object-contain p-1" />
@@ -128,19 +133,12 @@ export default function CompanySettingsPage() {
                   </div>
                 )}
               </div>
-
               <div className="flex-1">
                 <p className="text-sm text-gray-600 mb-3">
                   Upload your company logo. It will appear in the sidebar, login page, and customer emails.
                   PNG or JPG recommended.
                 </p>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleLogoUpload}
-                />
+                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
                 <button
                   onClick={() => fileRef.current?.click()}
                   disabled={uploading}
@@ -159,42 +157,23 @@ export default function CompanySettingsPage() {
             <div className="space-y-4">
               <div>
                 <label className="label">Company Name</label>
-                <input
-                  type="text"
-                  className="input"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                />
+                <input type="text" className="input" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
               </div>
               <div>
                 <label className="label">Phone</label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="801-979-5423"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
+                <input type="text" className="input" placeholder="801-979-5423" value={phone} onChange={(e) => setPhone(e.target.value)} />
               </div>
               <div>
                 <label className="label">Email</label>
-                <input
-                  type="email"
-                  className="input"
-                  placeholder="info@utahawnings.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
+                <input type="email" className="input" placeholder="info@utahawnings.com" value={email} onChange={(e) => setEmail(e.target.value)} />
               </div>
               <div>
-                <label className="label">Address</label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="1950 Parkway Blvd, West Valley City, UT 84119"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                />
+                <label className="label">Address - West Valley City</label>
+                <input type="text" className="input" placeholder="1950 Parkway Blvd, West Valley City, UT 84119" value={address1} onChange={(e) => setAddress1(e.target.value)} />
+              </div>
+              <div>
+                <label className="label">Address - Hurricane</label>
+                <input type="text" className="input" placeholder="174 Old Hwy 91 #27, Hurricane, UT 84737" value={address2} onChange={(e) => setAddress2(e.target.value)} />
               </div>
 
               {message && (
@@ -206,17 +185,12 @@ export default function CompanySettingsPage() {
                 </div>
               )}
 
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="btn-primary w-full disabled:opacity-50"
-              >
+              <button onClick={handleSave} disabled={saving} className="btn-primary w-full disabled:opacity-50">
                 <Save size={15} />
                 {saving ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </div>
-
         </div>
       </main>
     </>
