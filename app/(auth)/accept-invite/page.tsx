@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
@@ -12,8 +12,10 @@ export default function AcceptInvitePage() {
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
   const router = useRouter();
+  const supabaseRef = useRef(createClient());
+
   useEffect(() => {
-    const supabase = createClient();
+    const supabase = supabaseRef.current;
 
     async function exchangeToken() {
       const hash = window.location.hash;
@@ -53,8 +55,6 @@ export default function AcceptInvitePage() {
     exchangeToken();
   }, []);
 
-  const supabase = createClient();
-
   async function handleSetPassword() {
     if (!password || password !== confirm) {
       setError("Passwords do not match");
@@ -67,7 +67,7 @@ export default function AcceptInvitePage() {
     setLoading(true);
     setError("");
 
-    const { error } = await supabase.auth.updateUser({ password });
+    const { error } = await supabaseRef.current.auth.updateUser({ password });
     if (error) {
       setError(error.message);
       setLoading(false);
