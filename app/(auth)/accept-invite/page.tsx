@@ -10,14 +10,18 @@ export default function AcceptInvitePage() {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [ready, setReady] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
   useEffect(() => {
-    // Supabase puts the token in the URL hash — exchange it for a session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user?.user_metadata?.full_name) {
-        setName(session.user.user_metadata.full_name);
+    // Exchange the token from the URL hash for a real session
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+        if (session?.user?.user_metadata?.full_name) {
+          setName(session.user.user_metadata.full_name);
+        }
+        setReady(true);
       }
     });
   }, []);
@@ -58,8 +62,18 @@ export default function AcceptInvitePage() {
         </div>
 
         <div className="bg-white rounded-2xl p-8 shadow-2xl">
-          <h2 className="text-slate-800 text-lg font-semibold mb-1">Welcome{name ? ", " + name : ""}!</h2>
-          <p className="text-slate-500 text-sm mb-6">Set a password to activate your account.</p>
+          <h2 className="text-slate-800 text-lg font-semibold mb-1">
+            Welcome{name ? ", " + name : ""}!
+          </h2>
+          <p className="text-slate-500 text-sm mb-6">
+            Set a password to activate your account.
+          </p>
+
+          {!ready && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-4">
+              <p className="text-blue-600 text-sm">Verifying your invite link...</p>
+            </div>
+          )}
 
           <div className="space-y-4">
             <div>
@@ -70,6 +84,7 @@ export default function AcceptInvitePage() {
                 placeholder="Min 8 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={!ready}
               />
             </div>
 
@@ -81,7 +96,8 @@ export default function AcceptInvitePage() {
                 placeholder="Repeat password"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSetPassword()}
+                onKeyDown={(e) => e.key === "Enter" && ready && handleSetPassword()}
+                disabled={!ready}
               />
             </div>
 
@@ -93,7 +109,7 @@ export default function AcceptInvitePage() {
 
             <button
               onClick={handleSetPassword}
-              disabled={loading || !password || !confirm}
+              disabled={loading || !password || !confirm || !ready}
               className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Setting up account..." : "Activate Account"}
