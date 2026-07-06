@@ -62,6 +62,15 @@ export async function POST(request: NextRequest) {
 
     const inviteLink = linkData.properties?.action_link || "https://uaquotepro.com/accept-invite";
 
+    // Fetch company logo
+    const { data: company } = await supabase
+      .from("companies")
+      .select("logo_url")
+      .eq("slug", "utah-awnings")
+      .single();
+
+    const logoUrl = company?.logo_url || null;
+
     // Role display label
     const roleLabel = role === "admin" ? "Admin"
       : role === "manager" ? "Manager"
@@ -78,10 +87,13 @@ export async function POST(request: NextRequest) {
 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f4f4f4;">
   <div style="background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
     <div style="text-align: center; margin-bottom: 32px;">
-      <div style="display: inline-block; background: #CC2229; border-radius: 12px; padding: 12px 20px;">
-        <span style="color: white; font-size: 22px; font-weight: 900;">UA</span>
-      </div>
-      <h1 style="color: #1a1a1a; margin: 16px 0 4px;">Utah Awnings</h1>
+      ${logoUrl
+        ? `<img src="${logoUrl}" alt="Utah Awnings" style="max-height: 80px; max-width: 240px; object-fit: contain; margin-bottom: 8px;" />`
+        : `<div style="display: inline-block; background: #CC2229; border-radius: 12px; padding: 12px 20px;">
+             <span style="color: white; font-size: 22px; font-weight: 900;">UA</span>
+           </div>
+           <h1 style="color: #1a1a1a; margin: 16px 0 4px;">Utah Awnings</h1>`
+      }
       <p style="color: #666; margin: 0; font-size: 14px;">Sales Platform</p>
     </div>
     <h2 style="color: #1a1a1a; font-size: 20px; margin-bottom: 8px;">Hi ${full_name}, you have been invited!</h2>
