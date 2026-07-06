@@ -14,6 +14,7 @@ export default function AcceptInvitePage() {
   const router = useRouter();
   const supabase = createClient();
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     async function exchangeToken() {
       // Get hash from URL and parse it
