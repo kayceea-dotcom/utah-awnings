@@ -84,7 +84,8 @@ export const RATES = {
   DEFAULT_TAX:   0.0725,
 
   // Pergola
-  rafter_2x6_ft:       6.59,
+  rafter_2x6_032_ft:   6.59,
+  rafter_2x6_040_ft:   8.59,
   lattice_2x2_ft:      2.02,
   lattice_2x3_ft:      3.17,
   lattice_screw:       0.48,
