@@ -45,7 +45,7 @@ function nextStockLength(ft: number): number {
 export function calcPergola(inp: PergolaInputs): QuoteResult {
   const items: LineItem[] = [];
 
-  const rafterRate = RATES.rafter_2x6_ft;
+  const rafterRate = inp.rafterGauge === '040' ? RATES.rafter_2x6_040_ft : RATES.rafter_2x6_032_ft;
   const latticeRate = inp.latticeType === "2x3" ? RATES.lattice_2x3_ft : RATES.lattice_2x2_ft;
   const latticeEndcapRate = inp.latticeType === "2x3" ? RATES.endcap_2x3 : RATES.endcap_2x2;
   const latticeSpliceRate = inp.latticeType === "2x3" ? RATES.lattice_splice_2x3 : RATES.lattice_splice_2x2;
@@ -76,7 +76,7 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
 
   // ── HEADER BOARD ──
   if (inp.headerBoard && inp.beamLength > 0) {
-    items.push(li("2x6 Header Board", 1, inp.beamLength, RATES.rafter_2x6_ft, "", inp.colorPergola));
+    items.push(li("2x6 Header Board", 1, inp.beamLength, rafterRate, "", inp.colorPergola));
   }
 
   // ── BEAMS ──
