@@ -82,4 +82,27 @@ export const RATES = {
   // Constants
   CC_FEE_RATE:   0.0325,
   DEFAULT_TAX:   0.0725,
+
+  // Pergola
+  rafter_2x6_ft:       6.59,
+  lattice_2x2_ft:      2.02,
+  lattice_2x3_ft:      3.17,
+  lattice_screw:       0.32,
+  lattice_splice_2x2:  2.01,
+  lattice_splice_2x3:  2.07,
+  endcap_2x2:          1.49,
+  endcap_2x3:          1.84,
+  outside_brkt_2x6:    2.36,
+  foam_insert_pergola: 5.05,
+
+  // W-Pan
+  wpan_sqft:           4.48,
+  duraking_025_ft:     5.23,
+  duraking_032_ft:     6.89,
+  duraking_040_ft:     8.58,
+
+  // Metal walls
+  ls_tubing_ft:        5.89,
+  ls_bracket:          2.16,
+  metal_panel_screws:  40.00,
 } as const;
