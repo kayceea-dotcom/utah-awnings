@@ -9,7 +9,6 @@ import {
 import { useProfile } from "@/lib/hooks/useProfile";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 
 const nav = [
   { href: "/quote",     icon: Calculator, label: "Quote Builder" },
@@ -69,7 +68,7 @@ export default function Sidebar() {
       <div className="px-5 py-5 border-b border-charcoal-700 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {logoUrl ? (
-            <Image src={logoUrl} alt="Logo" width={140} height={48} className="object-contain max-h-12" />
+            <img src={logoUrl} alt="Logo" style={{ maxHeight: "48px", maxWidth: "140px", objectFit: "contain" }} />
           ) : (
             <>
               <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
