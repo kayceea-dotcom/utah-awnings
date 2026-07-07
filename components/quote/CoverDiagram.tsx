@@ -65,20 +65,21 @@ export default function CoverDiagram({
   const postRadius = 5;
   const postList: Post[] = [];
 
+  const beamY1 = originY + coverH1 - 1.5 * scale;
+  const beamY2 = originY + coverH2 - 1.5 * scale;
+
   if (posts1 > 0) {
-    // Distribute posts1 evenly along width1, at front edge
+    // Posts sit at the beam line, evenly spaced along width1
     for (let i = 0; i < posts1; i++) {
       const px = originX + (width1 / (posts1 + 1)) * (i + 1) * scale;
-      const py = originY + coverH1;
-      postList.push({ x: px, y: py, label: String(i + 1) });
+      postList.push({ x: px, y: beamY1, label: String(i + 1) });
     }
   }
 
   if (hasRun2 && posts2 > 0) {
     for (let i = 0; i < posts2; i++) {
       const px = originX + coverW1 + (width2 / (posts2 + 1)) * (i + 1) * scale;
-      const py = originY + coverH2;
-      postList.push({ x: px, y: py });
+      postList.push({ x: px, y: beamY2 });
     }
   }
 
@@ -165,15 +166,14 @@ export default function CoverDiagram({
             stroke="#1e40af" strokeWidth="3"
           />
 
-          {/* Rafter tails - short lines extending past beam */}
+          {/* Rafter tails - extend from beam line out past front edge */}
           {Array.from({ length: Math.round(width1 / 2) }).map((_, i) => {
             const rx = originX + (width1 / (Math.round(width1 / 2) + 1)) * (i + 1) * scale;
             return (
               <line key={i}
                 x1={rx} y1={originY + coverH1 - 1.5 * scale}
-                x2={rx} y2={originY + coverH1}
-                stroke="#1e40af" strokeWidth="1.5"
-                strokeDasharray="3,2"
+                x2={rx} y2={originY + coverH1 + 6}
+                stroke="#1e40af" strokeWidth="2"
               />
             );
           })}
