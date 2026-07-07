@@ -38,6 +38,11 @@ const GUTTERS = [
   { value: "roll_form", label: "Roll Form" },
 ];
 
+const JOG_TYPES = [
+  { value: "deck",  label: "Deck / Slab Jog (two independent beams)" },
+  { value: "house", label: "House Jog (continuous front beam)" },
+];
+
 const POST_HEIGHTS = [8, 10, 12, 14, 16, 20];
 
 const DEFAULT: WPanInputs = {
@@ -46,7 +51,9 @@ const DEFAULT: WPanInputs = {
   projection2: 0, width2: 0,
   panelType: "wpan_032",
   beamLength1: 0, beamLength2: 0,
+  beamQty1: 1, beamQty2: 1,
   beamType1: "3x3", beamType2: "",
+  jogType: "deck",
   hangerType: "roll_form", gutterType: "extruded",
   posts1: 0, postHeight1: 10,
   posts2: 0, postHeight2: 10,
@@ -258,10 +265,23 @@ export default function WPanQuotePage() {
   }
 
   function handleWidth1Change(v: number) {
-    setInp((p) => ({ ...p, width1: v, beamLength1: Math.max(0, v - 0.5) }));
+    setInp((p) => {
+      const newBeam1 = p.jogType === "house"
+        ? Math.max(0, v + p.width2 - 0.5)
+        : Math.max(0, v - 0.5);
+      return { ...p, width1: v, beamLength1: newBeam1 };
+    });
   }
   function handleWidth2Change(v: number) {
-    setInp((p) => ({ ...p, width2: v, beamLength2: Math.max(0, v - 0.5) }));
+    setInp((p) => {
+      const newBeam1 = p.jogType === "house"
+        ? Math.max(0, p.width1 + v - 0.5)
+        : p.beamLength1;
+      const newBeam2 = p.jogType === "house"
+        ? Math.max(0, Math.min(p.projection1, p.projection2) - 0.5)
+        : Math.max(0, v - 0.5);
+      return { ...p, width2: v, beamLength1: newBeam1, beamLength2: newBeam2 };
+    });
   }
 
   function toggleSection(s: SectionId) {
@@ -296,14 +316,18 @@ export default function WPanQuotePage() {
                 <NumInput label="Projection #2 (ft)" value={inp.projection2} onChange={(v) => setField("projection2", v)} hint="0 if single run" />
                 <NumInput label="Width #2 (ft)" value={inp.width2} onChange={handleWidth2Change} />
                 <SelectInput label="Panel Type" value={inp.panelType} onChange={(v) => setField("panelType", v as WPanType)} options={PANEL_TYPES} span={2} />
-                <NumInput label="Beam Length #1 (ft)" value={inp.beamLength1} onChange={(v) => setField("beamLength1", v)} hint="Width minus 6in" />
-                <NumInput label="Beam Length #2 (ft)" value={inp.beamLength2} onChange={(v) => setField("beamLength2", v)} />
+
               </SectionCard>
 
               <SectionCard id="structure" title="Structure" open={open.has("structure")} onToggle={toggleSection}>
+                <SelectInput label="Jog Type" value={inp.jogType} onChange={(v) => setField("jogType", v)} options={JOG_TYPES} span={2} />
                 <SelectInput label="Beam Type #1" value={inp.beamType1} onChange={(v) => setField("beamType1", v)} options={BEAM_TYPES} />
+                <NumInput label="Beam #1 Qty" value={inp.beamQty1} onChange={(v) => setField("beamQty1", v)} hint="2 for double beam" />
+                <NumInput label="Beam Length #1 (ft)" value={inp.beamLength1} onChange={(v) => setField("beamLength1", v)} hint="Auto from width" />
                 <SelectInput label="Beam Type #2" value={inp.beamType2} onChange={(v) => setField("beamType2", v)}
                   options={[{ value: "", label: "None" }, ...BEAM_TYPES]} />
+                <NumInput label="Beam #2 Qty" value={inp.beamQty2} onChange={(v) => setField("beamQty2", v)} hint="2 for double beam" />
+                <NumInput label="Beam Length #2 (ft)" value={inp.beamLength2} onChange={(v) => setField("beamLength2", v)} />
                 <SelectInput label="Hanger Type" value={inp.hangerType} onChange={(v) => setField("hangerType", v)} options={HANGERS} />
                 <SelectInput label="Gutter Type" value={inp.gutterType} onChange={(v) => setField("gutterType", v)} options={GUTTERS} />
               </SectionCard>

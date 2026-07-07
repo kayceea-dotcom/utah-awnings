@@ -13,8 +13,11 @@ export interface WPanInputs {
   panelType: WPanType;
   beamLength1: number;
   beamLength2: number;
+  beamQty1: number;
+  beamQty2: number;
   beamType1: string;
   beamType2: string;
+  jogType: string;
   hangerType: string;
   gutterType: string;
   posts1: number;
@@ -107,14 +110,16 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   }
 
   if (inp.beamLength1 > 0) {
-    items.push(li("Beam #1 (" + inp.beamType1 + ")", 1, inp.beamLength1, beamRate(inp.beamType1), "", inp.colorPostsBeam));
+    const bq1 = inp.beamQty1 || 1;
+    items.push(li("Beam #1 (" + inp.beamType1 + ")", bq1, inp.beamLength1, beamRate(inp.beamType1), "", inp.colorPostsBeam));
     const steelStock = nextStockLength(inp.beamLength1 + 1.5);
-    items.push(li("Steel Insert #1", 1, steelStock, steelRate(inp.beamType1)));
+    items.push(li("Steel Insert #1", bq1, steelStock, steelRate(inp.beamType1)));
   }
   if (inp.beamLength2 > 0 && inp.beamType2) {
-    items.push(li("Beam #2 (" + inp.beamType2 + ")", 1, inp.beamLength2, beamRate(inp.beamType2), "", inp.colorPostsBeam));
+    const bq2 = inp.beamQty2 || 1;
+    items.push(li("Beam #2 (" + inp.beamType2 + ")", bq2, inp.beamLength2, beamRate(inp.beamType2), "", inp.colorPostsBeam));
     const steelStock2 = nextStockLength(inp.beamLength2 + 1.5);
-    items.push(li("Steel Insert #2", 1, steelStock2, steelRate(inp.beamType2)));
+    items.push(li("Steel Insert #2", bq2, steelStock2, steelRate(inp.beamType2)));
   }
 
   // ── POSTS ──
