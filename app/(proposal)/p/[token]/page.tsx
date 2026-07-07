@@ -253,7 +253,6 @@ export default function ProposalPage() {
                 projection2={Number(inp.projection2) || 0}
                 width2={Number(inp.width2) || 0}
                 posts1={Number(inp.posts1) || 0}
-                posts2={Number(inp.posts2) || 0}
                 downspouts={Number(inp.downspouts) || 1}
               />
             </div>
