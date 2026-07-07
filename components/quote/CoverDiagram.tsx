@@ -14,7 +14,7 @@ interface CoverDiagramProps {
 export default function CoverDiagram({
   projection1, width1,
   projection2 = 0, width2 = 0,
-  posts1 = 0, posts2: _posts2 = 0,
+  posts1 = 0,
   downspouts = 1,
   showRafterTails = true,
   className = "",

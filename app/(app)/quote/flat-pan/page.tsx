@@ -433,7 +433,6 @@ export default function ModernQuotePage() {
                 projection2={inp.projection2}
                 width2={inp.width2}
                 posts1={inp.posts1}
-                posts2={inp.posts2}
                 downspouts={inp.downspouts}
                 showRafterTails={false}
               />
