@@ -461,7 +461,6 @@ export default function NewportQuotePage() {
                 posts1={inp.posts1}
                 posts2={inp.posts2}
                 downspouts={inp.downspouts}
-                productType="newport"
               />
               <PriceSummaryPanel result={result} />
             </div>

@@ -14,7 +14,6 @@ interface CoverDiagramProps {
   posts1?: number;
   posts2?: number;
   downspouts?: number;
-  productType?: string;
   className?: string;
 }
 
