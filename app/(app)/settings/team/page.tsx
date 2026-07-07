@@ -11,6 +11,7 @@ import { UserPlus, Mail, Shield, RefreshCw } from "lucide-react";
 interface TeamMember {
   id: string;
   full_name: string;
+  email?: string;
   role: string;
   created_at: string;
 }
@@ -25,6 +26,25 @@ export default function TeamPage() {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const { profile } = useProfile();
   const supabase = createClient();
+  const [resending, setResending] = useState<string | null>(null);
+  const [resendMsg, setResendMsg] = useState<string | null>(null);
+
+  async function handleResend(email: string, full_name: string) {
+    setResending(email);
+    setResendMsg(null);
+    const res = await fetch("/api/resend-invite", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, full_name }),
+    });
+    if (res.ok) {
+      setResendMsg("Link resent to " + full_name);
+    } else {
+      setResendMsg("Failed to resend");
+    }
+    setResending(null);
+    setTimeout(() => setResendMsg(null), 4000);
+  }
 
   async function loadMembers() {
     setLoading(true);
@@ -95,6 +115,12 @@ export default function TeamPage() {
       <TopBar title="Team" subtitle="Invite and manage your sales team" />
       <main className="flex-1 p-4 lg:p-6 pb-24 lg:pb-6">
         <div className="max-w-2xl mx-auto space-y-5">
+
+          {resendMsg && (
+            <div className="card p-4 bg-green-50 border-green-200">
+              <p className="text-green-700 text-sm font-medium">{resendMsg}</p>
+            </div>
+          )}
 
           {/* Invite Card */}
           <div className="card p-5">
@@ -200,9 +226,21 @@ export default function TeamPage() {
                         {new Date(member.created_at).toLocaleDateString()}
                       </p>
                     </div>
-                    <span className={"inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold " + roleColor(member.role)}>
-                      {roleLabel(member.role)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={"inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold " + roleColor(member.role)}>
+                        {roleLabel(member.role)}
+                      </span>
+                      {member.id !== profile?.id && (
+                        <button
+                          onClick={() => handleResend(member.email || "", member.full_name)}
+                          disabled={resending === member.email}
+                          className="text-xs text-gray-400 hover:text-red-600 transition disabled:opacity-50"
+                          title="Resend login link"
+                        >
+                          {resending === member.email ? "..." : "Resend"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
