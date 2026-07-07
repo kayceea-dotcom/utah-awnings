@@ -23,7 +23,7 @@ export default function CoverDiagram({
   projection2 = 0, width2 = 0,
   posts1 = 0, posts2 = 0,
   downspouts = 1,
-  productType = "newport",
+  productType: _productType = "newport",
   className = "",
 }: CoverDiagramProps) {
   if (!projection1 || !width1) {
