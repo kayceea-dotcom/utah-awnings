@@ -137,12 +137,8 @@ export default function CoverDiagram({
           {showRafterTails && Array.from({ length: tailCount }).map((_, i) => {
             const rx = ox + (width1 / (tailCount + 1)) * (i + 1) * scale;
             return (
-              <g key={i}>
-                <line x1={rx} y1={frontEdgeY} x2={rx} y2={tailTipY}
-                  stroke="#1e40af" strokeWidth="2" />
-                <line x1={rx - 5} y1={tailTipY} x2={rx + 5} y2={tailTipY}
-                  stroke="#1e40af" strokeWidth="2" />
-              </g>
+              <line key={i} x1={rx} y1={frontEdgeY} x2={rx} y2={tailTipY}
+                stroke="#1e40af" strokeWidth="2" />
             );
           })}
 
