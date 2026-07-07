@@ -435,6 +435,7 @@ export default function ModernQuotePage() {
                 posts1={inp.posts1}
                 posts2={inp.posts2}
                 downspouts={inp.downspouts}
+                showRafterTails={false}
               />
               <PriceSummaryPanel result={result} />
             </div>

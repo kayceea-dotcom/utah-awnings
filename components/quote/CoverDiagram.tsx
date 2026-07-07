@@ -1,11 +1,5 @@
 "use client";
 
-interface Post {
-  x: number;
-  y: number;
-  label?: string;
-}
-
 interface CoverDiagramProps {
   projection1: number;
   width1: number;
@@ -14,6 +8,7 @@ interface CoverDiagramProps {
   posts1?: number;
   posts2?: number;
   downspouts?: number;
+  showRafterTails?: boolean;
   className?: string;
 }
 
@@ -22,84 +17,78 @@ export default function CoverDiagram({
   projection2 = 0, width2 = 0,
   posts1 = 0, posts2 = 0,
   downspouts = 1,
+  showRafterTails = true,
   className = "",
 }: CoverDiagramProps) {
   if (!projection1 || !width1) {
     return (
       <div className={"flex items-center justify-center bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 " + className}
-           style={{ minHeight: 200 }}>
-        <p className="text-gray-400 text-sm">Enter dimensions to see diagram</p>
+           style={{ minHeight: 180 }}>
+        <p className="text-gray-400 text-sm text-center px-4">Enter dimensions to see diagram</p>
       </div>
     );
   }
 
-  // ── Layout constants ──
-  const PAD = 48;
-  const HOUSE_H = 24;
-  const LABEL_H = 24;
+  // ── Orientation: House on LEFT, cover extends RIGHT ──
+  // X axis = projection (depth of cover, left to right)
+  // Y axis = width (along house, top to bottom)
+
+  const PAD = 40;
+  const TAIL_LEN = 14;   // rafter tail pixel length sticking left past house wall
+  const OVERHANG = 10;   // beam is slightly inset from front (right) edge
+  const DIM_SPACE = 28;  // space for dimension labels
 
   const hasRun2 = projection2 > 0 && width2 > 0;
   const totalWidth = hasRun2 ? width1 + width2 : width1;
-  const maxProjection = Math.max(projection1, hasRun2 ? projection2 : 0);
 
-  // Scale to fit in ~400px wide, ~320px tall canvas
-  const availW = 380;
+  // Scale to fit nicely
   const availH = 260;
-  const scaleX = availW / totalWidth;
-  const scaleY = availH / maxProjection;
-  const scale = Math.min(scaleX, scaleY, 16); // max 16px per foot
+  const availW = 300;
+  const scaleY = availH / totalWidth;
+  const scaleX = availW / Math.max(projection1, projection2 || 0);
+  const scale = Math.min(scaleX, scaleY, 14);
 
-  const coverW1 = width1 * scale;
-  const coverH1 = projection1 * scale;
-  const coverW2 = hasRun2 ? width2 * scale : 0;
-  const coverH2 = hasRun2 ? projection2 * scale : 0;
-  const totalW = totalWidth * scale;
+  const coverH1 = width1 * scale;
+  const coverW1 = projection1 * scale;
+  const coverH2 = hasRun2 ? width2 * scale : 0;
+  const coverW2 = hasRun2 ? projection2 * scale : 0;
+  const totalH = totalWidth * scale;
 
-  const svgW = totalW + PAD * 2 + 40;
-  const svgH = Math.max(coverH1, coverH2) + PAD * 2 + HOUSE_H + LABEL_H * 2;
+  const svgW = coverW1 + PAD * 2 + DIM_SPACE + TAIL_LEN;
+  const svgH = totalH + PAD * 2 + DIM_SPACE;
 
-  const originX = PAD + 20;
-  const originY = PAD + HOUSE_H;
+  // Origin = top-left of cover (house wall top)
+  const ox = PAD + TAIL_LEN;  // left edge = house wall
+  const oy = PAD;
 
-  // ── Post positions ──
-  const postRadius = 5;
-  const postList: Post[] = [];
+  // Beam X position = projection - 1.5ft from front (right side)
+  const beamX1 = ox + coverW1 - 1.5 * scale;
+  const beamX2 = hasRun2 ? ox + coverW2 - 1.5 * scale : beamX1;
 
-  const beamY1 = originY + coverH1 - 1.5 * scale;
-  const beamY2 = originY + coverH2 - 1.5 * scale;
+  // Rafter tail count = width / 2
+  const tailCount1 = Math.round(width1 / 2);
 
+  // Post positions along beam
+  const postPositions1: number[] = [];
   if (posts1 > 0) {
-    // Posts sit at the beam line, evenly spaced along width1
-    for (let i = 0; i < posts1; i++) {
-      const px = originX + (width1 / (posts1 + 1)) * (i + 1) * scale;
-      postList.push({ x: px, y: beamY1, label: String(i + 1) });
+    if (posts1 === 1) {
+      postPositions1.push(oy + coverH1 / 2);
+    } else {
+      for (let i = 0; i < posts1; i++) {
+        const offset = i === 0 ? 1.5
+          : i === posts1 - 1 ? width1 - 1.5
+          : 1.5 + (width1 - 3) * i / (posts1 - 1);
+        postPositions1.push(oy + offset * scale);
+      }
     }
   }
-
-  if (hasRun2 && posts2 > 0) {
-    for (let i = 0; i < posts2; i++) {
-      const px = originX + coverW1 + (width2 / (posts2 + 1)) * (i + 1) * scale;
-      postList.push({ x: px, y: beamY2 });
-    }
-  }
-
-  // ── Downspout positions ──
-  const downspoutList: { x: number; y: number }[] = [];
-  if (downspouts > 0) {
-    for (let i = 0; i < downspouts; i++) {
-      const px = originX + (totalWidth / (downspouts + 1)) * (i + 1) * scale;
-      downspoutList.push({ x: px, y: originY });
-    }
-  }
-
-  const hatchSize = 6;
 
   return (
     <div className={"bg-white rounded-xl border border-gray-200 overflow-hidden " + className}>
       <div className="px-4 py-2 border-b border-gray-100">
         <p className="text-xs font-bold uppercase tracking-widest text-gray-400">Cover Diagram — Top View</p>
       </div>
-      <div className="flex items-center justify-center p-2 overflow-x-auto">
+      <div className="flex items-center justify-center p-3 overflow-x-auto">
         <svg
           viewBox={"0 0 " + svgW + " " + svgH}
           width={svgW}
@@ -107,187 +96,129 @@ export default function CoverDiagram({
           style={{ maxWidth: "100%", height: "auto" }}
         >
           <defs>
-            <pattern id="hatch" patternUnits="userSpaceOnUse" width={hatchSize} height={hatchSize} patternTransform="rotate(45)">
-              <line x1="0" y1="0" x2="0" y2={hatchSize} stroke="#94a3b8" strokeWidth="1" />
+            <pattern id="hatch" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+              <line x1="0" y1="0" x2="0" y2="6" stroke="#94a3b8" strokeWidth="1" />
             </pattern>
           </defs>
 
-          {/* House wall */}
-          <rect
-            x={originX - 8}
-            y={originY - HOUSE_H}
-            width={totalW + 16}
-            height={HOUSE_H}
-            fill="url(#hatch)"
-            stroke="#64748b"
-            strokeWidth="2"
-          />
-          <text x={originX + totalW / 2} y={originY - HOUSE_H / 2 + 4}
-            textAnchor="middle" fontSize="10" fill="#475569" fontWeight="600">HOUSE</text>
+          {/* ── House wall (left edge, hatched) ── */}
+          <rect x={ox - 12} y={oy - 4} width={12} height={totalH + 8}
+            fill="url(#hatch)" stroke="#64748b" strokeWidth="1.5" />
 
-          {/* Run 1 — main cover */}
-          <rect
-            x={originX}
-            y={originY}
-            width={coverW1}
-            height={coverH1}
-            fill="#eff6ff"
-            stroke="#3b82f6"
-            strokeWidth="1.5"
-          />
+          {/* ── Run 1 cover rectangle ── */}
+          <rect x={ox} y={oy} width={coverW1} height={coverH1}
+            fill="#eff6ff" stroke="#3b82f6" strokeWidth="1.5" />
 
-          {/* Run 2 */}
+          {/* ── Run 2 cover rectangle ── */}
           {hasRun2 && (
-            <rect
-              x={originX + coverW1}
-              y={originY}
-              width={coverW2}
-              height={coverH2}
-              fill="#f0fdf4"
-              stroke="#22c55e"
-              strokeWidth="1.5"
-            />
+            <rect x={ox} y={oy + coverH1} width={coverW2} height={coverH2}
+              fill="#f0fdf4" stroke="#22c55e" strokeWidth="1.5" />
           )}
 
-          {/* Overhang area (shaded) */}
-          <rect
-            x={originX}
-            y={originY + coverH1 - 1.5 * scale}
-            width={coverW1}
-            height={1.5 * scale}
-            fill="#dbeafe"
-            opacity={0.5}
-          />
+          {/* ── Hanger dashed line along house wall ── */}
+          <line x1={ox} y1={oy} x2={ox} y2={oy + totalH}
+            stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="6,3" />
 
-          {/* Beam line (1.5ft from front = beam position) */}
-          <line
-            x1={originX} y1={originY + coverH1 - 1.5 * scale}
-            x2={originX + coverW1} y2={originY + coverH1 - 1.5 * scale}
-            stroke="#1e40af" strokeWidth="3"
-          />
+          {/* ── Beam line run 1 (vertical line near right/front) ── */}
+          <line x1={beamX1} y1={oy} x2={beamX1} y2={oy + coverH1}
+            stroke="#1e40af" strokeWidth="3" />
 
-          {/* Rafter tails - only from beam line to 1ft past front edge */}
-          {Array.from({ length: Math.round(width1 / 2) }).map((_, i) => {
-            const rx = originX + (width1 / (Math.round(width1 / 2) + 1)) * (i + 1) * scale;
-            const beamLineY = originY + coverH1 - 1.5 * scale;
-            const tailEnd = originY + coverH1 + 1 * scale;
+          {/* ── Beam line run 2 ── */}
+          {hasRun2 && (
+            <line x1={beamX2} y1={oy + coverH1} x2={beamX2} y2={oy + coverH1 + coverH2}
+              stroke="#15803d" strokeWidth="3" />
+          )}
+
+          {/* ── Top plate (horizontal line at top of run 1) ── */}
+          <line x1={ox} y1={oy} x2={ox + coverW1} y2={oy}
+            stroke="#1e40af" strokeWidth="2" />
+
+          {/* ── Bottom plate (horizontal line at bottom of run 1) ── */}
+          <line x1={ox} y1={oy + coverH1} x2={ox + coverW1} y2={oy + coverH1}
+            stroke="#1e40af" strokeWidth="2" />
+
+          {/* ── Rafter tails (sticking LEFT past house wall) ── */}
+          {showRafterTails && Array.from({ length: tailCount1 }).map((_, i) => {
+            const ty = oy + (width1 / (tailCount1 + 1)) * (i + 1) * scale;
             return (
-              <line key={i}
-                x1={rx} y1={beamLineY}
-                x2={rx} y2={tailEnd}
-                stroke="#1e40af" strokeWidth="2"
-              />
+              <g key={i}>
+                {/* Tail line from house wall extending left */}
+                <line x1={ox - 12} y1={ty} x2={ox - 12 - TAIL_LEN} y2={ty}
+                  stroke="#1e40af" strokeWidth="2" />
+                {/* Cap at tip */}
+                <line x1={ox - 12 - TAIL_LEN} y1={ty - 5} x2={ox - 12 - TAIL_LEN} y2={ty + 5}
+                  stroke="#1e40af" strokeWidth="2.5" />
+              </g>
             );
           })}
 
-          {/* Side plates - full length house to 1ft past front edge */}
-          <line
-            x1={originX} y1={originY}
-            x2={originX} y2={originY + coverH1 + 1 * scale}
-            stroke="#1e40af" strokeWidth="3"
-          />
-          <line
-            x1={originX + coverW1} y1={originY}
-            x2={originX + coverW1} y2={originY + coverH1 + 1 * scale}
-            stroke="#1e40af" strokeWidth="3"
-          />
-
-          {/* Beam line run 2 */}
-          {hasRun2 && (
-            <>
-              <rect
-                x={originX + coverW1}
-                y={originY + coverH2 - 1.5 * scale}
-                width={coverW2}
-                height={1.5 * scale}
-                fill="#dcfce7"
-                opacity={0.5}
-              />
-              <line
-                x1={originX + coverW1} y1={originY + coverH2 - 1.5 * scale}
-                x2={originX + coverW1 + coverW2} y2={originY + coverH2 - 1.5 * scale}
-                stroke="#15803d" strokeWidth="3"
-              />
-            </>
-          )}
-
-          {/* Hanger line along house */}
-          <line
-            x1={originX} y1={originY}
-            x2={originX + totalW} y2={originY}
-            stroke="#94a3b8" strokeWidth="2"
-            strokeDasharray="6,3"
-          />
-
-          {/* Posts */}
-          {postList.map((p, i) => (
+          {/* ── Posts (squares on beam line) ── */}
+          {postPositions1.map((py, i) => (
             <g key={i}>
-              <circle cx={p.x} cy={p.y} r={postRadius} fill="#1e293b" />
-              <text x={p.x} y={p.y - postRadius - 3} textAnchor="middle" fontSize="8" fill="#475569">P</text>
+              <rect x={beamX1 - 5} y={py - 5} width={10} height={10}
+                fill="#1e293b" rx="1" />
+              <text x={beamX1} y={py + 4} textAnchor="middle"
+                fontSize="7" fill="white" fontWeight="bold">{i + 1}</text>
             </g>
           ))}
 
-          {/* Downspouts */}
-          {downspoutList.map((d, i) => (
-            <g key={i}>
-              <rect x={d.x - 4} y={d.y - 8} width={8} height={8} fill="#0ea5e9" rx="1" />
-              <text x={d.x} y={d.y + 10} textAnchor="middle" fontSize="7" fill="#0ea5e9">DS</text>
-            </g>
-          ))}
+          {/* ── Downspout marker at top of gutter (house wall, top) ── */}
+          {downspouts > 0 && Array.from({ length: downspouts }).map((_, i) => {
+            const dy = oy + (totalWidth / (downspouts + 1)) * (i + 1) * scale;
+            return (
+              <g key={i}>
+                <rect x={ox - 12} y={dy - 5} width={8} height={8}
+                  fill="#0ea5e9" rx="1" />
+              </g>
+            );
+          })}
 
-          {/* ── Dimension labels ── */}
-
-          {/* Width 1 label (top) */}
-          <line x1={originX} y1={originY - 10} x2={originX + coverW1} y2={originY - 10} stroke="#64748b" strokeWidth="1" markerEnd="url(#arrow)" markerStart="url(#arrow)" />
-          <text x={originX + coverW1 / 2} y={originY - 14} textAnchor="middle" fontSize="11" fontWeight="700" fill="#1e293b">
-            {width1}{"'"}
-          </text>
-
-          {/* Width 2 label (top) */}
-          {hasRun2 && (
-            <>
-              <line x1={originX + coverW1} y1={originY - 10} x2={originX + coverW1 + coverW2} y2={originY - 10} stroke="#64748b" strokeWidth="1" />
-              <text x={originX + coverW1 + coverW2 / 2} y={originY - 14} textAnchor="middle" fontSize="11" fontWeight="700" fill="#15803d">
-                {width2}{"'"}
-              </text>
-            </>
-          )}
-
-          {/* Projection 1 label (right side) */}
-          <line x1={originX + coverW1 + 10} y1={originY} x2={originX + coverW1 + 10} y2={originY + coverH1} stroke="#64748b" strokeWidth="1" />
+          {/* ── Dimension: Width (left side, vertical) ── */}
+          <line x1={ox - 12 - TAIL_LEN - 8} y1={oy}
+                x2={ox - 12 - TAIL_LEN - 8} y2={oy + coverH1}
+            stroke="#64748b" strokeWidth="1" />
+          <line x1={ox - 12 - TAIL_LEN - 12} y1={oy}
+                x2={ox - 12 - TAIL_LEN - 4} y2={oy}
+            stroke="#64748b" strokeWidth="1" />
+          <line x1={ox - 12 - TAIL_LEN - 12} y1={oy + coverH1}
+                x2={ox - 12 - TAIL_LEN - 4} y2={oy + coverH1}
+            stroke="#64748b" strokeWidth="1" />
           <text
-            x={originX + coverW1 + 22}
-            y={originY + coverH1 / 2 + 4}
-            fontSize="11" fontWeight="700" fill="#1e293b"
-          >
-            {projection1}{"'"}
+            x={ox - 12 - TAIL_LEN - 14}
+            y={oy + coverH1 / 2 + 4}
+            textAnchor="middle" fontSize="11" fontWeight="700" fill="#1e293b"
+            transform={"rotate(-90," + (ox - 12 - TAIL_LEN - 14) + "," + (oy + coverH1 / 2 + 4) + ")"}
+          >{width1}{"'"}</text>
+
+          {/* ── Dimension: Projection (top, horizontal, pink like sketch) ── */}
+          <line x1={ox + coverW1 + 8} y1={oy}
+                x2={ox + coverW1 + 8} y2={oy + coverH1}
+            stroke="#CC2229" strokeWidth="1.5" />
+          <line x1={ox + coverW1 + 4} y1={oy}
+                x2={ox + coverW1 + 12} y2={oy}
+            stroke="#CC2229" strokeWidth="1.5" />
+          <line x1={ox + coverW1 + 4} y1={oy + coverH1}
+                x2={ox + coverW1 + 12} y2={oy + coverH1}
+            stroke="#CC2229" strokeWidth="1.5" />
+          <text x={ox + coverW1 + 18} y={oy + coverH1 / 2 + 4}
+            textAnchor="middle" fontSize="11" fontWeight="700" fill="#CC2229"
+            transform={"rotate(90," + (ox + coverW1 + 18) + "," + (oy + coverH1 / 2) + ")"}
+          >{projection1}{"'"}</text>
+
+          {/* ── Labels ── */}
+          <text x={ox + coverW1 / 2} y={oy + coverH1 / 2 + 4}
+            textAnchor="middle" fontSize="9" fill="#94a3b8">
+            {width1 * projection1} sq ft
           </text>
 
-          {/* Projection 2 label */}
-          {hasRun2 && (
-            <>
-              <line x1={originX + totalW + 10} y1={originY} x2={originX + totalW + 10} y2={originY + coverH2} stroke="#64748b" strokeWidth="1" />
-              <text
-                x={originX + totalW + 22}
-                y={originY + coverH2 / 2 + 4}
-                fontSize="11" fontWeight="700" fill="#15803d"
-              >
-                {projection2}{"'"}
-              </text>
-            </>
-          )}
-
-          {/* Compass / North indicator */}
-          <text x={svgW - 20} y={svgH - 10} fontSize="9" fill="#94a3b8" textAnchor="middle">N</text>
-          <line x1={svgW - 20} y1={svgH - 22} x2={svgW - 20} y2={svgH - 14} stroke="#94a3b8" strokeWidth="1.5" />
-
-          {/* Legend */}
-          <circle cx={originX} cy={svgH - 12} r={4} fill="#1e293b" />
-          <text x={originX + 8} y={svgH - 8} fontSize="9" fill="#475569">Post</text>
-          <rect x={originX + 36} y={svgH - 16} width={8} height={8} fill="#0ea5e9" rx="1" />
-          <text x={originX + 48} y={svgH - 8} fontSize="9" fill="#475569">Downspout</text>
-          <line x1={originX + 100} y1={svgH - 12} x2={originX + 112} y2={svgH - 12} stroke="#1e40af" strokeWidth="3" />
-          <text x={originX + 116} y={svgH - 8} fontSize="9" fill="#475569">Beam</text>
+          {/* ── Legend ── */}
+          <rect x={ox} y={svgH - 16} width={8} height={8} fill="#1e293b" rx="1" />
+          <text x={ox + 12} y={svgH - 8} fontSize="9" fill="#475569">Post</text>
+          <rect x={ox + 44} y={svgH - 16} width={8} height={8} fill="#0ea5e9" rx="1" />
+          <text x={ox + 56} y={svgH - 8} fontSize="9" fill="#475569">Downspout</text>
+          <line x1={ox + 108} y1={svgH - 12} x2={ox + 120} y2={svgH - 12}
+            stroke="#1e40af" strokeWidth="3" />
+          <text x={ox + 124} y={svgH - 8} fontSize="9" fill="#475569">Beam</text>
         </svg>
       </div>
     </div>
