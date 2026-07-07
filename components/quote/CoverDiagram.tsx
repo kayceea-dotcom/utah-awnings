@@ -180,16 +180,16 @@ export default function CoverDiagram({
             );
           })}
 
-          {/* Side plates extending 1ft past front edge */}
+          {/* Side plates extending 1ft past front edge only */}
           <line
-            x1={originX} y1={originY}
+            x1={originX} y1={originY + coverH1}
             x2={originX} y2={originY + coverH1 + 1 * scale}
-            stroke="#1e40af" strokeWidth="2.5"
+            stroke="#1e40af" strokeWidth="3"
           />
           <line
-            x1={originX + coverW1} y1={originY}
+            x1={originX + coverW1} y1={originY + coverH1}
             x2={originX + coverW1} y2={originY + coverH1 + 1 * scale}
-            stroke="#1e40af" strokeWidth="2.5"
+            stroke="#1e40af" strokeWidth="3"
           />
 
           {/* Beam line run 2 */}
