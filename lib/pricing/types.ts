@@ -13,6 +13,15 @@ export type AwningColor =
   | "Beechwood" | "Pewter" | "Maplewood" | "Ebony" | "Sandalwood";
 export type WrapType = "none" | "2x6" | "3x8";
 
+export interface BeamConfig {
+  type: string;
+  qty: number;
+  length: number;
+  positionFromHouse: number;
+  posts: number;
+  postHeight: number;
+}
+
 export interface NewportInputs {
   jobName: string;
   salesman: string;
@@ -28,6 +37,7 @@ export interface NewportInputs {
   beamType2: BeamType | "";
   beamEndCut1: EndCut;
   beamEndCut2: EndCut | "";
+  beams: BeamConfig[];
   gutterType: GutterType;
   hangerType: HangerType;
   posts1: number;
