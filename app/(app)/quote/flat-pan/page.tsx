@@ -8,8 +8,10 @@ import type { NewportInputs } from "@/lib/pricing/types";
 import TopBar from "@/components/TopBar";
 import Field from "@/components/quote/Field";
 import MaterialList from "@/components/quote/MaterialList";
-import { ChevronDown, ChevronUp, RefreshCw, DollarSign } from "lucide-react";
+import { ChevronDown, ChevronUp, RefreshCw, DollarSign, Send } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useProfile";
+import { useRouter } from "next/navigation";
+import SaveQuoteModal from "@/components/quote/SaveQuoteModal";
 
 const COLORS = ["White","Siennawood","Slate","Driftwood","Beechwood","Pewter","Maplewood","Ebony","Sandalwood"];
 
@@ -301,7 +303,9 @@ export default function ModernQuotePage() {
   );
   const [showMaterials, setShowMaterials] = useState(false);
   const [showPricePanel, setShowPricePanel] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
   const { profile } = useProfile();
+  const router = useRouter();
 
   const result = useMemo(() => calcNewport(inp), [inp]);
 
@@ -335,6 +339,9 @@ export default function ModernQuotePage() {
       <TopBar title="Modern" subtitle="Sleek flat pan roof system - live pricing">
         <button onClick={() => setInp(DEFAULT)} className="btn-secondary text-xs px-3 py-2">
           <RefreshCw size={13} /> Reset
+        </button>
+        <button onClick={() => setShowSaveModal(true)} className="btn-primary text-xs px-3 py-2">
+          <Send size={13} /> Generate Proposal
         </button>
       </TopBar>
 
@@ -433,6 +440,22 @@ export default function ModernQuotePage() {
             <PriceSummaryPanel result={result} onClose={() => setShowPricePanel(false)} />
           </div>
         </div>
+      )}
+      {showSaveModal && (
+        <SaveQuoteModal
+          productType="modern"
+          inputs={inp as unknown as Record<string, unknown>}
+          lineItems={result.lineItems}
+          materialCost={result.materialCost}
+          totalJobSale={result.totalJobSale}
+          totalProfit={result.totalProfit}
+          markup={result.markup}
+          onClose={() => setShowSaveModal(false)}
+          onSuccess={(token) => {
+            setShowSaveModal(false);
+            router.push("/proposals/" + token);
+          }}
+        />
       )}
     </>
   );
