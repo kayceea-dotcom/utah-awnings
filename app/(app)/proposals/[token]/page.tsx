@@ -20,6 +20,8 @@ export default function ProposalPreviewPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [ordering, setOrdering] = useState(false);
+  const [ordered, setOrdered] = useState(false);
   const [error, setError] = useState("");
   const supabase = createClient();
 
@@ -42,6 +44,23 @@ export default function ProposalPreviewPage() {
     }
     load();
   }, [token]);
+
+  async function handleSendOrder() {
+    setOrdering(true);
+    setError("");
+    const res = await fetch("/api/order-sheet", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ proposalToken: token }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error || "Failed to send order");
+    } else {
+      setOrdered(true);
+    }
+    setOrdering(false);
+  }
 
   async function handleSend() {
     setSending(true);
@@ -164,6 +183,12 @@ export default function ProposalPreviewPage() {
             <button onClick={handleSend} disabled={sending} className={sent ? "btn-secondary w-full disabled:opacity-50" : "btn-primary w-full disabled:opacity-50"}>
               <Send size={15} />
               {sending ? "Sending..." : sent ? "Resend Email" : "Email Proposal to " + (c.name as string)}
+            </button>
+
+            <button onClick={handleSendOrder} disabled={ordering}
+              className="btn-secondary w-full disabled:opacity-50">
+              <Send size={15} className="text-orange-500" />
+              {ordering ? "Sending Order..." : ordered ? "Order Sent to Supplier" : "Send Order to Wholesale Patio"}
             </button>
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
