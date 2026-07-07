@@ -79,6 +79,7 @@ const DEFAULT: NewportInputs = {
   shadeBeamQty: 0,
   priceIncrease: 0, footings: 0, roofMounts: 0, misc: 0,
   markup: 2.0, taxRate: 0.0745,
+  beams: [],
 };
 
 type SectionId = "job" | "dimensions" | "structure" | "posts" | "colors" | "extras" | "pricing";
