@@ -12,6 +12,7 @@ import { ChevronDown, ChevronUp, RefreshCw, DollarSign, Send } from "lucide-reac
 import { useProfile } from "@/lib/hooks/useProfile";
 import { useRouter } from "next/navigation";
 import SaveQuoteModal from "@/components/quote/SaveQuoteModal";
+import CoverDiagram from "@/components/quote/CoverDiagram";
 
 const COLORS = ["White","Siennawood","Slate","Driftwood","Beechwood","Pewter","Maplewood","Ebony","Sandalwood"];
 
@@ -451,7 +452,17 @@ export default function NewportQuotePage() {
             </div>
 
             {/* ── Desktop right panel ── */}
-            <div className="hidden lg:block w-80 flex-shrink-0 sticky top-20">
+            <div className="hidden lg:block w-80 flex-shrink-0 sticky top-20 space-y-4">
+              <CoverDiagram
+                projection1={inp.projection1}
+                width1={inp.width1}
+                projection2={inp.projection2}
+                width2={inp.width2}
+                posts1={inp.posts1}
+                posts2={inp.posts2}
+                downspouts={inp.downspouts}
+                productType="newport"
+              />
               <PriceSummaryPanel result={result} />
             </div>
           </div>
