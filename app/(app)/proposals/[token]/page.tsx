@@ -130,12 +130,12 @@ export default function ProposalPreviewPage() {
                 <span className="text-gray-500">Due on Completion</span>
                 <span className="font-semibold">{fmt(q.balance_due as number)}</span>
               </div>
-              {q.estimated_install_date && (
+              {q.estimated_install_date ? (
                 <div className="flex justify-between">
                   <span className="text-gray-500">Est. Install Date</span>
-                  <span className="font-semibold">{new Date(q.estimated_install_date as string).toLocaleDateString()}</span>
+                  <span className="font-semibold">{new Date(String(q.estimated_install_date)).toLocaleDateString()}</span>
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
 
