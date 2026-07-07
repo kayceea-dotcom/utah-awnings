@@ -228,8 +228,8 @@ export default function ProposalPage() {
             <div><span className="text-gray-500">Beam:</span> <span className="font-medium">{q.beam_type as string}</span></div>
             <div><span className="text-gray-500">Wrap:</span> <span className="font-medium">{q.wrap as string}</span></div>
             <div><span className="text-gray-500">End Cut:</span> <span className="font-medium">{q.end_cut as string}</span></div>
-            {q.fan_beam && <div><span className="text-gray-500">Fan Beam:</span> <span className="font-medium">{q.fan_beam as string}</span></div>}
-            {q.notes && <div className="col-span-2"><span className="text-gray-500">Notes:</span> <span className="font-medium">{q.notes as string}</span></div>}
+            {q.fan_beam ? <div><span className="text-gray-500">Fan Beam:</span> <span className="font-medium">{String(q.fan_beam)}</span></div> : null}
+            {q.notes ? <div className="col-span-2"><span className="text-gray-500">Notes:</span> <span className="font-medium">{String(q.notes)}</span></div> : null}
           </div>
         </div>
 
