@@ -180,14 +180,14 @@ export default function CoverDiagram({
             );
           })}
 
-          {/* Side plates extending 1ft past front edge only */}
+          {/* Side plates - full length house to 1ft past front edge */}
           <line
-            x1={originX} y1={originY + coverH1}
+            x1={originX} y1={originY}
             x2={originX} y2={originY + coverH1 + 1 * scale}
             stroke="#1e40af" strokeWidth="3"
           />
           <line
-            x1={originX + coverW1} y1={originY + coverH1}
+            x1={originX + coverW1} y1={originY}
             x2={originX + coverW1} y2={originY + coverH1 + 1 * scale}
             stroke="#1e40af" strokeWidth="3"
           />
