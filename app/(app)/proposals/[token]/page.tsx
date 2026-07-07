@@ -148,10 +148,10 @@ export default function ProposalPreviewPage() {
               <p className="text-xs text-green-600">
                 Signed on {new Date(proposal.signed_at as string).toLocaleDateString()} - Payment: {(proposal.payment_method as string || "").replace("_", " ")}
               </p>
-              {proposal.signature_data && (
-                <img src={proposal.signature_data as string} alt="Signature"
+              {proposal.signature_data ? (
+                <img src={String(proposal.signature_data)} alt="Signature"
                   className="mt-3 border border-green-200 rounded-lg bg-white p-2 max-h-20" />
-              )}
+              ) : null}
             </div>
           )}
 
