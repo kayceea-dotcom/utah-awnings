@@ -106,4 +106,30 @@ export const RATES = {
   ls_tubing_ft:        5.89,
   ls_bracket:          2.16,
   metal_panel_screws:  40.00,
+
+  // IRP / LRP panels (per sq ft)
+  IRP_3_032:   13.54,
+  IRP_4_032:   16.02,
+
+  // LRP Hangers (per piece)
+  lrp_3_hanger_16:  139.73,
+  lrp_3_hanger_20:  174.67,
+  lrp_3_hanger_24:  209.57,
+  lrp_4_hanger_20:  232.47,
+
+  // LRP Gutters (per piece)
+  lrp_3_gutter_16:  279.18,
+  lrp_3_gutter_20:  348.95,
+  lrp_3_gutter_24:  418.71,
+  lrp_4_gutter_20:  444.33,
+  lrp_4_gutter_24:  533.22,
+
+  // LRP Side Fascia (per piece)
+  lrp_3_fascia_17:  124.54,
+  lrp_3_fascia_21:  153.87,
+  lrp_3_fascia_25:  183.06,
+  lrp_4_fascia_25:  231.10,
+
+  // LRP Drip edge
+  lrp_drip_edge_24: 297.16,
 } as const;
