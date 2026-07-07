@@ -10,6 +10,7 @@ import Field from "@/components/quote/Field";
 import MaterialList from "@/components/quote/MaterialList";
 import { ChevronDown, ChevronUp, RefreshCw, DollarSign } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useProfile";
+import CoverDiagram from "@/components/quote/CoverDiagram";
 
 const COLORS = ["White","Siennawood","Slate","Driftwood","Beechwood","Pewter","Maplewood","Ebony","Sandalwood"];
 const COLOR_OPTS = COLORS.map((c) => ({ value: c, label: c }));
@@ -339,6 +340,15 @@ export default function PergolaQuotePage() {
                 <PriceSummaryPanel result={result} />
               </div>
 
+              <div className="lg:hidden">
+                <CoverDiagram
+                  projection1={inp.projection}
+                  width1={inp.width}
+                  posts1={inp.posts}
+                  downspouts={0}
+                />
+              </div>
+
               <button onClick={() => setShowMaterials((v) => !v)} className="btn-secondary w-full">
                 <DollarSign size={15} />
                 {showMaterials ? "Hide" : "Show"} Material List ({result.lineItems.length} items)
@@ -346,7 +356,13 @@ export default function PergolaQuotePage() {
               {showMaterials && <MaterialList items={result.lineItems} />}
             </div>
 
-            <div className="hidden lg:block w-80 flex-shrink-0 sticky top-20">
+            <div className="hidden lg:block w-80 flex-shrink-0 sticky top-20 space-y-4">
+              <CoverDiagram
+                projection1={inp.projection}
+                width1={inp.width}
+                posts1={inp.posts}
+                downspouts={0}
+              />
               <PriceSummaryPanel result={result} />
             </div>
           </div>

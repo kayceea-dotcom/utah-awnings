@@ -10,6 +10,7 @@ import Field from "@/components/quote/Field";
 import MaterialList from "@/components/quote/MaterialList";
 import { ChevronDown, ChevronUp, RefreshCw, DollarSign, Send } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useProfile";
+import CoverDiagram from "@/components/quote/CoverDiagram";
 import { useRouter } from "next/navigation";
 import SaveQuoteModal from "@/components/quote/SaveQuoteModal";
 
@@ -425,7 +426,16 @@ export default function ModernQuotePage() {
               {showMaterials && <MaterialList items={result.lineItems} />}
             </div>
 
-            <div className="hidden lg:block w-80 flex-shrink-0 sticky top-20">
+            <div className="hidden lg:block w-80 flex-shrink-0 sticky top-20 space-y-4">
+              <CoverDiagram
+                projection1={inp.projection1}
+                width1={inp.width1}
+                projection2={inp.projection2}
+                width2={inp.width2}
+                posts1={inp.posts1}
+                posts2={inp.posts2}
+                downspouts={inp.downspouts}
+              />
               <PriceSummaryPanel result={result} />
             </div>
           </div>
