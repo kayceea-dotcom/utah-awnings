@@ -166,18 +166,31 @@ export default function CoverDiagram({
             stroke="#1e40af" strokeWidth="3"
           />
 
-          {/* Rafter tails - run from house wall all the way to 1ft past front edge */}
+          {/* Rafter tails - only from beam line to 1ft past front edge */}
           {Array.from({ length: Math.round(width1 / 2) }).map((_, i) => {
             const rx = originX + (width1 / (Math.round(width1 / 2) + 1)) * (i + 1) * scale;
+            const beamLineY = originY + coverH1 - 1.5 * scale;
             const tailEnd = originY + coverH1 + 1 * scale;
             return (
               <line key={i}
-                x1={rx} y1={originY}
+                x1={rx} y1={beamLineY}
                 x2={rx} y2={tailEnd}
-                stroke="#93c5fd" strokeWidth="1.5"
+                stroke="#1e40af" strokeWidth="2"
               />
             );
           })}
+
+          {/* Side plates extending 1ft past front edge */}
+          <line
+            x1={originX} y1={originY}
+            x2={originX} y2={originY + coverH1 + 1 * scale}
+            stroke="#1e40af" strokeWidth="2.5"
+          />
+          <line
+            x1={originX + coverW1} y1={originY}
+            x2={originX + coverW1} y2={originY + coverH1 + 1 * scale}
+            stroke="#1e40af" strokeWidth="2.5"
+          />
 
           {/* Beam line run 2 */}
           {hasRun2 && (
