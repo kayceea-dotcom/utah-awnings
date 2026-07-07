@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import CoverDiagram from "@/components/quote/CoverDiagram";
 import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { CheckCircle, PenLine, CreditCard, Banknote, Phone } from "lucide-react";
@@ -232,6 +233,25 @@ export default function ProposalPage() {
             {q.notes ? <div className="col-span-2"><span className="text-gray-500">Notes:</span> <span className="font-medium">{String(q.notes)}</span></div> : null}
           </div>
         </div>
+
+        {/* Cover Diagram */}
+        {(() => {
+          const inp = q.inputs as Record<string, unknown> | null;
+          if (!inp) return null;
+          return (
+            <div className="mb-4">
+              <CoverDiagram
+                projection1={Number(inp.projection1) || 0}
+                width1={Number(inp.width1) || 0}
+                projection2={Number(inp.projection2) || 0}
+                width2={Number(inp.width2) || 0}
+                posts1={Number(inp.posts1) || 0}
+                posts2={Number(inp.posts2) || 0}
+                downspouts={Number(inp.downspouts) || 1}
+              />
+            </div>
+          );
+        })()}
 
         {/* Pricing */}
         <div className="bg-white rounded-2xl p-6 mb-4 shadow-sm">
