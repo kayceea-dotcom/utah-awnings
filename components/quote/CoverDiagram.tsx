@@ -148,20 +148,53 @@ export default function CoverDiagram({
             />
           )}
 
-          {/* Beam line (front edge run 1) */}
+          {/* Overhang area (shaded) */}
+          <rect
+            x={originX}
+            y={originY + coverH1 - 1.5 * scale}
+            width={coverW1}
+            height={1.5 * scale}
+            fill="#dbeafe"
+            opacity={0.5}
+          />
+
+          {/* Beam line (1.5ft from front = beam position) */}
           <line
-            x1={originX} y1={originY + coverH1}
-            x2={originX + coverW1} y2={originY + coverH1}
+            x1={originX} y1={originY + coverH1 - 1.5 * scale}
+            x2={originX + coverW1} y2={originY + coverH1 - 1.5 * scale}
             stroke="#1e40af" strokeWidth="3"
           />
 
+          {/* Rafter tails - short lines extending past beam */}
+          {Array.from({ length: Math.round(width1 / 2) }).map((_, i) => {
+            const rx = originX + (width1 / (Math.round(width1 / 2) + 1)) * (i + 1) * scale;
+            return (
+              <line key={i}
+                x1={rx} y1={originY + coverH1 - 1.5 * scale}
+                x2={rx} y2={originY + coverH1}
+                stroke="#1e40af" strokeWidth="1.5"
+                strokeDasharray="3,2"
+              />
+            );
+          })}
+
           {/* Beam line run 2 */}
           {hasRun2 && (
-            <line
-              x1={originX + coverW1} y1={originY + coverH2}
-              x2={originX + coverW1 + coverW2} y2={originY + coverH2}
-              stroke="#15803d" strokeWidth="3"
-            />
+            <>
+              <rect
+                x={originX + coverW1}
+                y={originY + coverH2 - 1.5 * scale}
+                width={coverW2}
+                height={1.5 * scale}
+                fill="#dcfce7"
+                opacity={0.5}
+              />
+              <line
+                x1={originX + coverW1} y1={originY + coverH2 - 1.5 * scale}
+                x2={originX + coverW1 + coverW2} y2={originY + coverH2 - 1.5 * scale}
+                stroke="#15803d" strokeWidth="3"
+              />
+            </>
           )}
 
           {/* Hanger line along house */}

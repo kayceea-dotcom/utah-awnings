@@ -73,7 +73,7 @@ const DEFAULT: NewportInputs = {
   colorPans: "White", colorGutterFascia: "White", colorPostsBeam: "White",
   wrapType: "2x6",
   rafterTails: true, bayWindowPopout: false,
-  downspouts: 1, sprayPaint: false,
+  downspouts: 1, sprayPaint: true,
   groundMountPosts1: false, groundMountPosts2: false,
   fanBeamQty: 0, fanBeamLength: 16,
   shadeBeamQty: 0,
