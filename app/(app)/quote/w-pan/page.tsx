@@ -39,6 +39,7 @@ const GUTTERS = [
 ];
 
 const JOG_TYPES = [
+  { value: "none",  label: "No Jog (single run)" },
   { value: "deck",  label: "Deck / Slab Jog (two independent beams)" },
   { value: "house", label: "House Jog (continuous front beam)" },
 ];
@@ -53,12 +54,12 @@ const DEFAULT: WPanInputs = {
   beamLength1: 0, beamLength2: 0,
   beamQty1: 1, beamQty2: 1,
   beamType1: "3x3", beamType2: "",
-  jogType: "deck",
+  jogType: "none",
   hangerType: "roll_form", gutterType: "extruded",
   posts1: 0, postHeight1: 10,
   posts2: 0, postHeight2: 10,
   colorPans: "White", colorGutterFascia: "White", colorPostsBeam: "White",
-  downspouts: 1, sprayPaint: false,
+  downspouts: 1, sprayPaint: true,
   fanBeamQty: 0, fanBeamLength: 16,
   priceIncrease: 0, footings: 0, roofMounts: 0, misc: 0,
   markup: 1.9, taxRate: 0.0745,
