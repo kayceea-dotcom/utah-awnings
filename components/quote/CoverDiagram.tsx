@@ -6,7 +6,6 @@ interface CoverDiagramProps {
   projection2?: number;
   width2?: number;
   posts1?: number;
-  posts2?: number;
   downspouts?: number;
   showRafterTails?: boolean;
   className?: string;
@@ -35,7 +34,6 @@ export default function CoverDiagram({
 
   const PAD = 40;
   const TAIL_LEN = 14;   // rafter tail pixel length sticking left past house wall
-  const OVERHANG = 10;   // beam is slightly inset from front (right) edge
   const DIM_SPACE = 28;  // space for dimension labels
 
   const hasRun2 = projection2 > 0 && width2 > 0;
