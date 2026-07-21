@@ -48,6 +48,19 @@
     min-height: 48px;
   }
 
+  /* Number inputs: plain typed entry only — no spinner arrows (they invite
+     mis-clicks, and scrolling the page while one is focused silently changes
+     its value instead of scrolling). */
+  .input[type="number"]::-webkit-outer-spin-button,
+  .input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .input[type="number"] {
+    -moz-appearance: textfield;
+  }
+
   .select {
     @apply w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm
            text-gray-900 shadow-sm appearance-none cursor-pointer transition

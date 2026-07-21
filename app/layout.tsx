@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import NumberInputScrollGuard from "@/components/NumberInputScrollGuard";
 
 export const metadata: Metadata = {
   title: "Utah Awnings - Sales Platform",
@@ -9,7 +10,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-slate-50">{children}</body>
+      <body className="min-h-screen bg-slate-50">
+        <NumberInputScrollGuard />
+        {children}
+      </body>
     </html>
   );
 }
