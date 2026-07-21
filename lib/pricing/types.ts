@@ -10,7 +10,7 @@ export type PanelType =
   | "flat_8_020" | "flat_8_024" | "flat_8_032";
 export type AwningColor =
   | "White" | "Siennawood" | "Slate" | "Driftwood"
-  | "Beechwood" | "Pewter" | "Maplewood" | "Ebony" | "Sandalwood";
+  | "Beechwood" | "Maplewood" | "Ebony" | "Sandlewood";
 export type WrapType = "none" | "2x6" | "3x8";
 
 export interface BeamConfig {

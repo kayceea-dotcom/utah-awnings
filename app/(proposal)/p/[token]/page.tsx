@@ -241,8 +241,15 @@ export default function ProposalPage() {
           </div>
         </div>
 
+        {/* 3D Render (falls back to the 2D diagram if none was generated) */}
+        {q.render_url ? (
+          <div className="mb-4">
+            <img src={q.render_url as string} alt="3D render of your patio cover" className="w-full rounded-lg border border-gray-200" />
+          </div>
+        ) : null}
+
         {/* Cover Diagram */}
-        {(() => {
+        {!q.render_url && (() => {
           const inp = q.inputs as Record<string, unknown> | null;
           if (!inp) return null;
           return (

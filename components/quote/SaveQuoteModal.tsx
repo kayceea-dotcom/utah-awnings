@@ -13,13 +13,14 @@ interface Props {
   totalJobSale: number;
   totalProfit: number;
   markup: number;
+  renderUrl?: string;
   onClose: () => void;
   onSuccess: (proposalToken: string) => void;
 }
 
 export default function SaveQuoteModal({
   productType, inputs, lineItems, materialCost,
-  totalJobSale, totalProfit, markup, onClose, onSuccess
+  totalJobSale, totalProfit, markup, renderUrl, onClose, onSuccess
 }: Props) {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
@@ -100,6 +101,7 @@ export default function SaveQuoteModal({
           balance_due: balanceDue,
           estimated_install_date: installDate || null,
           notes,
+          render_url: renderUrl || null,
         })
         .select()
         .single();

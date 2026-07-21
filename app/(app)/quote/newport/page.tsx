@@ -3,7 +3,12 @@
 export const dynamic = "force-dynamic";
 
 import { useState, useMemo, useEffect } from "react";
+import dynamicImport from "next/dynamic";
 import { calcNewport } from "@/lib/pricing/newport";
+import { newportToScene } from "@/lib/scene/adapters/newport";
+import type { CosmeticOverrides } from "@/lib/scene/types";
+import { SHOW_3D_VIEWER } from "@/lib/scene/featureFlags";
+import CosmeticControls from "@/components/viewer3d/CosmeticControls";
 import type { NewportInputs, BeamConfig } from "@/lib/pricing/types";
 import TopBar from "@/components/TopBar";
 import Field from "@/components/quote/Field";
@@ -14,7 +19,16 @@ import { useRouter } from "next/navigation";
 import SaveQuoteModal from "@/components/quote/SaveQuoteModal";
 import CoverDiagram from "@/components/quote/CoverDiagram";
 
-const COLORS = ["White","Siennawood","Slate","Driftwood","Beechwood","Pewter","Maplewood","Ebony","Sandalwood"];
+const Viewer3DPanel = dynamicImport(() => import("@/components/viewer3d/Viewer3DPanel"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full aspect-square rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center text-sm text-slate-400">
+      Loading 3D view…
+    </div>
+  ),
+});
+
+const COLORS = ["White","Siennawood","Slate","Driftwood","Beechwood","Maplewood","Ebony","Sandlewood"];
 
 const PANEL_TYPES = [
   { value: "T6_024",     label: "T6 .024 - 6in Flat Pan" },
@@ -321,6 +335,9 @@ function PriceSummaryPanel({ result, onClose }: {
 
 export default function NewportQuotePage() {
   const [inp, setInp] = useState<NewportInputs>(DEFAULT);
+  const [viewMode, setViewMode] = useState<"2d" | "3d">("2d");
+  const [cosmetic, setCosmetic] = useState<CosmeticOverrides>({});
+  const [capturedRenderUrl, setCapturedRenderUrl] = useState("");
   const [open, setOpen] = useState<Set<SectionId>>(
     new Set(["job","dimensions","structure","posts","colors","extras","pricing"] as SectionId[])
   );
@@ -331,6 +348,7 @@ export default function NewportQuotePage() {
   const router = useRouter();
 
   const result = useMemo(() => calcNewport(inp), [inp]);
+  const sceneConfig = useMemo(() => newportToScene(inp, cosmetic), [inp, cosmetic]);
 
   useEffect(() => {
     if (profile?.full_name) {
@@ -425,7 +443,7 @@ export default function NewportQuotePage() {
               {/* Additional Beams Section */}
               <div className="card overflow-hidden">
                 <div className="px-4 lg:px-5 py-4 flex items-center justify-between">
-                  <span className="text-sm font-bold text-gray-800">Additional / Mid-Span Beams</span>
+                  <span className="text-sm font-bold text-gray-800">Additional / Multi-Span Beams</span>
                   <button
                     onClick={() => {
                       const newBeam: BeamConfig = { type: "3x8", qty: 1, length: inp.width1 - 0.5 || 0, positionFromHouse: 0, posts: 0, postHeight: 10 };
@@ -567,14 +585,43 @@ export default function NewportQuotePage() {
 
             {/* ── Desktop right panel ── */}
             <div className="hidden lg:block w-80 flex-shrink-0 sticky top-20 space-y-4">
-              <CoverDiagram
-                projection1={inp.projection1}
-                width1={inp.width1}
-                projection2={inp.projection2}
-                width2={inp.width2}
-                posts1={inp.posts1}
-                downspouts={inp.downspouts}
-              />
+              {SHOW_3D_VIEWER && (
+                <div className="flex justify-center gap-1 rounded-md bg-slate-100 p-1 text-sm">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("2d")}
+                    className={`flex-1 rounded px-3 py-1 font-medium transition ${
+                      viewMode === "2d" ? "bg-white shadow-sm" : "text-slate-500"
+                    }`}
+                  >
+                    2D
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("3d")}
+                    className={`flex-1 rounded px-3 py-1 font-medium transition ${
+                      viewMode === "3d" ? "bg-white shadow-sm" : "text-slate-500"
+                    }`}
+                  >
+                    3D
+                  </button>
+                </div>
+              )}
+              {!SHOW_3D_VIEWER || viewMode === "2d" ? (
+                <CoverDiagram
+                  projection1={inp.projection1}
+                  width1={inp.width1}
+                  projection2={inp.projection2}
+                  width2={inp.width2}
+                  posts1={inp.posts1}
+                  downspouts={inp.downspouts}
+                />
+              ) : (
+                <>
+                  <Viewer3DPanel scene={sceneConfig} onRenderCaptured={setCapturedRenderUrl} />
+                  <CosmeticControls value={cosmetic} onChange={setCosmetic} />
+                </>
+              )}
               <PriceSummaryPanel result={result} />
             </div>
           </div>
@@ -601,6 +648,7 @@ export default function NewportQuotePage() {
           totalJobSale={result.totalJobSale}
           totalProfit={result.totalProfit}
           markup={result.markup}
+          renderUrl={capturedRenderUrl || undefined}
           onClose={() => setShowSaveModal(false)}
           onSuccess={(token) => {
             setShowSaveModal(false);

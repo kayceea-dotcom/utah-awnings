@@ -12,6 +12,10 @@ function panelRate(type: string): number {
   return (RATES as Record<string, number>)[type] ?? 0;
 }
 
+function panelWidthFt(type: string): number {
+  return type.startsWith("flat_8_") ? 8 / 12 : 0.5;
+}
+
 function nextStockLength(ft: number): number {
   if (ft <= 16) return 16;
   if (ft <= 20) return 20;
@@ -32,8 +36,8 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   const rafterRate   = is3x8 ? RATES.rafter_tail_3x8_ft  : RATES.rafter_tail_2x6_ft;
 
   // ── PANELS ──
-  const p1Qty = inp.projection1 > 0 ? Math.ceil(inp.width1 / 0.5) : 0;
-  const p2Qty = inp.projection2 > 0 ? Math.ceil(inp.width2 / 0.5) : 0;
+  const p1Qty = inp.projection1 > 0 ? Math.ceil(inp.width1 / panelWidthFt(inp.panelType1)) : 0;
+  const p2Qty = inp.projection2 > 0 ? Math.ceil(inp.width2 / panelWidthFt(inp.panelType2)) : 0;
 
   if (p1Qty > 0) {
     items.push(li("Panel #1", p1Qty, inp.projection1, panelRate(inp.panelType1), "ft", inp.colorPans));

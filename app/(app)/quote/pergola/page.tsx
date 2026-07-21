@@ -12,7 +12,7 @@ import { ChevronDown, ChevronUp, RefreshCw, DollarSign } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useProfile";
 import CoverDiagram from "@/components/quote/CoverDiagram";
 
-const COLORS = ["White","Siennawood","Slate","Driftwood","Beechwood","Pewter","Maplewood","Ebony","Sandalwood"];
+const COLORS = ["White","Siennawood","Slate","Driftwood","Beechwood","Maplewood","Ebony","Sandlewood"];
 const COLOR_OPTS = COLORS.map((c) => ({ value: c, label: c }));
 
 const BEAM_TYPES = [

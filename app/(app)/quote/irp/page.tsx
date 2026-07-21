@@ -11,7 +11,7 @@ import MaterialList from "@/components/quote/MaterialList";
 import { ChevronDown, ChevronUp, RefreshCw, DollarSign } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useProfile";
 
-const COLORS = ["White","Siennawood","Slate","Driftwood","Beechwood","Pewter","Maplewood","Ebony","Sandalwood"];
+const COLORS = ["White","Siennawood","Slate","Driftwood","Beechwood","Maplewood","Ebony","Sandlewood"];
 const COLOR_OPTS = COLORS.map((c) => ({ value: c, label: c }));
 
 const PANEL_TYPES = [
