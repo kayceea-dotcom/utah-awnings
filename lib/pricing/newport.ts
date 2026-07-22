@@ -18,8 +18,7 @@ function panelWidthFt(type: string): number {
 
 function nextStockLength(ft: number): number {
   if (ft <= 16) return 16;
-  if (ft <= 20) return 20;
-  return 24;
+  return Math.ceil(ft / 4) * 4;
 }
 
 export function calcNewport(inp: NewportInputs): QuoteResult {
