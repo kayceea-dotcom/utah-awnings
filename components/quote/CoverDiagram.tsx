@@ -79,8 +79,9 @@ export default function CoverDiagram({
   const tailCount = Math.round(width1 / 2);
   // Front edge Y
   const frontEdgeY = oy + coverH1;
-  // Tail tip Y (1ft below front edge)
-  const tailTipY = frontEdgeY + TAIL_LEN;
+  // Tail tip Y (1ft below front edge) — only extends past the front edge when
+  // rafter tails are actually present; otherwise the cover is a clean rectangle.
+  const tailTipY = showRafterTails ? frontEdgeY + TAIL_LEN : frontEdgeY;
 
   return (
     <div className={"bg-white rounded-xl border border-gray-200 overflow-hidden " + className}>
