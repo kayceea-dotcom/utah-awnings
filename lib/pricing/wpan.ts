@@ -1,5 +1,6 @@
 import { RATES } from "./rates";
 import type { LineItem, QuoteResult } from "./types";
+import { li, nextStockLength } from "./shared";
 
 export type WPanType = "wpan_032" | "duraking_025" | "duraking_032" | "duraking_040";
 
@@ -37,19 +38,6 @@ export interface WPanInputs {
   misc: number;
   markup: number;
   taxRate: number;
-}
-
-function li(
-  name: string, qty: number, length: number, rate: number,
-  unit = "", color = ""
-): LineItem {
-  return { name, qty, length, unit, rate, amount: qty * (length || 1) * rate, color };
-}
-
-function nextStockLength(ft: number): number {
-  if (ft <= 16) return 16;
-  if (ft <= 20) return 20;
-  return 24;
 }
 
 function panelRate(type: WPanType): number {
@@ -112,13 +100,13 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   if (inp.beamLength1 > 0) {
     const bq1 = inp.beamQty1 || 1;
     items.push(li("Beam #1 (" + inp.beamType1 + ")", bq1, inp.beamLength1, beamRate(inp.beamType1), "", inp.colorPostsBeam));
-    const steelStock = nextStockLength(inp.beamLength1 + 1.5);
+    const steelStock = nextStockLength(inp.beamLength1);
     items.push(li("Steel Insert #1", bq1, steelStock, steelRate(inp.beamType1)));
   }
   if (inp.beamLength2 > 0 && inp.beamType2) {
     const bq2 = inp.beamQty2 || 1;
     items.push(li("Beam #2 (" + inp.beamType2 + ")", bq2, inp.beamLength2, beamRate(inp.beamType2), "", inp.colorPostsBeam));
-    const steelStock2 = nextStockLength(inp.beamLength2 + 1.5);
+    const steelStock2 = nextStockLength(inp.beamLength2);
     items.push(li("Steel Insert #2", bq2, steelStock2, steelRate(inp.beamType2)));
   }
 

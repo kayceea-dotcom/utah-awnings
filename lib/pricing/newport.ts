@@ -94,12 +94,12 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   // ── BEAMS — rate depends on selected beam type ──
   if (inp.beamLength1 > 0) {
     items.push(li("Beam #1 (" + inp.beamType1 + ")", 1, inp.beamLength1, beamMaterialRate(inp.beamType1), "", inp.colorPostsBeam));
-    const steelStock = nextStockLength(inp.beamLength1 + 1.5);
+    const steelStock = nextStockLength(inp.beamLength1);
     items.push(li("Steel Insert #1", 1, steelStock, steelInsertRate(inp.beamType1)));
   }
   if (inp.beamLength2 > 0 && inp.beamType2) {
     items.push(li("Beam #2 (" + inp.beamType2 + ")", 1, inp.beamLength2, beamMaterialRate(inp.beamType2), "", inp.colorPostsBeam));
-    const steelStock2 = nextStockLength(inp.beamLength2 + 1.5);
+    const steelStock2 = nextStockLength(inp.beamLength2);
     items.push(li("Steel Insert #2", 1, steelStock2, steelInsertRate(inp.beamType2)));
   }
 

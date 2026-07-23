@@ -1,5 +1,6 @@
 import { RATES } from "./rates";
 import type { LineItem, QuoteResult } from "./types";
+import { li, nextStockLength } from "./shared";
 
 export interface PergolaInputs {
   jobName: string;
@@ -30,18 +31,6 @@ export interface PergolaInputs {
   taxRate: number;
 }
 
-function li(
-  name: string, qty: number, length: number, rate: number,
-  unit = "", color = ""
-): LineItem {
-  return { name, qty, length, unit, rate, amount: qty * (length || 1) * rate, color };
-}
-
-function nextStockLength(ft: number): number {
-  if (ft <= 16) return 16;
-  if (ft <= 20) return 20;
-  return 24;
-}
 
 export function calcPergola(inp: PergolaInputs): QuoteResult {
   const items: LineItem[] = [];
@@ -84,7 +73,7 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
   // ── BEAMS ──
   if (inp.beamLength > 0 && inp.beamQty > 0) {
     items.push(li("Beam (" + inp.beamType + ")", inp.beamQty, inp.beamLength, RATES.beam_3x8, "", inp.colorPergola));
-    const steelStock = nextStockLength(inp.beamLength + 1.5);
+    const steelStock = nextStockLength(inp.beamLength);
     items.push(li("Steel Insert", inp.beamQty, steelStock, RATES.steel_3x8_14ga_ft));
   }
 

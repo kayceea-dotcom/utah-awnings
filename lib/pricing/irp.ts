@@ -108,11 +108,11 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
   // ── BEAMS ──
   if (inp.beamLength1 > 0) {
     items.push(li("Beam #1 (" + inp.beamType1 + ")", 1, inp.beamLength1, beamMaterialRate(inp.beamType1), "", inp.colorPostsBeam));
-    items.push(li("Steel Insert #1", 1, nextStockLength(inp.beamLength1 + 1.5), steelInsertRate(inp.beamType1)));
+    items.push(li("Steel Insert #1", 1, nextStockLength(inp.beamLength1), steelInsertRate(inp.beamType1)));
   }
   if (inp.beamLength2 > 0 && inp.beamType2) {
     items.push(li("Beam #2 (" + inp.beamType2 + ")", 1, inp.beamLength2, beamMaterialRate(inp.beamType2), "", inp.colorPostsBeam));
-    items.push(li("Steel Insert #2", 1, nextStockLength(inp.beamLength2 + 1.5), steelInsertRate(inp.beamType2)));
+    items.push(li("Steel Insert #2", 1, nextStockLength(inp.beamLength2), steelInsertRate(inp.beamType2)));
   }
 
   // ── BEAM END CAPS — sized to the beam's own type, zero for I-beams ──
