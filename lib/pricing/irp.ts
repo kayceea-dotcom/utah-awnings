@@ -1,5 +1,6 @@
 import { RATES } from "./rates";
 import type { LineItem, QuoteResult } from "./types";
+import { li, nextStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, anchorQty } from "./shared";
 
 export type IRPType = "lrp_3_032" | "lrp_4_032";
 
@@ -19,6 +20,8 @@ export interface IRPInputs {
   postHeight1: number;
   posts2: number;
   postHeight2: number;
+  groundMountPosts1: boolean;
+  groundMountPosts2: boolean;
   colorPostsBeam: string;
   downspouts: number;
   sprayPaint: boolean;
@@ -28,13 +31,6 @@ export interface IRPInputs {
   misc: number;
   markup: number;
   taxRate: number;
-}
-
-function li(
-  name: string, qty: number, length: number, rate: number,
-  unit = "", color = ""
-): LineItem {
-  return { name, qty, length, unit, rate, amount: qty * (length || 1) * rate, color };
 }
 
 // LRP hanger: pick correct stock piece based on beam length
@@ -110,27 +106,21 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
   }
 
   // ── BEAMS ──
-  function beamRate(beamType: string): number {
-    if (beamType === "3x3") return RATES.beam_3x3;
-    return RATES.beam_3x8;
-  }
-  function steelRate(beamType: string): number {
-    if (beamType === "3x3") return RATES.steel_3x3_g_beam_ft;
-    return RATES.steel_3x8_14ga_ft;
-  }
-  function nextStockLength(ft: number): number {
-    if (ft <= 16) return 16;
-    if (ft <= 20) return 20;
-    return 24;
-  }
-
   if (inp.beamLength1 > 0) {
-    items.push(li("Beam #1 (" + inp.beamType1 + ")", 1, inp.beamLength1, beamRate(inp.beamType1), "", inp.colorPostsBeam));
-    items.push(li("Steel Insert #1", 1, nextStockLength(inp.beamLength1 + 1.5), steelRate(inp.beamType1)));
+    items.push(li("Beam #1 (" + inp.beamType1 + ")", 1, inp.beamLength1, beamMaterialRate(inp.beamType1), "", inp.colorPostsBeam));
+    items.push(li("Steel Insert #1", 1, nextStockLength(inp.beamLength1 + 1.5), steelInsertRate(inp.beamType1)));
   }
   if (inp.beamLength2 > 0 && inp.beamType2) {
-    items.push(li("Beam #2 (" + inp.beamType2 + ")", 1, inp.beamLength2, beamRate(inp.beamType2), "", inp.colorPostsBeam));
-    items.push(li("Steel Insert #2", 1, nextStockLength(inp.beamLength2 + 1.5), steelRate(inp.beamType2)));
+    items.push(li("Beam #2 (" + inp.beamType2 + ")", 1, inp.beamLength2, beamMaterialRate(inp.beamType2), "", inp.colorPostsBeam));
+    items.push(li("Steel Insert #2", 1, nextStockLength(inp.beamLength2 + 1.5), steelInsertRate(inp.beamType2)));
+  }
+
+  // ── BEAM END CAPS — sized to the beam's own type, zero for I-beams ──
+  if (inp.beamLength1 > 0) {
+    items.push(li("Beam End Caps #1", 2, 0, beamEndcapRate(inp.beamType1), "", inp.colorPostsBeam));
+  }
+  if (inp.beamLength2 > 0 && inp.beamType2) {
+    items.push(li("Beam End Caps #2", 2, 0, beamEndcapRate(inp.beamType2), "", inp.colorPostsBeam));
   }
 
   // ── POSTS ──
@@ -177,9 +167,10 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
     items.push(li("Spray Paint Posts/Beam", 1, 0, RATES.spray_paint, "", inp.colorPostsBeam));
   }
 
-  // ── ANCHORS ──
-  if (totalPosts > 0) {
-    items.push(li("Wedge Anchors", totalPosts * 2, 0, RATES.anchor_wedge));
+  // ── ANCHORS — 2 per post, skip whichever post group is ground-mounted (no anchor needed) ──
+  const wedgeAnchorQty = anchorQty(inp.posts1, inp.groundMountPosts1, inp.posts2, inp.groundMountPosts2);
+  if (wedgeAnchorQty > 0) {
+    items.push(li("Wedge Anchors", wedgeAnchorQty, 0, RATES.anchor_wedge));
   }
 
   // ── SILICONE ──

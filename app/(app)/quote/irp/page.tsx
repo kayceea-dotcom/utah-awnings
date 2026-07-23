@@ -37,6 +37,7 @@ const DEFAULT: IRPInputs = {
   beamType1: "3x8", beamType2: "",
   posts1: 0, postHeight1: 10,
   posts2: 0, postHeight2: 10,
+  groundMountPosts1: false, groundMountPosts2: false,
   colorPostsBeam: "White",
   downspouts: 1, sprayPaint: false,
   priceIncrease: 0, footings: 0, roofMounts: 0, misc: 0,
@@ -296,9 +297,13 @@ export default function IRPQuotePage() {
                 <NumInput label="Posts #1 (qty)" value={inp.posts1} onChange={(v) => setField("posts1", v)} />
                 <SelectInput label="Height #1 (ft)" value={String(inp.postHeight1)} onChange={(v) => setField("postHeight1", Number(v))}
                   options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))} />
+                <ToggleInput label="Ground Mount Posts #1" value={inp.groundMountPosts1} onChange={(v) => setField("groundMountPosts1", v)}
+                  yesLabel="no anchors needed" />
                 <NumInput label="Posts #2 (qty)" value={inp.posts2} onChange={(v) => setField("posts2", v)} />
                 <SelectInput label="Height #2 (ft)" value={String(inp.postHeight2)} onChange={(v) => setField("postHeight2", Number(v))}
                   options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))} />
+                <ToggleInput label="Ground Mount Posts #2" value={inp.groundMountPosts2} onChange={(v) => setField("groundMountPosts2", v)}
+                  yesLabel="no anchors needed" />
                 <NumInput label="Downspouts" value={inp.downspouts} onChange={(v) => setField("downspouts", v)} />
                 <ToggleInput label="Spray Paint" value={inp.sprayPaint} onChange={(v) => setField("sprayPaint", v)} yesLabel="include" />
               </SectionCard>

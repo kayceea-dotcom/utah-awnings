@@ -1,12 +1,6 @@
 import { RATES } from "./rates";
 import type { NewportInputs, LineItem, QuoteResult } from "./types";
-
-function li(
-  name: string, qty: number, length: number, rate: number,
-  unit = "", color = ""
-): LineItem {
-  return { name, qty, length, unit, rate, amount: qty * (length || 1) * rate, color };
-}
+import { li, nextStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, anchorQty } from "./shared";
 
 function panelRate(type: string): number {
   return (RATES as Record<string, number>)[type] ?? 0;
@@ -14,12 +8,6 @@ function panelRate(type: string): number {
 
 function panelWidthFt(type: string): number {
   return type.startsWith("flat_8_") ? 8 / 12 : 0.5;
-}
-
-// Real supplier stock lengths (not a uniform step) — smallest one that fits.
-const STOCK_LENGTHS = [16, 20, 24, 32, 40, 48, 60, 72, 80];
-function nextStockLength(ft: number): number {
-  return STOCK_LENGTHS.find((len) => ft <= len) ?? STOCK_LENGTHS[STOCK_LENGTHS.length - 1];
 }
 
 export function calcNewport(inp: NewportInputs): QuoteResult {
@@ -103,25 +91,6 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   }
 
   // ── BEAMS — rate depends on selected beam type ──
-  function beamMaterialRate(beamType: string): number {
-    if (beamType === "3x3") return RATES.beam_3x3;
-    if (beamType === "4_i_beam") return RATES.beam_4_i_beam;
-    if (beamType === "7_i_beam") return RATES.beam_7_i_beam;
-    return RATES.beam_3x8;
-  }
-  // Only 3x3/3x8 beams take a steel insert — I-beams are solid, no insert needed.
-  function steelInsertRate(beamType: string): number {
-    if (beamType === "3x3") return RATES.steel_3x3_g_beam_ft;
-    if (beamType === "3x8") return RATES.steel_3x8_14ga_ft;
-    return 0;
-  }
-  // Beam's own end cap is sized to the beam type, not the wrap kit; I-beams don't take one.
-  function beamEndcapRate(beamType: string): number {
-    if (beamType === "3x3") return RATES.endcap_3x3;
-    if (beamType === "3x8") return RATES.endcap_3x8;
-    return 0;
-  }
-
   if (inp.beamLength1 > 0) {
     items.push(li("Beam #1 (" + inp.beamType1 + ")", 1, inp.beamLength1, beamMaterialRate(inp.beamType1), "", inp.colorPostsBeam));
     const steelStock = nextStockLength(inp.beamLength1 + 1.5);
@@ -246,9 +215,9 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   }
 
   // ── ANCHORS — 2 per post, skip whichever post group is ground-mounted (no anchor needed) ──
-  const anchorQty = (inp.groundMountPosts1 ? 0 : inp.posts1 * 2) + (inp.groundMountPosts2 ? 0 : inp.posts2 * 2);
-  if (anchorQty > 0) {
-    items.push(li("Wedge Anchors", anchorQty, 0, RATES.anchor_wedge));
+  const wedgeAnchorQty = anchorQty(inp.posts1, inp.groundMountPosts1, inp.posts2, inp.groundMountPosts2);
+  if (wedgeAnchorQty > 0) {
+    items.push(li("Wedge Anchors", wedgeAnchorQty, 0, RATES.anchor_wedge));
   }
 
   // ── BEAM END CAPS — sized to the beam's own type, zero for I-beams ──
