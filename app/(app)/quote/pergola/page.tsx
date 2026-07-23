@@ -270,7 +270,7 @@ export default function PergolaQuotePage() {
   }
 
   function handleWidthChange(v: number) {
-    setInp((p) => ({ ...p, width: v, beamLength: Math.max(0, v - 0.5) }));
+    setInp((p) => ({ ...p, width: v, beamLength: v }));
   }
 
   function toggleSection(s: SectionId) {
@@ -302,7 +302,7 @@ export default function PergolaQuotePage() {
               <SectionCard id="dimensions" title="Dimensions" open={open.has("dimensions")} onToggle={toggleSection}>
                 <NumInput label="Projection (ft)" value={inp.projection} onChange={(v) => setField("projection", v)} hint="Depth of the cover" />
                 <NumInput label="Width (ft)" value={inp.width} onChange={handleWidthChange} hint="Along the house" />
-                <NumInput label="Beam Length (ft)" value={inp.beamLength} onChange={(v) => setField("beamLength", v)} hint="Width minus 6in" />
+                <NumInput label="Beam Length (ft)" value={inp.beamLength} onChange={(v) => setField("beamLength", v)} hint="Matches width" />
               </SectionCard>
 
               <SectionCard id="structure" title="Structure" open={open.has("structure")} onToggle={toggleSection}>
