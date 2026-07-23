@@ -1,6 +1,6 @@
 import { RATES } from "./rates";
 import type { LineItem, QuoteResult } from "./types";
-import { li, nextStockLength } from "./shared";
+import { li, nextStockLength, wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems } from "./shared";
 
 export type WPanType = "wpan_032" | "duraking_025" | "duraking_032" | "duraking_040";
 
@@ -28,6 +28,8 @@ export interface WPanInputs {
   colorPans: string;
   colorGutterFascia: string;
   colorPostsBeam: string;
+  wrapType: string;
+  rafterTails: boolean;
   downspouts: number;
   sprayPaint: boolean;
   fanBeamQty: number;
@@ -87,6 +89,16 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     items.push(li("Extruded Side Fascia", 2, fasciaStockLen, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
   }
 
+  // ── WRAP KIT — front plate gutter, rafter tails, inside/outside brackets ──
+  const hasWrap = inp.wrapType === "3x8" || inp.wrapType === "2x6";
+  const wrapRates = wrapKitRates(inp.wrapType);
+  if (hasWrap) {
+    items.push(...wrapKitRafterItems(wrapRates, {
+      gutterType: inp.gutterType, width1: inp.width1, rafterTails: inp.rafterTails,
+      colorGutterFascia: inp.colorGutterFascia, colorPostsBeam: inp.colorPostsBeam,
+    }));
+  }
+
   // ── BEAMS ──
   function beamRate(beamType: string): number {
     if (beamType === "3x3") return RATES.beam_3x3;
@@ -119,6 +131,16 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   if (inp.posts2 > 0) {
     items.push(li("3x3 Post Sleeve #2", inp.posts2, inp.postHeight2, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
     items.push(li("3x3 Steel Post #2",  inp.posts2, inp.postHeight2, RATES.post_3x3_steel_ft));
+  }
+
+  // ── WRAP KIT — post plates, sideplates, mitered caps, foam inserts, end caps, plugs ──
+  if (hasWrap) {
+    items.push(...wrapKitFinishingItems(wrapRates, {
+      posts1: inp.posts1, postHeight1: inp.postHeight1,
+      posts2: inp.posts2, postHeight2: inp.postHeight2,
+      projection1: inp.projection1, width1: inp.width1, panelQty1: p1Qty,
+      colorPostsBeam: inp.colorPostsBeam,
+    }));
   }
 
   // ── GUTTER SPLICE — always include for W-Pan ──

@@ -1,6 +1,9 @@
 import { RATES } from "./rates";
 import type { LineItem, QuoteResult } from "./types";
-import { li, nextStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, anchorQty } from "./shared";
+import {
+  li, nextStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, anchorQty,
+  wrapKitRates, wrapKitFinishingItems,
+} from "./shared";
 
 export type IRPType = "lrp_3_032" | "lrp_4_032";
 
@@ -23,6 +26,7 @@ export interface IRPInputs {
   groundMountPosts1: boolean;
   groundMountPosts2: boolean;
   colorPostsBeam: string;
+  wrapType: string;
   downspouts: number;
   sprayPaint: boolean;
   priceIncrease: number;
@@ -132,6 +136,19 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
   if (inp.posts2 > 0) {
     items.push(li("3x3 Post Sleeve #2", inp.posts2, inp.postHeight2, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
     items.push(li("3x3 Steel Post #2",  inp.posts2, inp.postHeight2, RATES.post_3x3_steel_ft));
+  }
+
+  // ── WRAP KIT — post plates, sideplates, mitered caps, foam inserts, end caps, plugs.
+  // IRP keeps its own dedicated LRP hanger/gutter/fascia regardless, so unlike Flat Panel
+  // and W-Pan there are no rafter-tail/front-plate/bracket items here. ──
+  const hasWrap = inp.wrapType === "3x8" || inp.wrapType === "2x6";
+  if (hasWrap) {
+    items.push(...wrapKitFinishingItems(wrapKitRates(inp.wrapType), {
+      posts1: inp.posts1, postHeight1: inp.postHeight1,
+      posts2: inp.posts2, postHeight2: inp.postHeight2,
+      projection1: inp.projection1, width1: inp.width1, panelQty1: p1Qty,
+      colorPostsBeam: inp.colorPostsBeam,
+    }));
   }
 
   // ── POST BRACKETS ──

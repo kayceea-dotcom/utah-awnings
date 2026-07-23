@@ -28,6 +28,12 @@ const BEAM_TYPES = [
 
 const POST_HEIGHTS = [8, 10, 12, 14, 16, 20];
 
+const WRAPS = [
+  { value: "none", label: "None (no wrap kit)" },
+  { value: "3x8",  label: "3x8" },
+  { value: "2x6",  label: "2x6" },
+];
+
 const DEFAULT: IRPInputs = {
   jobName: "", salesman: "",
   projection1: 0, width1: 0,
@@ -39,6 +45,7 @@ const DEFAULT: IRPInputs = {
   posts2: 0, postHeight2: 10,
   groundMountPosts1: false, groundMountPosts2: false,
   colorPostsBeam: "White",
+  wrapType: "none",
   downspouts: 1, sprayPaint: false,
   priceIncrease: 0, footings: 0, roofMounts: 0, misc: 0,
   markup: 2.0, taxRate: 0.0745,
@@ -291,6 +298,7 @@ export default function IRPQuotePage() {
                 <SelectInput label="Beam Type #1" value={inp.beamType1} onChange={(v) => setField("beamType1", v)} options={BEAM_TYPES} />
                 <SelectInput label="Beam Type #2" value={inp.beamType2} onChange={(v) => setField("beamType2", v)}
                   options={[{ value: "", label: "None" }, ...BEAM_TYPES]} />
+                <SelectInput label="Wrap Type" value={inp.wrapType} onChange={(v) => setField("wrapType", v)} options={WRAPS} span={2} />
               </SectionCard>
 
               <SectionCard id="posts" title="Posts" open={open.has("posts")} onToggle={toggleSection}>

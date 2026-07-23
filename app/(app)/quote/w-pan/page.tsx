@@ -44,6 +44,12 @@ const JOG_TYPES = [
   { value: "house", label: "House Jog (continuous front beam)" },
 ];
 
+const WRAPS = [
+  { value: "none", label: "None (no wrap kit)" },
+  { value: "3x8",  label: "3x8" },
+  { value: "2x6",  label: "2x6" },
+];
+
 const POST_HEIGHTS = [8, 10, 12, 14, 16, 20];
 
 const DEFAULT: WPanInputs = {
@@ -59,6 +65,7 @@ const DEFAULT: WPanInputs = {
   posts1: 0, postHeight1: 10,
   posts2: 0, postHeight2: 10,
   colorPans: "White", colorGutterFascia: "White", colorPostsBeam: "White",
+  wrapType: "none", rafterTails: true,
   downspouts: 1, sprayPaint: true,
   fanBeamQty: 0, fanBeamLength: 16,
   priceIncrease: 0, footings: 0, roofMounts: 0, misc: 0,
@@ -331,6 +338,8 @@ export default function WPanQuotePage() {
                 <NumInput label="Beam Length #2 (ft)" value={inp.beamLength2} onChange={(v) => setField("beamLength2", v)} />
                 <SelectInput label="Hanger Type" value={inp.hangerType} onChange={(v) => setField("hangerType", v)} options={HANGERS} />
                 <SelectInput label="Gutter Type" value={inp.gutterType} onChange={(v) => setField("gutterType", v)} options={GUTTERS} />
+                <SelectInput label="Wrap Type" value={inp.wrapType} onChange={(v) => setField("wrapType", v)} options={WRAPS} />
+                <ToggleInput label="Rafter Tails" value={inp.rafterTails} onChange={(v) => setField("rafterTails", v)} />
               </SectionCard>
 
               <SectionCard id="posts" title="Posts" open={open.has("posts")} onToggle={toggleSection}>

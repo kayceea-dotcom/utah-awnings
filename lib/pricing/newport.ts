@@ -1,6 +1,9 @@
 import { RATES } from "./rates";
 import type { NewportInputs, LineItem, QuoteResult } from "./types";
-import { li, nextStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, anchorQty } from "./shared";
+import {
+  li, nextStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, anchorQty,
+  wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems,
+} from "./shared";
 
 function panelRate(type: string): number {
   return (RATES as Record<string, number>)[type] ?? 0;
@@ -14,14 +17,7 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   const items: LineItem[] = [];
 
   const hasWrap = inp.wrapType === "3x8" || inp.wrapType === "2x6";
-  const is3x8 = inp.wrapType === "3x8";
-  const wrapRate     = is3x8 ? RATES.beam_3x8            : RATES.post_plate_2x6_ft;
-  const sideRate     = is3x8 ? RATES.sideplate_3x8_ft    : RATES.sideplate_2x6_ft;
-  const endcapRate   = is3x8 ? RATES.endcap_3x8          : RATES.endcap_2x6;
-  const insideBrktRate = is3x8 ? RATES.inside_brkt_3x8   : RATES.inside_brkt_2x6;
-  const outsideBrktRate = is3x8 ? RATES.outside_brkt_3x8 : RATES.outside_brkt_2x6;
-  const miterCapRate = is3x8 ? RATES.mitered_cap_3x8     : RATES.mitered_cap_2x6;
-  const rafterRate   = is3x8 ? RATES.rafter_tail_3x8_ft  : RATES.rafter_tail_2x6_ft;
+  const wrapRates = wrapKitRates(inp.wrapType);
 
   // ── PANELS ──
   const p1Qty = inp.projection1 > 0 ? Math.ceil(inp.width1 / panelWidthFt(inp.panelType1)) : 0;
@@ -79,16 +75,12 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("Extruded Side Fascia", 2, fasciaLen, RATES.fascia_extruded_ft, "", inp.colorGutterFascia));
   }
 
-  // ── FRONT PLATE — only with wrap kit + extruded gutter; exact length = width + 1 ──
-  if (hasWrap && inp.gutterType === "extruded" && inp.width1 > 0) {
-    const frontPlateLen = inp.width1 + 1;
-    items.push(li("Front Plate Gutter", 1, frontPlateLen, wrapRate, "", inp.colorGutterFascia));
-  }
-
-  // ── SIDE PLATES (structural, cut one side) — only with wrap kit; length = projection + 2ft ──
-  if (hasWrap && inp.projection1 > 0) {
-    const sideLen = inp.projection1 + 2;
-    items.push(li("Sideplates Cut One Side", 2, sideLen, sideRate, "", inp.colorPostsBeam));
+  // ── WRAP KIT — front plate gutter, rafter tails, inside/outside brackets ──
+  if (hasWrap) {
+    items.push(...wrapKitRafterItems(wrapRates, {
+      gutterType: inp.gutterType, width1: inp.width1, rafterTails: inp.rafterTails,
+      colorGutterFascia: inp.colorGutterFascia, colorPostsBeam: inp.colorPostsBeam,
+    }));
   }
 
   // ── BEAMS — rate depends on selected beam type ──
@@ -114,50 +106,14 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("3x3 Steel Post #2",  inp.posts2, inp.postHeight2, RATES.post_3x3_steel_ft));
   }
 
-  // ── POST PLATES — only with wrap kit; qty=posts*2, length=postHeight+1 ──
-  if (hasWrap && inp.posts1 > 0) {
-    items.push(li("Post Plates #1 (Mitered)", inp.posts1 * 2, inp.postHeight1 + 1, wrapRate, "", inp.colorPostsBeam));
-  }
-  if (hasWrap && inp.posts2 > 0) {
-    items.push(li("Post Plates #2 (Mitered)", inp.posts2 * 2, inp.postHeight2 + 1, wrapRate, "", inp.colorPostsBeam));
-  }
-
-  // ── MITERED CAPS — only with wrap kit; totalPosts * 2, uses endcap-style rate ──
-  if (hasWrap && totalPosts > 0) {
-    items.push(li("Mitered Caps", totalPosts * 2, 0, miterCapRate, "", inp.colorPostsBeam));
-  }
-
-  // ── RAFTER TAILS — only with wrap kit, spaced every ~2ft along width ──
-  let rtQty = 0;
-  if (hasWrap && inp.rafterTails && inp.width1 > 0) {
-    rtQty = Math.round(inp.width1 / 2);
-    items.push(li("Rafter Tails", rtQty, 0, rafterRate, "", inp.colorPostsBeam));
-  }
-
-  // ── INSIDE / OUTSIDE BRACKETS — only with wrap kit, same spacing as rafter tails plus 2 ──
-  if (hasWrap && inp.width1 > 0) {
-    const spacingQty = Math.round(inp.width1 / 2);
-    const bracketQty = spacingQty + 2;
-    items.push(li("Inside Brackets", bracketQty, 0, insideBrktRate));
-    items.push(li("Outside Brackets", bracketQty, 0, outsideBrktRate, "", inp.colorPostsBeam));
-  }
-
-  // ── PLUGS — only with wrap kit; roughly panels*0.7 + 1 ──
-  if (hasWrap && p1Qty > 0) {
-    const plugQty = Math.round(p1Qty * 0.7) + 1;
-    items.push(li("Plugs", plugQty, 0, RATES.plug_5_8));
-  }
-
-  // ── END CAPS — only with wrap kit; same spacing as rafter tails plus 2 ──
-  if (hasWrap && inp.width1 > 0) {
-    const spacingQty = Math.round(inp.width1 / 2);
-    const endCapQty = spacingQty + 2;
-    items.push(li("End Caps", endCapQty, 0, endcapRate, "", inp.colorPostsBeam));
-  }
-
-  // ── FOAM INSERTS — posts * 2; part of the wrap kit bundle ──
-  if (hasWrap && totalPosts > 0) {
-    items.push(li("Foam Inserts 2x6", totalPosts * 2, 0, RATES.foam_insert_2x6, "ea"));
+  // ── WRAP KIT — post plates, sideplates, mitered caps, foam inserts, end caps, plugs ──
+  if (hasWrap) {
+    items.push(...wrapKitFinishingItems(wrapRates, {
+      posts1: inp.posts1, postHeight1: inp.postHeight1,
+      posts2: inp.posts2, postHeight2: inp.postHeight2,
+      projection1: inp.projection1, width1: inp.width1, panelQty1: p1Qty,
+      colorPostsBeam: inp.colorPostsBeam,
+    }));
   }
 
   // ── GUTTER SPLICE — needed whenever a gutter run exceeds max stock length (24ft); when the
