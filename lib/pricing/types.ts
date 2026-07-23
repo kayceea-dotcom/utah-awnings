@@ -12,6 +12,11 @@ export type AwningColor =
   | "White" | "Siennawood" | "Slate" | "Driftwood"
   | "Beechwood" | "Maplewood" | "Ebony" | "Sandlewood";
 export type WrapType = "none" | "2x6" | "3x8";
+// Only matters when there's a second run (width2 > 0). A jog in the house wall
+// means the front edge stays straight (one beam/gutter run) but the hanger
+// has to split to follow the wall. A jog in the ground/deck means the front
+// edge steps (two separate beams/gutters) but the hanger stays continuous.
+export type JogType = "house" | "ground";
 
 export interface BeamConfig {
   type: string;
@@ -29,6 +34,7 @@ export interface NewportInputs {
   width1: number;
   projection2: number;
   width2: number;
+  jogType: JogType;
   panelType1: PanelType;
   panelType2: PanelType | "";
   beamLength1: number;

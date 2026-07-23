@@ -14,9 +14,11 @@ export const RATES = {
   beam_3x8:    10.10,
   beam_2x6:     6.59,
   beam_3x3:     4.71,
+  beam_4_i_beam: 14.19,
+  beam_7_i_beam: 25.24,
   steel_3x3_g_beam_ft: 12.0075,
 
-  // Steel inserts (per ft)
+  // Steel inserts (per ft) — 3x3/3x8 beams only; I-beams don't take an insert
   steel_3x8_14ga_ft:  15.26,
   steel_3x8_12ga_ft:  21.80,
 
@@ -24,9 +26,11 @@ export const RATES = {
   post_3x3_sleeve_ft:  4.71,
   post_3x3_steel_ft:   8.477,
 
-  // Hangers (per ft)
+  // Hangers (per ft, except elevated_roof_mount which is a flat fee)
   hanger_roll_form_ft:   3.37,
+  hanger_extruded_ft:    5.00,
   hanger_a_rail_ft:     13.77,
+  hanger_elevated_roof_mount: 300,
 
   // Gutters
   gutter_roll_form_ft:   4.63,
@@ -71,7 +75,7 @@ export const RATES = {
   screw_8x0_5_extruded:   0.18,
   plug_5_8:               0.39,
   anchor_wedge:           4.42,
-  foam_gasket_ft:         0.71,
+  foam_gasket_ft:         0.89,
   gutter_splice:          8.62,
   gutter_dam:             0.92,
   pan_clip:               0.46,

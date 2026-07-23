@@ -65,6 +65,11 @@ const GUTTERS = [
   { value: "extruded",  label: "Extruded" },
 ];
 
+const JOG_TYPES = [
+  { value: "ground", label: "Ground / deck (2 beams, 2 gutters, 1 hanger)" },
+  { value: "house",  label: "House wall (1 beam, 1 gutter, 2 hangers)" },
+];
+
 const POST_HEIGHTS = [8, 10, 12, 14, 16, 20];
 const WRAPS = [
   { value: "none", label: "None (no wrap kit)" },
@@ -76,7 +81,7 @@ const COLOR_OPTS = COLORS.map((c) => ({ value: c, label: c }));
 const DEFAULT: NewportInputs = {
   jobName: "", salesman: "",
   projection1: 0, width1: 0,
-  projection2: 0, width2: 0,
+  projection2: 0, width2: 0, jogType: "ground",
   panelType1: "T6_024", panelType2: "",
   beamLength1: 0, beamLength2: 0,
   beamType1: "3x3", beamType2: "",
@@ -380,6 +385,10 @@ export default function ModernQuotePage() {
                 <NumInput label="Width #1 (ft)" value={inp.width1} onChange={handleWidth1Change} hint="Along the house" />
                 <NumInput label="Projection #2 (ft)" value={inp.projection2} onChange={(v) => setField("projection2", v)} hint="0 if single run" />
                 <NumInput label="Width #2 (ft)" value={inp.width2} onChange={handleWidth2Change} />
+                {inp.width2 > 0 && (
+                  <SelectInput label="2nd Run Caused By" value={inp.jogType} onChange={(v) => setField("jogType", v as never)}
+                    options={JOG_TYPES} span={2} />
+                )}
                 <SelectInput label="Panel Type #1" value={inp.panelType1} onChange={(v) => setField("panelType1", v as never)} options={PANEL_TYPES} />
                 <SelectInput label="Panel Type #2" value={inp.panelType2} onChange={(v) => setField("panelType2", v as never)}
                   options={[{ value: "", label: "None (single run)" }, ...PANEL_TYPES]} />
@@ -395,6 +404,8 @@ export default function ModernQuotePage() {
                 <SelectInput label="End Cut #2" value={inp.beamEndCut2} onChange={(v) => setField("beamEndCut2", v as never)}
                   options={[{ value: "", label: "N/A" }, ...END_CUTS]} />
                 <SelectInput label="Hanger Type" value={inp.hangerType} onChange={(v) => setField("hangerType", v as never)} options={HANGERS} />
+                <ToggleInput label="Bay Window / Pop-out" value={inp.bayWindowPopout} onChange={(v) => setField("bayWindowPopout", v)}
+                  yesLabel="extra hanger for angled jog" />
                 <SelectInput label="Gutter Type" value={inp.gutterType} onChange={(v) => setField("gutterType", v as never)} options={GUTTERS} />
                 <SelectInput label="Wrap Type" value={inp.wrapType} onChange={(v) => setField("wrapType", v as never)} options={WRAPS} />
               </SectionCard>
@@ -403,9 +414,13 @@ export default function ModernQuotePage() {
                 <NumInput label="Posts #1 (qty)" value={inp.posts1} onChange={(v) => setField("posts1", v)} />
                 <SelectInput label="Height #1 (ft)" value={String(inp.postHeight1)} onChange={(v) => setField("postHeight1", Number(v))}
                   options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))} />
+                <ToggleInput label="Ground Mount Posts #1" value={inp.groundMountPosts1} onChange={(v) => setField("groundMountPosts1", v)}
+                  yesLabel="no anchors needed" />
                 <NumInput label="Posts #2 (qty)" value={inp.posts2} onChange={(v) => setField("posts2", v)} />
                 <SelectInput label="Height #2 (ft)" value={String(inp.postHeight2)} onChange={(v) => setField("postHeight2", Number(v))}
                   options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))} />
+                <ToggleInput label="Ground Mount Posts #2" value={inp.groundMountPosts2} onChange={(v) => setField("groundMountPosts2", v)}
+                  yesLabel="no anchors needed" />
                 <NumInput label="Downspouts" value={inp.downspouts} onChange={(v) => setField("downspouts", v)} />
                 <ToggleInput label="Spray Paint" value={inp.sprayPaint} onChange={(v) => setField("sprayPaint", v)} yesLabel="include" />
               </SectionCard>

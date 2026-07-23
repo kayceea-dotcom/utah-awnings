@@ -16,9 +16,10 @@ function panelWidthFt(type: string): number {
   return type.startsWith("flat_8_") ? 8 / 12 : 0.5;
 }
 
+// Real supplier stock lengths (not a uniform step) — smallest one that fits.
+const STOCK_LENGTHS = [16, 20, 24, 32, 40, 48, 60, 72, 80];
 function nextStockLength(ft: number): number {
-  if (ft <= 16) return 16;
-  return Math.ceil(ft / 4) * 4;
+  return STOCK_LENGTHS.find((len) => ft <= len) ?? STOCK_LENGTHS[STOCK_LENGTHS.length - 1];
 }
 
 export function calcNewport(inp: NewportInputs): QuoteResult {
@@ -28,7 +29,6 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   const is3x8 = inp.wrapType === "3x8";
   const wrapRate     = is3x8 ? RATES.beam_3x8            : RATES.post_plate_2x6_ft;
   const sideRate     = is3x8 ? RATES.sideplate_3x8_ft    : RATES.sideplate_2x6_ft;
-  const fasciaRate   = is3x8 ? RATES.fascia_extruded_3x8_ft : RATES.fascia_extruded_2x6_ft;
   const endcapRate   = is3x8 ? RATES.endcap_3x8          : RATES.endcap_2x6;
   const insideBrktRate = is3x8 ? RATES.inside_brkt_3x8   : RATES.inside_brkt_2x6;
   const miterCapRate = is3x8 ? RATES.mitered_cap_3x8     : RATES.mitered_cap_2x6;
@@ -45,25 +45,49 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("Panel #2", p2Qty, inp.projection2, panelRate(inp.panelType2), "ft", inp.colorPans));
   }
 
-  // ── HANGER ──
-  const hangerLen = inp.beamLength1 > 0 ? inp.beamLength1 + 1.5 : 0;
-  const hangerRate = inp.hangerType === "a_rail" ? RATES.hanger_a_rail_ft : RATES.hanger_roll_form_ft;
-  if (hangerLen > 0) {
-    items.push(li("Hanger", 1, hangerLen, hangerRate, "", inp.colorPans));
+  const combinedWidth = inp.width1 + inp.width2;
+  const hasSecondRun = inp.width2 > 0;
+
+  // ── HANGER — combined into 1 piece, UNLESS the second run is a jog in the house wall,
+  // which forces the hanger to split into 2 (the beam/gutter stay continuous in that case).
+  // A bay window/pop-out is itself a jog in the house wall with the same projection throughout —
+  // the wall's angled path is longer, so the hanger needs a bigger allowance (+8 instead of +1). ──
+  const splitHanger = hasSecondRun && inp.jogType === "house";
+  const hangerAllowance = inp.bayWindowPopout ? 8 : 1;
+  function hangerRateFor(type: string): number {
+    if (type === "a_rail") return RATES.hanger_a_rail_ft;
+    if (type === "extruded") return RATES.hanger_extruded_ft;
+    if (type === "elevated_roof_mount") return RATES.hanger_elevated_roof_mount;
+    return RATES.hanger_roll_form_ft;
+  }
+  if (inp.hangerType === "elevated_roof_mount") {
+    if (combinedWidth > 0) items.push(li("Hanger", 1, 0, RATES.hanger_elevated_roof_mount, "", inp.colorPans));
+  } else if (splitHanger) {
+    if (inp.width1 > 0) items.push(li("Hanger #1", 1, inp.width1 + hangerAllowance, hangerRateFor(inp.hangerType), "", inp.colorPans));
+    if (inp.width2 > 0) items.push(li("Hanger #2", 1, inp.width2 + hangerAllowance, hangerRateFor(inp.hangerType), "", inp.colorPans));
+  } else if (combinedWidth > 0) {
+    items.push(li("Hanger", 1, combinedWidth + hangerAllowance, hangerRateFor(inp.hangerType), "", inp.colorPans));
   }
 
-  // ── GUTTER ──
-  const gutterStockLen = nextStockLength(inp.beamLength1 + 1.5);
-  if (inp.gutterType === "roll_form") {
-    items.push(li("Roll Form Gutter", 1, inp.beamLength1 + 1.5, RATES.gutter_roll_form_ft, "", inp.colorGutterFascia));
-  } else {
-    items.push(li("Extruded Gutter", 1, gutterStockLen, RATES.gutter_extruded_ft, "", inp.colorGutterFascia));
+  // ── GUTTER — combined into 1 piece, UNLESS the second run is a jog in the ground/deck,
+  // which forces the beam/gutter to split into 2 (the hanger stays continuous in that case).
+  // Roof-mount hanger needs 2 gutters regardless. ──
+  const gutterMultiplier = inp.hangerType === "elevated_roof_mount" ? 2 : 1;
+  const splitGutter = hasSecondRun && inp.jogType === "ground";
+  const gutterName = inp.gutterType === "roll_form" ? "Roll Form Gutter" : "Extruded Gutter";
+  const gutterRate = inp.gutterType === "roll_form" ? RATES.gutter_roll_form_ft : RATES.gutter_extruded_ft;
+  if (splitGutter) {
+    if (inp.width1 > 0) items.push(li(gutterName + " #1", gutterMultiplier, nextStockLength(inp.width1), gutterRate, "", inp.colorGutterFascia));
+    if (inp.width2 > 0) items.push(li(gutterName + " #2", gutterMultiplier, nextStockLength(inp.width2), gutterRate, "", inp.colorGutterFascia));
+  } else if (combinedWidth > 0) {
+    items.push(li(gutterName, gutterMultiplier, nextStockLength(combinedWidth), gutterRate, "", inp.colorGutterFascia));
   }
 
-  // ── EXTRUDED SIDE FASCIA — only with extruded gutter; length tied to PROJECTION (depth) ──
-  if (inp.gutterType === "extruded" && inp.projection1 > 0) {
-    const fasciaLen = nextStockLength(inp.projection1);
-    items.push(li("Extruded Side Fascia", 2, fasciaLen, fasciaRate, "", inp.colorGutterFascia));
+  // ── EXTRUDED SIDE FASCIA — only with extruded gutter; length keyed off the DEEPER of the two
+  // projections. Rate is a single fixed value, not split by wrap type. ──
+  if (inp.gutterType === "extruded" && (inp.projection1 > 0 || inp.projection2 > 0)) {
+    const fasciaLen = nextStockLength(Math.max(inp.projection1, inp.projection2));
+    items.push(li("Extruded Side Fascia", 2, fasciaLen, RATES.fascia_extruded_ft, "", inp.colorGutterFascia));
   }
 
   // ── FRONT PLATE — only with wrap kit + extruded gutter; exact length = width + 1 ──
@@ -81,11 +105,21 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   // ── BEAMS — rate depends on selected beam type ──
   function beamMaterialRate(beamType: string): number {
     if (beamType === "3x3") return RATES.beam_3x3;
-    return RATES.beam_3x8; // 3x8, 4_i_beam, 7_i_beam all use 3x8 wrap rate for now
+    if (beamType === "4_i_beam") return RATES.beam_4_i_beam;
+    if (beamType === "7_i_beam") return RATES.beam_7_i_beam;
+    return RATES.beam_3x8;
   }
+  // Only 3x3/3x8 beams take a steel insert — I-beams are solid, no insert needed.
   function steelInsertRate(beamType: string): number {
     if (beamType === "3x3") return RATES.steel_3x3_g_beam_ft;
-    return RATES.steel_3x8_14ga_ft;
+    if (beamType === "3x8") return RATES.steel_3x8_14ga_ft;
+    return 0;
+  }
+  // Beam's own end cap is sized to the beam type, not the wrap kit; I-beams don't take one.
+  function beamEndcapRate(beamType: string): number {
+    if (beamType === "3x3") return RATES.endcap_3x3;
+    if (beamType === "3x8") return RATES.endcap_3x8;
+    return 0;
   }
 
   if (inp.beamLength1 > 0) {
@@ -155,9 +189,13 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("Foam Inserts 2x6", totalPosts * 2, 0, RATES.foam_insert_2x6, "ea"));
   }
 
-  // ── GUTTER SPLICE — only when extruded gutter and beam+1.5 exceeds max stock length (24ft) ──
-  if (inp.gutterType === "extruded" && inp.beamLength1 + 1.5 > 24) {
-    items.push(li("Gutter Splice", 1, 0, RATES.gutter_splice));
+  // ── GUTTER SPLICE — needed whenever a gutter run exceeds max stock length (24ft); when the
+  // gutter is split (ground/deck jog), check each piece separately instead of the combined width ──
+  const gutterSpliceQty = splitGutter
+    ? (inp.width1 > 24 ? 1 : 0) + (inp.width2 > 24 ? 1 : 0)
+    : combinedWidth > 24 ? 1 : 0;
+  if (gutterSpliceQty > 0) {
+    items.push(li("Gutter Splice", gutterSpliceQty, 0, RATES.gutter_splice));
   }
 
   // ── POST BRACKETS — posts * 2 ──
@@ -165,8 +203,8 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("Post Brackets", totalPosts * 2, 0, RATES.post_brkt));
   }
 
-  // ── GUTTER DAMS — downspouts * 2 ──
-  items.push(li("Gutter Dams", inp.downspouts * 2, 0, RATES.gutter_dam));
+  // ── GUTTER DAMS — 4 with a second run, else 2 ──
+  items.push(li("Gutter Dams", inp.width2 > 0 ? 4 : 2, 0, RATES.gutter_dam));
 
   // ── DOWNSPOUTS ──
   if (inp.downspouts > 0) {
@@ -176,21 +214,21 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("Downspout Straps",     inp.downspouts * 2, 0, RATES.downspout_strap,  "", inp.colorGutterFascia));
   }
 
-  // ── FLASHING — totalPosts ──
-  if (totalPosts > 0) {
-    items.push(li("Flashing", totalPosts, 0, RATES.flashing));
+  // ── FLASHING — combined width / 10, rounded up ──
+  if (combinedWidth > 0) {
+    items.push(li("Flashing", Math.ceil(combinedWidth / 10), 0, RATES.flashing));
   }
 
-  // ── LAGS — total panels ──
-  const totalPanels = p1Qty + p2Qty;
-  if (totalPanels > 0) {
-    items.push(li("Lag Screws",            totalPanels, 0, RATES.lag_screw));
-    items.push(li("#14x1 Colored Screws",  totalPanels, 0, RATES.screw_14x1_colored,  "", inp.colorPostsBeam));
-    items.push(li("#14x1 Washered Screws", totalPanels, 0, RATES.screw_14x1_washered, "", inp.colorPostsBeam));
+  // ── LAGS — combined width * 2 ──
+  const fastenerQty = combinedWidth * 2;
+  if (fastenerQty > 0) {
+    items.push(li("Lag Screws",            fastenerQty, 0, RATES.lag_screw));
+    items.push(li("#14x1 Colored Screws",  fastenerQty, 0, RATES.screw_14x1_colored,  "", inp.colorPostsBeam));
+    items.push(li("#14x1 Washered Screws", fastenerQty, 0, RATES.screw_14x1_washered, "", inp.colorPostsBeam));
   }
 
-  // ── PAN SCREWS — ~panels * 6.25, rounded to nearest 50 ──
-  const panScrewQty = Math.round(totalPanels * 6.25 / 50) * 50;
+  // ── PAN SCREWS — combined width * 10, rounded up to the nearest 100 ──
+  const panScrewQty = Math.ceil((combinedWidth * 10) / 100) * 100;
   if (panScrewQty > 0) {
     items.push(li("#8x1/2 Pan Color",  panScrewQty, 0, RATES.screw_8x0_5_color,    "", inp.colorPans));
     items.push(li("#8x1/2 Extruded",   panScrewQty, 0, RATES.screw_8x0_5_extruded, "", inp.colorPostsBeam));
@@ -202,27 +240,28 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("Spray Paint Posts/Beam", 1, 0, RATES.spray_paint, "", inp.colorPostsBeam));
   }
 
-  // ── FOAM GASKET — length = stock length matching gutter/steel ──
-  if (inp.beamLength1 > 0) {
-    items.push(li("Foam Gasket", 1, gutterStockLen, RATES.foam_gasket_ft));
+  // ── FOAM GASKET — raw combined width, not rounded to a stock length ──
+  if (combinedWidth > 0) {
+    items.push(li("Foam Gasket", 1, combinedWidth, RATES.foam_gasket_ft));
   }
 
-  // ── ANCHORS ──
-  if (totalPosts > 0) {
-    items.push(li("Wedge Anchors", totalPosts * 2, 0, RATES.anchor_wedge));
+  // ── ANCHORS — 2 per post, skip whichever post group is ground-mounted (no anchor needed) ──
+  const anchorQty = (inp.groundMountPosts1 ? 0 : inp.posts1 * 2) + (inp.groundMountPosts2 ? 0 : inp.posts2 * 2);
+  if (anchorQty > 0) {
+    items.push(li("Wedge Anchors", anchorQty, 0, RATES.anchor_wedge));
   }
 
-  // ── BEAM END CAPS — uses wrap-type endcap rate ──
+  // ── BEAM END CAPS — sized to the beam's own type, zero for I-beams ──
   if (inp.beamLength1 > 0) {
-    items.push(li("Beam End Caps #1", 2, 0, endcapRate, "", inp.colorPostsBeam));
+    items.push(li("Beam End Caps #1", 2, 0, beamEndcapRate(inp.beamType1), "", inp.colorPostsBeam));
   }
-  if (inp.beamLength2 > 0) {
-    items.push(li("Beam End Caps #2", 2, 0, endcapRate, "", inp.colorPostsBeam));
+  if (inp.beamLength2 > 0 && inp.beamType2) {
+    items.push(li("Beam End Caps #2", 2, 0, beamEndcapRate(inp.beamType2), "", inp.colorPostsBeam));
   }
 
-  // ── SILICONE ──
-  if (inp.beamLength1 > 0) {
-    items.push(li("Silicone Clear", Math.ceil(inp.beamLength1 / 10), 0, RATES.silicone_clear));
+  // ── SILICONE — combined width / 10, rounded up ──
+  if (combinedWidth > 0) {
+    items.push(li("Silicone Clear", Math.ceil(combinedWidth / 10), 0, RATES.silicone_clear));
   }
 
   // ── PAN CLIPS ──
