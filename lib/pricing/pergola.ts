@@ -9,6 +9,7 @@ export interface PergolaInputs {
   beamLength: number;
   beamType: string;
   beamEndCut: string;
+  beamQty: number;
   rafterGauge: string;
   latticeType: string;
   latticeSpacing: string;
@@ -52,8 +53,9 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
   const tubeInches = inp.latticeType === "2x3" ? 3 : 2;
 
   // ── RAFTERS ──
-  // One rafter every 2ft of width + 1 for the end
-  const rafterQty = inp.width > 0 ? Math.ceil(inp.width / 2) + 1 : 0;
+  // One rafter every 2ft of width — they're inset 6in-1ft from each end
+  // (depending on whether the width is odd or even), not flush with the beam.
+  const rafterQty = inp.width > 0 ? Math.round(inp.width / 2) : 0;
   if (rafterQty > 0) {
     items.push(li("2x6 Rafters", rafterQty, inp.projection, rafterRate, "ft", inp.colorPergola));
   }
@@ -80,10 +82,10 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
   }
 
   // ── BEAMS ──
-  if (inp.beamLength > 0) {
-    items.push(li("Beam (" + inp.beamType + ")", 2, inp.beamLength, RATES.beam_3x8, "", inp.colorPergola));
+  if (inp.beamLength > 0 && inp.beamQty > 0) {
+    items.push(li("Beam (" + inp.beamType + ")", inp.beamQty, inp.beamLength, RATES.beam_3x8, "", inp.colorPergola));
     const steelStock = nextStockLength(inp.beamLength + 1.5);
-    items.push(li("Steel Insert", 2, steelStock, RATES.steel_3x8_14ga_ft));
+    items.push(li("Steel Insert", inp.beamQty, steelStock, RATES.steel_3x8_14ga_ft));
   }
 
   // ── POSTS ──
@@ -157,9 +159,9 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
     items.push(li("Wedge Anchors", totalPosts * 2, 0, RATES.anchor_wedge));
   }
 
-  // ── BEAM END CAPS ──
-  if (inp.beamLength > 0) {
-    items.push(li("3x8 Beam End Caps", 4, 0, RATES.endcap_3x8, "", inp.colorPergola));
+  // ── BEAM END CAPS — 2 per beam ──
+  if (inp.beamLength > 0 && inp.beamQty > 0) {
+    items.push(li("3x8 Beam End Caps", inp.beamQty * 2, 0, RATES.endcap_3x8, "", inp.colorPergola));
   }
 
   // ── SILICONE ──

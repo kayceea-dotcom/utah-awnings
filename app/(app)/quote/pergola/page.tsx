@@ -53,7 +53,7 @@ const POST_HEIGHTS = [8, 10, 12, 14, 16, 20];
 const DEFAULT: PergolaInputs = {
   jobName: "", salesman: "",
   projection: 0, width: 0,
-  beamLength: 0, beamType: "3x8", beamEndCut: "beveled",
+  beamLength: 0, beamType: "3x8", beamEndCut: "beveled", beamQty: 2,
   rafterGauge: "032",
   latticeType: "2x2", latticeSpacing: "1x",
   headerBoard: true,
@@ -308,6 +308,7 @@ export default function PergolaQuotePage() {
               <SectionCard id="structure" title="Structure" open={open.has("structure")} onToggle={toggleSection}>
                 <SelectInput label="Rafter Gauge" value={inp.rafterGauge} onChange={(v) => setField("rafterGauge", v)} options={RAFTER_GAUGES} />
                 <SelectInput label="Beam Type" value={inp.beamType} onChange={(v) => setField("beamType", v)} options={BEAM_TYPES} />
+                <NumInput label="Beam Qty" value={inp.beamQty} onChange={(v) => setField("beamQty", v)} hint="Usually 2" />
                 <SelectInput label="End Cut" value={inp.endCut} onChange={(v) => setField("endCut", v)} options={END_CUTS} />
                 <SelectInput label="End Cut Side" value={inp.endCutSide} onChange={(v) => setField("endCutSide", v)} options={END_CUT_SIDES} />
                 <SelectInput label="Lattice Type" value={inp.latticeType} onChange={(v) => setField("latticeType", v as never)} options={LATTICE_TYPES} />
