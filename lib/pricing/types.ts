@@ -28,6 +28,9 @@ export interface BeamConfig {
 }
 
 export interface NewportInputs {
+  // Newport and Modern (Flat-Pan) share this calculator, but a few line
+  // items are specific to one product's actual material list.
+  product: "newport" | "flat_pan";
   jobName: string;
   salesman: string;
   projection1: number;

@@ -184,8 +184,8 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("End Caps", endCapQty, 0, endcapRate, "", inp.colorPostsBeam));
   }
 
-  // ── FOAM INSERTS — posts * 2 ──
-  if (totalPosts > 0) {
+  // ── FOAM INSERTS — posts * 2; Newport-only, Modern's post system doesn't use these ──
+  if (inp.product === "newport" && totalPosts > 0) {
     items.push(li("Foam Inserts 2x6", totalPosts * 2, 0, RATES.foam_insert_2x6, "ea"));
   }
 

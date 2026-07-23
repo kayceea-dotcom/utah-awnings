@@ -79,6 +79,7 @@ const WRAPS = [
 const COLOR_OPTS = COLORS.map((c) => ({ value: c, label: c }));
 
 const DEFAULT: NewportInputs = {
+  product: "newport",
   jobName: "", salesman: "",
   projection1: 0, width1: 0,
   projection2: 0, width2: 0, jogType: "ground",

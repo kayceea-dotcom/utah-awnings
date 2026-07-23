@@ -79,6 +79,7 @@ const WRAPS = [
 const COLOR_OPTS = COLORS.map((c) => ({ value: c, label: c }));
 
 const DEFAULT: NewportInputs = {
+  product: "flat_pan",
   jobName: "", salesman: "",
   projection1: 0, width1: 0,
   projection2: 0, width2: 0, jogType: "ground",
@@ -92,7 +93,7 @@ const DEFAULT: NewportInputs = {
   colorPans: "White", colorGutterFascia: "White", colorPostsBeam: "White",
   wrapType: "none",
   rafterTails: false, bayWindowPopout: false,
-  downspouts: 1, sprayPaint: false,
+  downspouts: 1, sprayPaint: true,
   groundMountPosts1: false, groundMountPosts2: false,
   fanBeamQty: 0, fanBeamLength: 16,
   shadeBeamQty: 0,
