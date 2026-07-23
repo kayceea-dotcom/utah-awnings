@@ -4,8 +4,7 @@ import Link from "next/link";
 import TopBar from "@/components/TopBar";
 
 const products = [
-  { slug: "newport", label: "Newport Patio Cover", desc: "T6 flat pan, standard residential" },
-  { slug: "flat-pan", label: "Modern", desc: "Sleek, slim flat pan cover for contemporary homes" },
+  { slug: "flat-panel", label: "Flat Panel", desc: "T6 flat pan cover, with or without a decorative wrap kit" },
   { slug: "irp", label: "IRP Insulated Roof", desc: "3in / 4in / 6in insulated roof panel" },
   { slug: "pergola", label: "Pergola", desc: "2x6 rafters, 2x2 lattice tubing" },
   { slug: "w-pan", label: "W-Pan Cover", desc: "Tri-V W-Pan, DuraKing options" },

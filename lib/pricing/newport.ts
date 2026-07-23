@@ -155,9 +155,8 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("End Caps", endCapQty, 0, endcapRate, "", inp.colorPostsBeam));
   }
 
-  // ── FOAM INSERTS — posts * 2; part of the wrap kit bundle, Newport-only
-  // (Modern's post system doesn't use a wrap kit at all) ──
-  if (inp.product === "newport" && hasWrap && totalPosts > 0) {
+  // ── FOAM INSERTS — posts * 2; part of the wrap kit bundle ──
+  if (hasWrap && totalPosts > 0) {
     items.push(li("Foam Inserts 2x6", totalPosts * 2, 0, RATES.foam_insert_2x6, "ea"));
   }
 

@@ -9,15 +9,15 @@ import { newportToScene } from "@/lib/scene/adapters/newport";
 import type { CosmeticOverrides } from "@/lib/scene/types";
 import { SHOW_3D_VIEWER } from "@/lib/scene/featureFlags";
 import CosmeticControls from "@/components/viewer3d/CosmeticControls";
-import type { NewportInputs } from "@/lib/pricing/types";
+import type { NewportInputs, BeamConfig } from "@/lib/pricing/types";
 import TopBar from "@/components/TopBar";
 import Field from "@/components/quote/Field";
 import MaterialList from "@/components/quote/MaterialList";
 import { ChevronDown, ChevronUp, RefreshCw, DollarSign, Send } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useProfile";
-import CoverDiagram from "@/components/quote/CoverDiagram";
 import { useRouter } from "next/navigation";
 import SaveQuoteModal from "@/components/quote/SaveQuoteModal";
+import CoverDiagram from "@/components/quote/CoverDiagram";
 
 const Viewer3DPanel = dynamicImport(() => import("@/components/viewer3d/Viewer3DPanel"), {
   ssr: false,
@@ -79,30 +79,31 @@ const WRAPS = [
 const COLOR_OPTS = COLORS.map((c) => ({ value: c, label: c }));
 
 const DEFAULT: NewportInputs = {
-  product: "flat_pan",
   jobName: "", salesman: "",
   projection1: 0, width1: 0,
   projection2: 0, width2: 0, jogType: "ground",
-  panelType1: "T6_024", panelType2: "",
+  panelType1: "T6_040", panelType2: "",
   beamLength1: 0, beamLength2: 0,
-  beamType1: "3x3", beamType2: "",
-  beamEndCut1: "scallop", beamEndCut2: "",
+  beamType1: "3x8", beamType2: "",
+  beamEndCut1: "beveled", beamEndCut2: "",
   gutterType: "extruded", hangerType: "roll_form",
-  posts1: 0, postHeight1: 8,
-  posts2: 0, postHeight2: 8,
+  posts1: 0, postHeight1: 10,
+  posts2: 0, postHeight2: 10,
   colorPans: "White", colorGutterFascia: "White", colorPostsBeam: "White",
-  wrapType: "none",
-  rafterTails: false, bayWindowPopout: false,
+  wrapType: "2x6",
+  rafterTails: true, bayWindowPopout: false,
   downspouts: 1, sprayPaint: true,
   groundMountPosts1: false, groundMountPosts2: false,
   fanBeamQty: 0, fanBeamLength: 16,
   shadeBeamQty: 0,
   priceIncrease: 0, footings: 0, roofMounts: 0, misc: 0,
-  markup: 2.0, taxRate: 0.0745,
+  markup: 1.8, taxRate: 0.0745,
   beams: [],
 };
 
 type SectionId = "job" | "dimensions" | "structure" | "posts" | "colors" | "extras" | "pricing";
+
+// ── Standalone components ─────────────────────────────────────────────────
 
 function SectionCard({
   id, title, open, onToggle, children
@@ -215,18 +216,26 @@ function ToggleInput({ label, value, onChange, yesLabel }: {
   );
 }
 
+// ── Price Summary components ──────────────────────────────────────────────
+
 function MobilePriceBar({ result, onExpand }: {
   result: ReturnType<typeof calcNewport>;
   onExpand: () => void;
 }) {
   const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
   const margin = result.totalJobSale > 0 ? result.totalProfit / result.totalJobSale : 0;
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-20 lg:hidden shadow-2xl" style={{ backgroundColor: "#1a1a1a" }}>
+    <div
+      className="fixed bottom-0 left-0 right-0 z-20 lg:hidden shadow-2xl"
+      style={{ backgroundColor: "#1a1a1a" }}
+    >
       <button onClick={onExpand} className="w-full px-4 py-3 flex items-center gap-3">
         <div className="flex-1 text-left">
           <p className="text-gray-400 text-xs font-semibold uppercase tracking-wide">Total Job Sale</p>
-          <p className="text-white text-2xl font-black tracking-tight">{fmt(result.totalJobSale)}</p>
+          <p className="text-white text-2xl font-black tracking-tight">
+            {fmt(result.totalJobSale)}
+          </p>
         </div>
         <div className="text-right">
           <p className="text-gray-400 text-xs font-semibold uppercase tracking-wide">Profit</p>
@@ -248,6 +257,7 @@ function PriceSummaryPanel({ result, onClose }: {
 }) {
   const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
   const margin = result.totalJobSale > 0 ? result.totalProfit / result.totalJobSale : 0;
+
   return (
     <div className="card p-5 space-y-4">
       {onClose && (
@@ -255,16 +265,23 @@ function PriceSummaryPanel({ result, onClose }: {
           <ChevronDown size={16} /> Close
         </button>
       )}
+
       <h2 className="section-heading">Price Summary</h2>
+
       <div className="rounded-2xl p-4 text-center border" style={{ backgroundColor: "#fdf2f2", borderColor: "#f9c9cb" }}>
-        <p className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: "#CC2229" }}>Total Job Sale</p>
-        <p className="text-3xl font-black tracking-tight" style={{ color: "#CC2229" }}>{fmt(result.totalJobSale)}</p>
+        <p className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: "#CC2229" }}>
+          Total Job Sale
+        </p>
+        <p className="text-3xl font-black tracking-tight" style={{ color: "#CC2229" }}>
+          {fmt(result.totalJobSale)}
+        </p>
         <div className="flex justify-center gap-3 mt-2 text-xs text-gray-500">
           <span>{result.totalSqFt.toFixed(0)} sq ft</span>
           <span>·</span>
           <span>{fmt(result.pricePerSqFt)}/sq ft</span>
         </div>
       </div>
+
       <div className="space-y-1.5 text-sm">
         {([
           ["Material Cost",   result.materialCost],
@@ -296,6 +313,7 @@ function PriceSummaryPanel({ result, onClose }: {
           <span className="font-mono">{fmt(result.totalJobSale)}</span>
         </div>
       </div>
+
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-xl p-3 border border-green-100 bg-green-50">
           <p className="text-xs text-green-600 font-bold uppercase tracking-wide">Profit</p>
@@ -318,7 +336,9 @@ function PriceSummaryPanel({ result, onClose }: {
   );
 }
 
-export default function ModernQuotePage() {
+// ── Main page ─────────────────────────────────────────────────────────────
+
+export default function FlatPanelQuotePage() {
   const [inp, setInp] = useState<NewportInputs>(DEFAULT);
   const [viewMode, setViewMode] = useState<"2d" | "3d">("2d");
   const [cosmetic, setCosmetic] = useState<CosmeticOverrides>({});
@@ -362,7 +382,7 @@ export default function ModernQuotePage() {
 
   return (
     <>
-      <TopBar title="Modern" subtitle="Sleek flat pan roof system - live pricing">
+      <TopBar title="Flat Panel" subtitle="T6 flat pan roof system - live pricing">
         <button onClick={() => setInp(DEFAULT)} className="btn-secondary text-xs px-3 py-2">
           <RefreshCw size={13} /> Reset
         </button>
@@ -374,6 +394,8 @@ export default function ModernQuotePage() {
       <main className="flex-1 p-3 lg:p-6 pb-32 lg:pb-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex gap-6 items-start">
+
+            {/* ── Left: form ── */}
             <div className="flex-1 min-w-0 space-y-3">
 
               <SectionCard id="job" title="Job Information" open={open.has("job")} onToggle={toggleSection}>
@@ -409,6 +431,7 @@ export default function ModernQuotePage() {
                   yesLabel="extra hanger for angled jog" />
                 <SelectInput label="Gutter Type" value={inp.gutterType} onChange={(v) => setField("gutterType", v as never)} options={GUTTERS} />
                 <SelectInput label="Wrap Type" value={inp.wrapType} onChange={(v) => setField("wrapType", v as never)} options={WRAPS} />
+                <ToggleInput label="Rafter Tails" value={inp.rafterTails} onChange={(v) => setField("rafterTails", v)} />
               </SectionCard>
 
               <SectionCard id="posts" title="Posts" open={open.has("posts")} onToggle={toggleSection}>
@@ -432,6 +455,119 @@ export default function ModernQuotePage() {
                 <SelectInput label="Posts / Beam" value={inp.colorPostsBeam} onChange={(v) => setField("colorPostsBeam", v as never)} options={COLOR_OPTS} span={2} />
               </SectionCard>
 
+              {/* Additional Beams Section */}
+              <div className="card overflow-hidden">
+                <div className="px-4 lg:px-5 py-4 flex items-center justify-between">
+                  <span className="text-sm font-bold text-gray-800">Additional / Multi-Span Beams</span>
+                  <button
+                    onClick={() => {
+                      const newBeam: BeamConfig = { type: "3x8", qty: 1, length: inp.width1 - 0.5 || 0, positionFromHouse: 0, posts: 0, postHeight: 10 };
+                      setField("beams", [...(inp.beams || []), newBeam]);
+                    }}
+                    className="text-xs btn-secondary px-3 py-1.5"
+                  >
+                    + Add Beam
+                  </button>
+                </div>
+                {(inp.beams || []).length > 0 && (
+                  <div className="px-4 lg:px-5 pb-5 space-y-4">
+                    {(inp.beams || []).map((beam, idx) => (
+                      <div key={idx} className="border border-gray-200 rounded-xl p-4 space-y-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Beam {idx + 3}</span>
+                          <button
+                            onClick={() => {
+                              const updated = [...(inp.beams || [])];
+                              updated.splice(idx, 1);
+                              setField("beams", updated);
+                            }}
+                            className="text-xs text-red-500 hover:text-red-700"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <Field label="Type">
+                            <div className="relative">
+                              <select className="select pr-8"
+                                value={beam.type}
+                                onChange={(e) => {
+                                  const updated = [...(inp.beams || [])];
+                                  updated[idx] = { ...updated[idx], type: e.target.value };
+                                  setField("beams", updated);
+                                }}>
+                                <option value="3x3">3x3 Beam</option>
+                                <option value="3x8">3x8 Beam</option>
+                                <option value="double_3x8">Double 3x8</option>
+                                <option value="4_i_beam">4in I-Beam</option>
+                                <option value="7_i_beam">7in I-Beam</option>
+                              </select>
+                              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+                                <ChevronDown size={14} className="text-gray-400" />
+                              </div>
+                            </div>
+                          </Field>
+                          <Field label="Qty">
+                            <input type="number" className="input"
+                              value={beam.qty === 0 ? "" : beam.qty} placeholder="1"
+                              onChange={(e) => {
+                                const updated = [...(inp.beams || [])];
+                                updated[idx] = { ...updated[idx], qty: parseInt(e.target.value) || 1 };
+                                setField("beams", updated);
+                              }} />
+                          </Field>
+                          <Field label="Length (ft)" hint="Width minus 6in">
+                            <input type="number" className="input"
+                              value={beam.length === 0 ? "" : beam.length} placeholder="0"
+                              onChange={(e) => {
+                                const updated = [...(inp.beams || [])];
+                                updated[idx] = { ...updated[idx], length: parseFloat(e.target.value) || 0 };
+                                setField("beams", updated);
+                              }} />
+                          </Field>
+                          <Field label="Position from House (ft)" hint="0 = front beam">
+                            <input type="number" className="input"
+                              value={beam.positionFromHouse === 0 ? "" : beam.positionFromHouse} placeholder="0"
+                              onChange={(e) => {
+                                const updated = [...(inp.beams || [])];
+                                updated[idx] = { ...updated[idx], positionFromHouse: parseFloat(e.target.value) || 0 };
+                                setField("beams", updated);
+                              }} />
+                          </Field>
+                          <Field label="Posts (qty)">
+                            <input type="number" className="input"
+                              value={beam.posts === 0 ? "" : beam.posts} placeholder="0"
+                              onChange={(e) => {
+                                const updated = [...(inp.beams || [])];
+                                updated[idx] = { ...updated[idx], posts: parseInt(e.target.value) || 0 };
+                                setField("beams", updated);
+                              }} />
+                          </Field>
+                          <Field label="Post Height (ft)">
+                            <div className="relative">
+                              <select className="select pr-8"
+                                value={String(beam.postHeight)}
+                                onChange={(e) => {
+                                  const updated = [...(inp.beams || [])];
+                                  updated[idx] = { ...updated[idx], postHeight: Number(e.target.value) };
+                                  setField("beams", updated);
+                                }}>
+                                {[8,10,12,14,16,20].map(h => (
+                                  <option key={h} value={String(h)}>{h} ft</option>
+                                ))}
+                              </select>
+                              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+                                <ChevronDown size={14} className="text-gray-400" />
+                              </div>
+                            </div>
+                          </Field>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <SectionCard id="extras" title="Fan Beam / Shade Beam" open={open.has("extras")} onToggle={toggleSection}>
                 <NumInput label="Fan Beam Qty" value={inp.fanBeamQty} onChange={(v) => setField("fanBeamQty", v)} />
                 <NumInput label="Fan Beam Length (ft)" value={inp.fanBeamLength} onChange={(v) => setField("fanBeamLength", v)} />
@@ -439,7 +575,7 @@ export default function ModernQuotePage() {
               </SectionCard>
 
               <SectionCard id="pricing" title="Pricing Adjustments" open={open.has("pricing")} onToggle={toggleSection}>
-                <NumInput label="Markup" value={inp.markup} onChange={(v) => setField("markup", v)} hint="2.0 = 100% above cost" />
+                <NumInput label="Markup" value={inp.markup} onChange={(v) => setField("markup", v)} hint="1.8 = 80% above cost" />
                 <NumInput label="Tax Rate" value={inp.taxRate} onChange={(v) => setField("taxRate", v)} hint="e.g. 0.0745" />
                 <NumInput label="Price Increase" value={inp.priceIncrease} onChange={(v) => setField("priceIncrease", v)} hint="e.g. 0.10 = 10%" />
                 <NumInput label="Footings ($)" value={inp.footings} onChange={(v) => setField("footings", v)} />
@@ -447,6 +583,7 @@ export default function ModernQuotePage() {
                 <NumInput label="Misc ($)" value={inp.misc} onChange={(v) => setField("misc", v)} />
               </SectionCard>
 
+              {/* Desktop price summary inline at bottom */}
               <div className="hidden lg:block">
                 <PriceSummaryPanel result={result} />
               </div>
@@ -461,6 +598,7 @@ export default function ModernQuotePage() {
               {showMaterials && <MaterialList items={result.lineItems} />}
             </div>
 
+            {/* ── Desktop right panel ── */}
             <div className="hidden lg:block w-80 flex-shrink-0 sticky top-20 space-y-4">
               {SHOW_3D_VIEWER && (
                 <div className="flex justify-center gap-1 rounded-md bg-slate-100 p-1 text-sm">
@@ -492,7 +630,6 @@ export default function ModernQuotePage() {
                   width2={inp.width2}
                   posts1={inp.posts1}
                   downspouts={inp.downspouts}
-                  showRafterTails={false}
                 />
               ) : (
                 <>
@@ -506,8 +643,10 @@ export default function ModernQuotePage() {
         </div>
       </main>
 
+      {/* ── Mobile sticky bottom price bar ── */}
       <MobilePriceBar result={result} onExpand={() => setShowPricePanel(true)} />
 
+      {/* ── Mobile price panel overlay ── */}
       {showPricePanel && (
         <div className="lg:hidden fixed inset-0 z-50 bg-black/60 flex items-end">
           <div className="bg-white w-full rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto">
@@ -517,7 +656,7 @@ export default function ModernQuotePage() {
       )}
       {showSaveModal && (
         <SaveQuoteModal
-          productType="modern"
+          productType="flat_panel"
           inputs={inp as unknown as Record<string, unknown>}
           lineItems={result.lineItems}
           materialCost={result.materialCost}

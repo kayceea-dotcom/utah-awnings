@@ -1,5 +1,5 @@
 export type ProductType =
-  | "newport" | "flat_pan" | "irp" | "pergola" | "w_pan" | "metal_wall" | "individual";
+  | "flat_panel" | "irp" | "pergola" | "w_pan" | "metal_wall" | "individual";
 
 export type BeamType = "3x3" | "3x8" | "4_i_beam" | "7_i_beam";
 export type EndCut = "scallop" | "beveled" | "mitered" | "corbel";
@@ -28,9 +28,6 @@ export interface BeamConfig {
 }
 
 export interface NewportInputs {
-  // Newport and Modern (Flat-Pan) share this calculator, but a few line
-  // items are specific to one product's actual material list.
-  product: "newport" | "flat_pan";
   jobName: string;
   salesman: string;
   projection1: number;
