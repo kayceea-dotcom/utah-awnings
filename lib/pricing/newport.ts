@@ -19,6 +19,7 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   const sideRate     = is3x8 ? RATES.sideplate_3x8_ft    : RATES.sideplate_2x6_ft;
   const endcapRate   = is3x8 ? RATES.endcap_3x8          : RATES.endcap_2x6;
   const insideBrktRate = is3x8 ? RATES.inside_brkt_3x8   : RATES.inside_brkt_2x6;
+  const outsideBrktRate = is3x8 ? RATES.outside_brkt_3x8 : RATES.outside_brkt_2x6;
   const miterCapRate = is3x8 ? RATES.mitered_cap_3x8     : RATES.mitered_cap_2x6;
   const rafterRate   = is3x8 ? RATES.rafter_tail_3x8_ft  : RATES.rafter_tail_2x6_ft;
 
@@ -133,11 +134,12 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("Rafter Tails", rtQty, 0, rafterRate, "", inp.colorPostsBeam));
   }
 
-  // ── INSIDE BRACKETS — only with wrap kit, same spacing as rafter tails plus 2 ──
+  // ── INSIDE / OUTSIDE BRACKETS — only with wrap kit, same spacing as rafter tails plus 2 ──
   if (hasWrap && inp.width1 > 0) {
     const spacingQty = Math.round(inp.width1 / 2);
-    const insideBrktQty = spacingQty + 2;
-    items.push(li("Inside Brackets", insideBrktQty, 0, insideBrktRate));
+    const bracketQty = spacingQty + 2;
+    items.push(li("Inside Brackets", bracketQty, 0, insideBrktRate));
+    items.push(li("Outside Brackets", bracketQty, 0, outsideBrktRate, "", inp.colorPostsBeam));
   }
 
   // ── PLUGS — only with wrap kit; roughly panels*0.7 + 1 ──
@@ -153,8 +155,9 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("End Caps", endCapQty, 0, endcapRate, "", inp.colorPostsBeam));
   }
 
-  // ── FOAM INSERTS — posts * 2; Newport-only, Modern's post system doesn't use these ──
-  if (inp.product === "newport" && totalPosts > 0) {
+  // ── FOAM INSERTS — posts * 2; part of the wrap kit bundle, Newport-only
+  // (Modern's post system doesn't use a wrap kit at all) ──
+  if (inp.product === "newport" && hasWrap && totalPosts > 0) {
     items.push(li("Foam Inserts 2x6", totalPosts * 2, 0, RATES.foam_insert_2x6, "ea"));
   }
 
