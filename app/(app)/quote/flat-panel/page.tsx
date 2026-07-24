@@ -626,6 +626,7 @@ export default function FlatPanelQuotePage() {
                   width1={inp.width1}
                   projection2={inp.projection2}
                   width2={inp.width2}
+                  jogType={inp.jogType}
                   posts1={inp.posts1}
                   downspouts={inp.downspouts}
                 />

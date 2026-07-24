@@ -8,6 +8,7 @@ interface CoverDiagramProps {
   posts1?: number;
   downspouts?: number;
   showRafterTails?: boolean;
+  jogType?: string;
   className?: string;
 }
 
@@ -17,6 +18,7 @@ export default function CoverDiagram({
   posts1 = 0,
   downspouts = 1,
   showRafterTails = true,
+  jogType = "ground",
   className = "",
 }: CoverDiagramProps) {
   if (!projection1 || !width1) {
@@ -36,6 +38,7 @@ export default function CoverDiagram({
   const TAIL_LEN = 12;
 
   const hasRun2 = projection2 > 0 && width2 > 0;
+  const isHouseJog = hasRun2 && jogType === "house";
   const totalWidth = hasRun2 ? width1 + width2 : width1;
 
   const availW = 300;
@@ -57,8 +60,18 @@ export default function CoverDiagram({
   const ox = PAD;
   const oy = PAD + HOUSE_H;
 
+  // A house jog keeps the front edge (beam/gutter) as one continuous, flush line and
+  // steps the house wall/hanger instead to follow the wall's jog. A ground/deck jog
+  // (the default) is the opposite: house wall stays flush, front edge steps.
+  const commonFrontY = oy + Math.max(coverH1, coverH2 || 0);
+  const run1TopY   = isHouseJog ? commonFrontY - coverH1 : oy;
+  const run2TopY   = isHouseJog ? commonFrontY - coverH2 : oy;
+  const run1FrontY = isHouseJog ? commonFrontY : oy + coverH1;
+  const run2FrontY = isHouseJog ? commonFrontY : oy + coverH2;
+
   // Beam Y = 1.5ft from BOTTOM (front) of cover
-  const beamY1 = oy + coverH1 - 1.5 * scale;
+  const beamY1 = run1FrontY - 1.5 * scale;
+  const beamY2 = run2FrontY - 1.5 * scale;
 
   // Post X positions along beam - 1.5ft from each end, evenly spaced
   const postPositions: number[] = [];
@@ -77,8 +90,8 @@ export default function CoverDiagram({
 
   // Rafter tail count
   const tailCount = Math.round(width1 / 2);
-  // Front edge Y
-  const frontEdgeY = oy + coverH1;
+  // Front edge Y (run 1)
+  const frontEdgeY = run1FrontY;
   // Tail tip Y (1ft below front edge) — only extends past the front edge when
   // rafter tails are actually present; otherwise the cover is a clean rectangle.
   const tailTipY = showRafterTails ? frontEdgeY + TAIL_LEN : frontEdgeY;
@@ -97,41 +110,61 @@ export default function CoverDiagram({
             </pattern>
           </defs>
 
-          {/* House wall at top */}
-          <rect x={ox - 4} y={oy - HOUSE_H} width={totalW + 8} height={HOUSE_H}
-            fill="url(#hatch)" stroke="#64748b" strokeWidth="1.5" />
+          {/* House wall at top — one continuous piece on a ground jog (or single run),
+              or stepped to follow each run's own depth on a house jog */}
+          {isHouseJog ? (
+            <>
+              <rect x={ox - 4} y={run1TopY - HOUSE_H} width={coverW1 + (hasRun2 ? 4 : 8)} height={HOUSE_H}
+                fill="url(#hatch)" stroke="#64748b" strokeWidth="1.5" />
+              <rect x={ox + coverW1} y={run2TopY - HOUSE_H} width={coverW2 + 8} height={HOUSE_H}
+                fill="url(#hatch)" stroke="#64748b" strokeWidth="1.5" />
+            </>
+          ) : (
+            <rect x={ox - 4} y={oy - HOUSE_H} width={totalW + 8} height={HOUSE_H}
+              fill="url(#hatch)" stroke="#64748b" strokeWidth="1.5" />
+          )}
           <text x={ox + totalW / 2} y={oy - HOUSE_H / 2 + 4}
             textAnchor="middle" fontSize="9" fill="#475569" fontWeight="600">HOUSE</text>
 
           {/* Cover rectangle run 1 */}
-          <rect x={ox} y={oy} width={coverW1} height={coverH1}
+          <rect x={ox} y={run1TopY} width={coverW1} height={coverH1}
             fill="#eff6ff" stroke="#3b82f6" strokeWidth="1.5" />
 
           {/* Cover rectangle run 2 */}
           {hasRun2 && (
-            <rect x={ox + coverW1} y={oy} width={coverW2} height={coverH2}
+            <rect x={ox + coverW1} y={run2TopY} width={coverW2} height={coverH2}
               fill="#f0fdf4" stroke="#22c55e" strokeWidth="1.5" />
           )}
 
-          {/* Hanger dashed line along house wall (top edge) */}
-          <line x1={ox} y1={oy} x2={ox + totalW} y2={oy}
-            stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="5,3" />
+          {/* Hanger dashed line along house wall — one continuous piece on a ground jog,
+              or split in 2 (following the wall's own jog) on a house jog */}
+          {isHouseJog ? (
+            <>
+              <line x1={ox} y1={run1TopY} x2={ox + coverW1} y2={run1TopY}
+                stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="5,3" />
+              <line x1={ox + coverW1} y1={run2TopY} x2={ox + coverW1 + coverW2} y2={run2TopY}
+                stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="5,3" />
+            </>
+          ) : (
+            <line x1={ox} y1={oy} x2={ox + totalW} y2={oy}
+              stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="5,3" />
+          )}
 
-          {/* Beam line run 1 - horizontal, 1.5ft from bottom */}
+          {/* Beam line run 1 - horizontal, 1.5ft from front edge; flush with run 2 on a house jog */}
           <line x1={ox} y1={beamY1} x2={ox + coverW1} y2={beamY1}
             stroke="#1e40af" strokeWidth="3" />
 
           {/* Beam line run 2 */}
           {hasRun2 && (
-            <line x1={ox + coverW1} y1={oy + coverH2 - 1.5 * scale}
-                  x2={ox + coverW1 + coverW2} y2={oy + coverH2 - 1.5 * scale}
+            <line x1={ox + coverW1} y1={beamY2}
+                  x2={ox + coverW1 + coverW2} y2={beamY2}
               stroke="#15803d" strokeWidth="3" />
           )}
 
           {/* Side plates - full height + tail */}
-          <line x1={ox} y1={oy} x2={ox} y2={tailTipY}
+          <line x1={ox} y1={run1TopY} x2={ox} y2={tailTipY}
             stroke="#1e40af" strokeWidth="2.5" />
-          <line x1={ox + coverW1} y1={oy} x2={ox + coverW1} y2={tailTipY}
+          <line x1={ox + coverW1} y1={run1TopY} x2={ox + coverW1} y2={tailTipY}
             stroke="#1e40af" strokeWidth="2.5" />
 
           {/* Rafter tails - short stubs below front edge */}
@@ -175,20 +208,20 @@ export default function CoverDiagram({
           </text>
 
           {/* Projection dimension (right side, red) */}
-          <line x1={ox + coverW1 + 10} y1={oy} x2={ox + coverW1 + 10} y2={oy + coverH1}
+          <line x1={ox + coverW1 + 10} y1={run1TopY} x2={ox + coverW1 + 10} y2={run1FrontY}
             stroke="#CC2229" strokeWidth="1.5" />
-          <line x1={ox + coverW1 + 6} y1={oy} x2={ox + coverW1 + 14} y2={oy}
+          <line x1={ox + coverW1 + 6} y1={run1TopY} x2={ox + coverW1 + 14} y2={run1TopY}
             stroke="#CC2229" strokeWidth="1.5" />
-          <line x1={ox + coverW1 + 6} y1={oy + coverH1} x2={ox + coverW1 + 14} y2={oy + coverH1}
+          <line x1={ox + coverW1 + 6} y1={run1FrontY} x2={ox + coverW1 + 14} y2={run1FrontY}
             stroke="#CC2229" strokeWidth="1.5" />
-          <text x={ox + coverW1 + 22} y={oy + coverH1 / 2 + 4}
+          <text x={ox + coverW1 + 22} y={(run1TopY + run1FrontY) / 2 + 4}
             textAnchor="middle" fontSize="11" fontWeight="700" fill="#CC2229"
-            transform={"rotate(90," + (ox + coverW1 + 22) + "," + (oy + coverH1 / 2) + ")"}>
+            transform={"rotate(90," + (ox + coverW1 + 22) + "," + (run1TopY + run1FrontY) / 2 + ")"}>
             {projection1}{"'"}
           </text>
 
           {/* Sq ft label */}
-          <text x={ox + coverW1 / 2} y={oy + coverH1 / 2 + 4}
+          <text x={ox + coverW1 / 2} y={(run1TopY + run1FrontY) / 2 + 4}
             textAnchor="middle" fontSize="9" fill="#94a3b8">
             {width1 * projection1} sq ft
           </text>
