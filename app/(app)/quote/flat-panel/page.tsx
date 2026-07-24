@@ -408,10 +408,8 @@ export default function FlatPanelQuotePage() {
                 <NumInput label="Width #1 (ft)" value={inp.width1} onChange={handleWidth1Change} hint="Along the house" />
                 <NumInput label="Projection #2 (ft)" value={inp.projection2} onChange={(v) => setField("projection2", v)} hint="0 if single run" />
                 <NumInput label="Width #2 (ft)" value={inp.width2} onChange={handleWidth2Change} />
-                {inp.width2 > 0 && (
-                  <SelectInput label="2nd Run Caused By" value={inp.jogType} onChange={(v) => setField("jogType", v as never)}
-                    options={JOG_TYPES} span={2} />
-                )}
+                <SelectInput label="2nd Run Caused By" value={inp.jogType} onChange={(v) => setField("jogType", v as never)}
+                  options={JOG_TYPES} span={2} />
                 <SelectInput label="Panel Type #1" value={inp.panelType1} onChange={(v) => setField("panelType1", v as never)} options={PANEL_TYPES} />
                 <SelectInput label="Panel Type #2" value={inp.panelType2} onChange={(v) => setField("panelType2", v as never)}
                   options={[{ value: "", label: "None (single run)" }, ...PANEL_TYPES]} />
