@@ -629,6 +629,7 @@ export default function FlatPanelQuotePage() {
                   jogType={inp.jogType}
                   posts1={inp.posts1}
                   downspouts={inp.downspouts}
+                  showRafterTails={inp.wrapType !== "none" && inp.rafterTails}
                 />
               ) : (
                 <>

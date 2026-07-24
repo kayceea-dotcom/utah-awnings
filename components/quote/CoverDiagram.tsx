@@ -88,13 +88,18 @@ export default function CoverDiagram({
     }
   }
 
-  // Rafter tail count
+  // Rafter tail count (run 1)
   const tailCount = Math.round(width1 / 2);
   // Front edge Y (run 1)
   const frontEdgeY = run1FrontY;
   // Tail tip Y (1ft below front edge) — only extends past the front edge when
   // rafter tails are actually present; otherwise the cover is a clean rectangle.
   const tailTipY = showRafterTails ? frontEdgeY + TAIL_LEN : frontEdgeY;
+
+  // Rafter tail count (run 2)
+  const tailCount2 = hasRun2 ? Math.round(width2 / 2) : 0;
+  const frontEdgeY2 = run2FrontY;
+  const tailTipY2 = showRafterTails ? frontEdgeY2 + TAIL_LEN : frontEdgeY2;
 
   return (
     <div className={"bg-white rounded-xl border border-gray-200 overflow-hidden " + className}>
@@ -161,18 +166,33 @@ export default function CoverDiagram({
               stroke="#15803d" strokeWidth="3" />
           )}
 
-          {/* Side plates - full height + tail */}
+          {/* Side plates - full height + tail (run 1) */}
           <line x1={ox} y1={run1TopY} x2={ox} y2={tailTipY}
             stroke="#1e40af" strokeWidth="2.5" />
           <line x1={ox + coverW1} y1={run1TopY} x2={ox + coverW1} y2={tailTipY}
             stroke="#1e40af" strokeWidth="2.5" />
 
-          {/* Rafter tails - short stubs below front edge */}
+          {/* Rafter tails - short stubs below front edge (run 1) */}
           {showRafterTails && Array.from({ length: tailCount }).map((_, i) => {
             const rx = ox + (width1 / (tailCount + 1)) * (i + 1) * scale;
             return (
               <line key={i} x1={rx} y1={frontEdgeY} x2={rx} y2={tailTipY}
                 stroke="#1e40af" strokeWidth="2" />
+            );
+          })}
+
+          {/* Side plate - outer edge + tail (run 2) */}
+          {hasRun2 && (
+            <line x1={ox + coverW1 + coverW2} y1={run2TopY} x2={ox + coverW1 + coverW2} y2={tailTipY2}
+              stroke="#15803d" strokeWidth="2.5" />
+          )}
+
+          {/* Rafter tails - short stubs below front edge (run 2) */}
+          {hasRun2 && showRafterTails && Array.from({ length: tailCount2 }).map((_, i) => {
+            const rx = ox + coverW1 + (width2 / (tailCount2 + 1)) * (i + 1) * scale;
+            return (
+              <line key={"r2-" + i} x1={rx} y1={frontEdgeY2} x2={rx} y2={tailTipY2}
+                stroke="#15803d" strokeWidth="2" />
             );
           })}
 
