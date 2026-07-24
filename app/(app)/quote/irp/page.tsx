@@ -295,7 +295,7 @@ export default function IRPQuotePage() {
                 <NumInput label="Width #1 (ft)" value={inp.width1} onChange={handleWidth1Change} hint="Along the house" />
                 <NumInput label="Projection #2 (ft)" value={inp.projection2} onChange={(v) => setField("projection2", v)} hint="0 if single run" />
                 <NumInput label="Width #2 (ft)" value={inp.width2} onChange={handleWidth2Change} />
-                <SelectInput label="2nd Run Caused By" value={inp.jogType} onChange={(v) => setField("jogType", v)}
+                <SelectInput label="Jog Type" value={inp.jogType} onChange={(v) => setField("jogType", v)}
                   options={JOG_TYPES} span={2} />
                 <NumInput label="Beam Length #1 (ft)" value={inp.beamLength1} onChange={(v) => setField("beamLength1", v)} hint="Width minus 6in" />
                 <NumInput label="Beam Length #2 (ft)" value={inp.beamLength2} onChange={(v) => setField("beamLength2", v)} />
