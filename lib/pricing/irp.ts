@@ -14,6 +14,7 @@ export interface IRPInputs {
   width1: number;
   projection2: number;
   width2: number;
+  jogType: string;
   panelType: IRPType;
   beamLength1: number;
   beamLength2: number;
@@ -82,30 +83,44 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
     items.push(li("LRP Panel #2 (" + (is4in ? "4.25in" : "3in") + ")", p2Qty, 4 * inp.projection2, panelRate, "sq ft"));
   }
 
+  // A 2nd run's jog only matters once there's a 2nd run at all. A house-wall jog keeps the
+  // gutter/fascia/drip-edge as one continuous piece (the front stays straight) but splits the
+  // hanger in 2 to follow the wall. A ground/deck jog does the opposite: 2 separate gutter/
+  // fascia/drip-edge sets (the front steps), 1 continuous hanger.
+  const hasSecondRun = inp.width2 > 0;
+  const combinedBeamLength = inp.beamLength1 + inp.beamLength2;
+  const splitHanger = hasSecondRun && inp.jogType === "house";
+  const splitGutter = hasSecondRun && inp.jogType === "ground";
+
   // ── HANGER ──
-  if (inp.beamLength1 > 0) {
-    const hangerRate = lrpHangerRate(inp.panelType, inp.beamLength1);
-    items.push(li("LRP Hanger #1", 1, 0, hangerRate));
-  }
-  if (inp.beamLength2 > 0) {
-    const hangerRate2 = lrpHangerRate(inp.panelType, inp.beamLength2);
-    items.push(li("LRP Hanger #2", 1, 0, hangerRate2));
+  if (splitHanger) {
+    if (inp.beamLength1 > 0) items.push(li("LRP Hanger #1", 1, 0, lrpHangerRate(inp.panelType, inp.beamLength1)));
+    if (inp.beamLength2 > 0) items.push(li("LRP Hanger #2", 1, 0, lrpHangerRate(inp.panelType, inp.beamLength2)));
+  } else if (inp.beamLength1 > 0 || inp.beamLength2 > 0) {
+    items.push(li("LRP Hanger", 1, 0, lrpHangerRate(inp.panelType, combinedBeamLength)));
   }
 
   // ── GUTTER ──
-  if (inp.beamLength1 > 0) {
-    const gutterRate = lrpGutterRate(inp.panelType, inp.beamLength1);
-    items.push(li("LRP Gutter #1", 1, 0, gutterRate));
+  if (splitGutter) {
+    if (inp.beamLength1 > 0) items.push(li("LRP Gutter #1", 1, 0, lrpGutterRate(inp.panelType, inp.beamLength1)));
+    if (inp.beamLength2 > 0) items.push(li("LRP Gutter #2", 1, 0, lrpGutterRate(inp.panelType, inp.beamLength2)));
+  } else if (inp.beamLength1 > 0 || inp.beamLength2 > 0) {
+    items.push(li("LRP Gutter", 1, 0, lrpGutterRate(inp.panelType, combinedBeamLength)));
   }
 
-  // ── SIDE FASCIA — 2 sides ──
-  if (inp.projection1 > 0) {
-    const fasciaRate = lrpFasciaRate(inp.panelType, inp.projection1);
-    items.push(li("LRP Side Fascia", 2, 0, fasciaRate));
+  // ── SIDE FASCIA — 2 sides per run ──
+  if (splitGutter) {
+    if (inp.projection1 > 0) items.push(li("LRP Side Fascia #1", 2, 0, lrpFasciaRate(inp.panelType, inp.projection1)));
+    if (inp.projection2 > 0) items.push(li("LRP Side Fascia #2", 2, 0, lrpFasciaRate(inp.panelType, inp.projection2)));
+  } else if (inp.projection1 > 0 || inp.projection2 > 0) {
+    items.push(li("LRP Side Fascia", 2, 0, lrpFasciaRate(inp.panelType, Math.max(inp.projection1, inp.projection2))));
   }
 
   // ── DRIP EDGE ──
-  if (inp.beamLength1 > 0) {
+  if (splitGutter) {
+    if (inp.beamLength1 > 0) items.push(li("LRP Drip Edge #1", 1, 0, RATES.lrp_drip_edge_24));
+    if (inp.beamLength2 > 0) items.push(li("LRP Drip Edge #2", 1, 0, RATES.lrp_drip_edge_24));
+  } else if (inp.beamLength1 > 0 || inp.beamLength2 > 0) {
     items.push(li("LRP Drip Edge", 1, 0, RATES.lrp_drip_edge_24));
   }
 
@@ -190,9 +205,9 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
     items.push(li("Wedge Anchors", wedgeAnchorQty, 0, RATES.anchor_wedge));
   }
 
-  // ── SILICONE ──
-  if (inp.beamLength1 > 0) {
-    items.push(li("Silicone Clear", Math.ceil(inp.beamLength1 / 10), 0, RATES.silicone_clear));
+  // ── SILICONE — combined beam length / 10, rounded up ──
+  if (combinedBeamLength > 0) {
+    items.push(li("Silicone Clear", Math.ceil(combinedBeamLength / 10), 0, RATES.silicone_clear));
   }
 
   // ── PRICING SUMMARY ──

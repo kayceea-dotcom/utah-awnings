@@ -34,10 +34,15 @@ const WRAPS = [
   { value: "2x6",  label: "2x6" },
 ];
 
+const JOG_TYPES = [
+  { value: "ground", label: "Ground / deck (2 gutters/fascia, 1 hanger)" },
+  { value: "house",  label: "House wall (1 gutter/fascia, 2 hangers)" },
+];
+
 const DEFAULT: IRPInputs = {
   jobName: "", salesman: "",
   projection1: 0, width1: 0,
-  projection2: 0, width2: 0,
+  projection2: 0, width2: 0, jogType: "ground",
   panelType: "lrp_3_032",
   beamLength1: 0, beamLength2: 0,
   beamType1: "3x8", beamType2: "",
@@ -290,6 +295,10 @@ export default function IRPQuotePage() {
                 <NumInput label="Width #1 (ft)" value={inp.width1} onChange={handleWidth1Change} hint="Along the house" />
                 <NumInput label="Projection #2 (ft)" value={inp.projection2} onChange={(v) => setField("projection2", v)} hint="0 if single run" />
                 <NumInput label="Width #2 (ft)" value={inp.width2} onChange={handleWidth2Change} />
+                {inp.width2 > 0 && (
+                  <SelectInput label="2nd Run Caused By" value={inp.jogType} onChange={(v) => setField("jogType", v)}
+                    options={JOG_TYPES} span={2} />
+                )}
                 <NumInput label="Beam Length #1 (ft)" value={inp.beamLength1} onChange={(v) => setField("beamLength1", v)} hint="Width minus 6in" />
                 <NumInput label="Beam Length #2 (ft)" value={inp.beamLength2} onChange={(v) => setField("beamLength2", v)} />
               </SectionCard>
