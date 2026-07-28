@@ -9,6 +9,7 @@ import TopBar from "@/components/TopBar";
 import Field from "@/components/quote/Field";
 import MaterialList from "@/components/quote/MaterialList";
 import ProductSwitcher from "@/components/quote/ProductSwitcher";
+import CoverDiagram from "@/components/quote/CoverDiagram";
 import { ChevronDown, ChevronUp, RefreshCw, DollarSign, Send } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useProfile";
 import { useRouter } from "next/navigation";
@@ -355,7 +356,17 @@ export default function IRPQuotePage() {
               {showMaterials && <MaterialList items={result.lineItems} />}
             </div>
 
-            <div className="hidden lg:block w-80 flex-shrink-0 sticky top-20">
+            <div className="hidden lg:block w-80 flex-shrink-0 sticky top-20 space-y-4">
+              <CoverDiagram
+                projection1={inp.projection1}
+                width1={inp.width1}
+                projection2={inp.projection2}
+                width2={inp.width2}
+                jogType={inp.jogType}
+                posts1={inp.posts1}
+                downspouts={inp.downspouts}
+                showRafterTails={false}
+              />
               <PriceSummaryPanel result={result} />
             </div>
           </div>
