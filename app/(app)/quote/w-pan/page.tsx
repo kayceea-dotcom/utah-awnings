@@ -56,6 +56,18 @@ const WRAPS = [
 
 const POST_HEIGHTS = [8, 10, 12, 14, 16, 20];
 
+const HOUSE_ATTACHMENTS = [
+  { value: "stucco",      label: "Stucco" },
+  { value: "siding",      label: "Siding" },
+  { value: "eave",        label: "Eave" },
+  { value: "angled_eave", label: "Angled Eave" },
+];
+const GROUND_ATTACHMENTS = [
+  { value: "concrete",     label: "Concrete" },
+  { value: "deck",         label: "Deck" },
+  { value: "ground_mount", label: "Ground Mount" },
+];
+
 const DEFAULT: WPanInputs = {
   jobName: "", salesman: "",
   projection1: 0, width1: 0,
@@ -71,12 +83,13 @@ const DEFAULT: WPanInputs = {
   colorPans: "White", colorGutterFascia: "White", colorPostsBeam: "White",
   wrapType: "none", rafterTails: true,
   downspouts: 1, sprayPaint: true,
+  houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
   fanBeamQty: 0, fanBeamLength: 16,
   priceIncrease: 0, footings: 0, roofMounts: 0, misc: 0,
   markup: 1.9, taxRate: 0.0745,
 };
 
-type SectionId = "job" | "dimensions" | "structure" | "posts" | "colors" | "extras" | "pricing";
+type SectionId = "job" | "dimensions" | "structure" | "attachment" | "posts" | "colors" | "extras" | "pricing";
 
 function SectionCard({ id, title, open, onToggle, children }: {
   id: SectionId; title: string; open: boolean;
@@ -258,7 +271,7 @@ function PriceSummaryPanel({ result, onClose }: { result: ReturnType<typeof calc
 export default function WPanQuotePage() {
   const [inp, setInp] = useState<WPanInputs>(DEFAULT);
   const [open, setOpen] = useState<Set<SectionId>>(
-    new Set(["job","dimensions","structure","posts","colors","extras","pricing"] as SectionId[])
+    new Set(["job","dimensions","structure","attachment","posts","colors","extras","pricing"] as SectionId[])
   );
   const [showMaterials, setShowMaterials] = useState(false);
   const [showPricePanel, setShowPricePanel] = useState(false);
@@ -349,6 +362,15 @@ export default function WPanQuotePage() {
                 <SelectInput label="Gutter Type" value={inp.gutterType} onChange={(v) => setField("gutterType", v)} options={GUTTERS} />
                 <SelectInput label="Wrap Type" value={inp.wrapType} onChange={(v) => setField("wrapType", v)} options={WRAPS} />
                 <ToggleInput label="Rafter Tails" value={inp.rafterTails} onChange={(v) => setField("rafterTails", v)} />
+              </SectionCard>
+
+              <SectionCard id="attachment" title="Attachment" open={open.has("attachment")} onToggle={toggleSection}>
+                <SelectInput label="House Attachment" value={inp.houseAttachment} onChange={(v) => setField("houseAttachment", v as never)} options={HOUSE_ATTACHMENTS} />
+                <SelectInput label="Ground Attachment" value={inp.groundAttachment} onChange={(v) => setField("groundAttachment", v as never)} options={GROUND_ATTACHMENTS} />
+                {inp.groundAttachment === "deck" && (
+                  <NumInput label="Deck Height (ft)" value={inp.deckHeight} onChange={(v) => setField("deckHeight", v)}
+                    hint="12ft or over adds $250" span={2} />
+                )}
               </SectionCard>
 
               <SectionCard id="posts" title="Posts" open={open.has("posts")} onToggle={toggleSection}>

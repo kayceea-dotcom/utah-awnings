@@ -131,7 +131,7 @@ export function newportToScene(inp: NewportInputs, cosmetic?: CosmeticOverrides)
       postsBeam: inp.colorPostsBeam,
       accent: cosmetic?.accentColor ?? inp.colorPostsBeam,
     },
-    groundMount: inp.groundMountPosts1 || inp.groundMountPosts2,
+    groundMount: inp.groundAttachment === "ground_mount",
     extras: {
       trim: cosmetic?.trim ?? { enabled: false, color: inp.colorGutterFascia },
       recessedLights: cosmetic?.recessedLights ?? { enabled: false, qty: 0 },

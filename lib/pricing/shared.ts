@@ -54,12 +54,16 @@ export function beamEndcapRate(beamType: string): number {
   return 0;
 }
 
-// 2 anchors per post, skipping whichever post group is ground-mounted (no anchor needed).
-export function anchorQty(
-  posts1: number, groundMountPosts1: boolean,
-  posts2: number, groundMountPosts2: boolean
-): number {
-  return (groundMountPosts1 ? 0 : posts1 * 2) + (groundMountPosts2 ? 0 : posts2 * 2);
+// 2 anchors per post — skipped entirely when the job is ground-mounted (posts set
+// directly, no concrete/deck surface to anchor into).
+export function anchorQty(totalPosts: number, groundAttachment: string): number {
+  return groundAttachment === "ground_mount" ? 0 : totalPosts * 2;
+}
+
+// A deck-mounted job 12ft or higher needs extra labor/hardware to work at height -
+// folded into the Misc $ field rather than its own line item.
+export function deckHeightSurcharge(groundAttachment: string, deckHeight: number): number {
+  return groundAttachment === "deck" && deckHeight >= 12 ? 250 : 0;
 }
 
 // ── Wrap kit ──────────────────────────────────────────────────────────────

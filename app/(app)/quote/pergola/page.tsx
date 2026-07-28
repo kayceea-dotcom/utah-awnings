@@ -53,6 +53,18 @@ const RAFTER_GAUGES = [
 
 const POST_HEIGHTS = [8, 10, 12, 14, 16, 20];
 
+const HOUSE_ATTACHMENTS = [
+  { value: "stucco",      label: "Stucco" },
+  { value: "siding",      label: "Siding" },
+  { value: "eave",        label: "Eave" },
+  { value: "angled_eave", label: "Angled Eave" },
+];
+const GROUND_ATTACHMENTS = [
+  { value: "concrete",     label: "Concrete" },
+  { value: "deck",         label: "Deck" },
+  { value: "ground_mount", label: "Ground Mount" },
+];
+
 const DEFAULT: PergolaInputs = {
   jobName: "", salesman: "",
   projection: 0, width: 0,
@@ -63,13 +75,14 @@ const DEFAULT: PergolaInputs = {
   posts: 0, postHeight: 10,
   colorPergola: "White",
   endCut: "scallop", endCutSide: "one_end",
-  sprayPaint: false, groundMount: false,
+  sprayPaint: false,
+  houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
   shadeBeamQty: 0,
   priceIncrease: 0, footings: 0, roofMounts: 0, misc: 0,
   markup: 1.8, taxRate: 0.0745,
 };
 
-type SectionId = "job" | "dimensions" | "structure" | "posts" | "colors" | "pricing";
+type SectionId = "job" | "dimensions" | "structure" | "attachment" | "posts" | "colors" | "pricing";
 
 function SectionCard({ id, title, open, onToggle, children }: {
   id: SectionId; title: string; open: boolean;
@@ -254,7 +267,7 @@ function PriceSummaryPanel({ result, onClose }: { result: ReturnType<typeof calc
 export default function PergolaQuotePage() {
   const [inp, setInp] = useState<PergolaInputs>(DEFAULT);
   const [open, setOpen] = useState<Set<SectionId>>(
-    new Set(["job","dimensions","structure","posts","colors","pricing"] as SectionId[])
+    new Set(["job","dimensions","structure","attachment","posts","colors","pricing"] as SectionId[])
   );
   const [showMaterials, setShowMaterials] = useState(false);
   const [showPricePanel, setShowPricePanel] = useState(false);
@@ -325,11 +338,19 @@ export default function PergolaQuotePage() {
                 <ToggleInput label="Spray Paint" value={inp.sprayPaint} onChange={(v) => setField("sprayPaint", v)} yesLabel="include" />
               </SectionCard>
 
+              <SectionCard id="attachment" title="Attachment" open={open.has("attachment")} onToggle={toggleSection}>
+                <SelectInput label="House Attachment" value={inp.houseAttachment} onChange={(v) => setField("houseAttachment", v as never)} options={HOUSE_ATTACHMENTS} />
+                <SelectInput label="Ground Attachment" value={inp.groundAttachment} onChange={(v) => setField("groundAttachment", v as never)} options={GROUND_ATTACHMENTS} />
+                {inp.groundAttachment === "deck" && (
+                  <NumInput label="Deck Height (ft)" value={inp.deckHeight} onChange={(v) => setField("deckHeight", v)}
+                    hint="12ft or over adds $250" span={2} />
+                )}
+              </SectionCard>
+
               <SectionCard id="posts" title="Posts" open={open.has("posts")} onToggle={toggleSection}>
                 <NumInput label="Posts (qty)" value={inp.posts} onChange={(v) => setField("posts", v)} />
                 <SelectInput label="Post Height (ft)" value={String(inp.postHeight)} onChange={(v) => setField("postHeight", Number(v))}
                   options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))} />
-                <ToggleInput label="Ground Mount Posts" value={inp.groundMount} onChange={(v) => setField("groundMount", v)} />
               </SectionCard>
 
               <SectionCard id="colors" title="Colors" open={open.has("colors")} onToggle={toggleSection}>

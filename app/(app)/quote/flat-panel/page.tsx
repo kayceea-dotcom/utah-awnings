@@ -79,6 +79,18 @@ const WRAPS = [
 ];
 const COLOR_OPTS = COLORS.map((c) => ({ value: c, label: c }));
 
+const HOUSE_ATTACHMENTS = [
+  { value: "stucco",      label: "Stucco" },
+  { value: "siding",      label: "Siding" },
+  { value: "eave",        label: "Eave" },
+  { value: "angled_eave", label: "Angled Eave" },
+];
+const GROUND_ATTACHMENTS = [
+  { value: "concrete",     label: "Concrete" },
+  { value: "deck",         label: "Deck" },
+  { value: "ground_mount", label: "Ground Mount" },
+];
+
 const DEFAULT: NewportInputs = {
   jobName: "", salesman: "",
   projection1: 0, width1: 0,
@@ -94,7 +106,7 @@ const DEFAULT: NewportInputs = {
   wrapType: "2x6",
   rafterTails: true, bayWindowPopout: false,
   downspouts: 1, sprayPaint: true,
-  groundMountPosts1: false, groundMountPosts2: false,
+  houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
   fanBeamQty: 0, fanBeamLength: 16,
   shadeBeamQty: 0,
   priceIncrease: 0, footings: 0, roofMounts: 0, misc: 0,
@@ -102,7 +114,7 @@ const DEFAULT: NewportInputs = {
   beams: [],
 };
 
-type SectionId = "job" | "dimensions" | "structure" | "posts" | "colors" | "extras" | "pricing";
+type SectionId = "job" | "dimensions" | "structure" | "attachment" | "posts" | "colors" | "extras" | "pricing";
 
 // ── Standalone components ─────────────────────────────────────────────────
 
@@ -345,7 +357,7 @@ export default function FlatPanelQuotePage() {
   const [cosmetic, setCosmetic] = useState<CosmeticOverrides>({});
   const [capturedRenderUrl, setCapturedRenderUrl] = useState("");
   const [open, setOpen] = useState<Set<SectionId>>(
-    new Set(["job","dimensions","structure","posts","colors","extras","pricing"] as SectionId[])
+    new Set(["job","dimensions","structure","attachment","posts","colors","extras","pricing"] as SectionId[])
   );
   const [showMaterials, setShowMaterials] = useState(false);
   const [showPricePanel, setShowPricePanel] = useState(false);
@@ -433,17 +445,22 @@ export default function FlatPanelQuotePage() {
                 <ToggleInput label="Rafter Tails" value={inp.rafterTails} onChange={(v) => setField("rafterTails", v)} />
               </SectionCard>
 
+              <SectionCard id="attachment" title="Attachment" open={open.has("attachment")} onToggle={toggleSection}>
+                <SelectInput label="House Attachment" value={inp.houseAttachment} onChange={(v) => setField("houseAttachment", v as never)} options={HOUSE_ATTACHMENTS} />
+                <SelectInput label="Ground Attachment" value={inp.groundAttachment} onChange={(v) => setField("groundAttachment", v as never)} options={GROUND_ATTACHMENTS} />
+                {inp.groundAttachment === "deck" && (
+                  <NumInput label="Deck Height (ft)" value={inp.deckHeight} onChange={(v) => setField("deckHeight", v)}
+                    hint="12ft or over adds $250" span={2} />
+                )}
+              </SectionCard>
+
               <SectionCard id="posts" title="Posts" open={open.has("posts")} onToggle={toggleSection}>
                 <NumInput label="Posts #1 (qty)" value={inp.posts1} onChange={(v) => setField("posts1", v)} />
                 <SelectInput label="Height #1 (ft)" value={String(inp.postHeight1)} onChange={(v) => setField("postHeight1", Number(v))}
                   options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))} />
-                <ToggleInput label="Ground Mount Posts #1" value={inp.groundMountPosts1} onChange={(v) => setField("groundMountPosts1", v)}
-                  yesLabel="no anchors needed" />
                 <NumInput label="Posts #2 (qty)" value={inp.posts2} onChange={(v) => setField("posts2", v)} />
                 <SelectInput label="Height #2 (ft)" value={String(inp.postHeight2)} onChange={(v) => setField("postHeight2", Number(v))}
                   options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))} />
-                <ToggleInput label="Ground Mount Posts #2" value={inp.groundMountPosts2} onChange={(v) => setField("groundMountPosts2", v)}
-                  yesLabel="no anchors needed" />
                 <NumInput label="Downspouts" value={inp.downspouts} onChange={(v) => setField("downspouts", v)} />
                 <ToggleInput label="Spray Paint" value={inp.sprayPaint} onChange={(v) => setField("sprayPaint", v)} yesLabel="include" />
               </SectionCard>

@@ -2,7 +2,7 @@ import { RATES } from "./rates";
 import type { NewportInputs, LineItem, QuoteResult } from "./types";
 import {
   li, nextStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, anchorQty,
-  wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen,
+  wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen, deckHeightSurcharge,
 } from "./shared";
 
 function panelRate(type: string): number {
@@ -174,7 +174,7 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   }
 
   // ── ANCHORS — 2 per post, skip whichever post group is ground-mounted (no anchor needed) ──
-  const wedgeAnchorQty = anchorQty(inp.posts1, inp.groundMountPosts1, inp.posts2, inp.groundMountPosts2);
+  const wedgeAnchorQty = anchorQty(totalPosts, inp.groundAttachment);
   if (wedgeAnchorQty > 0) {
     items.push(li("Wedge Anchors", wedgeAnchorQty, 0, RATES.anchor_wedge));
   }
@@ -204,11 +204,12 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   }
 
   // ── PRICING SUMMARY ──
+  const misc                = inp.misc + deckHeightSurcharge(inp.groundAttachment, inp.deckHeight);
   const materialCost        = items.reduce((s, i) => s + i.amount, 0);
   const taxes               = materialCost * inp.taxRate;
   const priceIncreaseDollar = (materialCost + taxes) * inp.priceIncrease;
   const totalMaterials      = materialCost + taxes + priceIncreaseDollar;
-  const subtotal            = totalMaterials + inp.footings + inp.roofMounts + inp.misc;
+  const subtotal            = totalMaterials + inp.footings + inp.roofMounts + misc;
   const preSaleTotal        = subtotal * inp.markup;
   const ccFee               = preSaleTotal * RATES.CC_FEE_RATE / (1 - RATES.CC_FEE_RATE);
   const totalJobSale        = preSaleTotal + ccFee;
@@ -224,7 +225,7 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     totalMaterials,
     footings:   inp.footings,
     roofMounts: inp.roofMounts,
-    misc:       inp.misc,
+    misc,
     subtotal, markup: inp.markup, ccFee,
     totalJobSale, totalProfit,
     costPerSqFt:  totalSqFt > 0 ? subtotal     / totalSqFt : 0,

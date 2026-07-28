@@ -1,8 +1,8 @@
 import { RATES } from "./rates";
-import type { LineItem, QuoteResult } from "./types";
+import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType } from "./types";
 import {
   li, nextStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, anchorQty,
-  wrapKitRates, wrapKitFinishingItems,
+  wrapKitRates, wrapKitFinishingItems, deckHeightSurcharge,
 } from "./shared";
 
 export type IRPType = "lrp_3_032" | "lrp_4_032";
@@ -24,12 +24,13 @@ export interface IRPInputs {
   postHeight1: number;
   posts2: number;
   postHeight2: number;
-  groundMountPosts1: boolean;
-  groundMountPosts2: boolean;
   colorPostsBeam: string;
   wrapType: string;
   downspouts: number;
   sprayPaint: boolean;
+  houseAttachment: HouseAttachmentType;
+  groundAttachment: GroundAttachmentType;
+  deckHeight: number;
   priceIncrease: number;
   footings: number;
   roofMounts: number;
@@ -202,7 +203,7 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
   }
 
   // ── ANCHORS — 2 per post, skip whichever post group is ground-mounted (no anchor needed) ──
-  const wedgeAnchorQty = anchorQty(inp.posts1, inp.groundMountPosts1, inp.posts2, inp.groundMountPosts2);
+  const wedgeAnchorQty = anchorQty(totalPosts, inp.groundAttachment);
   if (wedgeAnchorQty > 0) {
     items.push(li("Wedge Anchors", wedgeAnchorQty, 0, RATES.anchor_wedge));
   }
@@ -213,11 +214,12 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
   }
 
   // ── PRICING SUMMARY ──
+  const misc                = inp.misc + deckHeightSurcharge(inp.groundAttachment, inp.deckHeight);
   const materialCost        = items.reduce((s, i) => s + i.amount, 0);
   const taxes               = materialCost * inp.taxRate;
   const priceIncreaseDollar = (materialCost + taxes) * inp.priceIncrease;
   const totalMaterials      = materialCost + taxes + priceIncreaseDollar;
-  const subtotal            = totalMaterials + inp.footings + inp.roofMounts + inp.misc;
+  const subtotal            = totalMaterials + inp.footings + inp.roofMounts + misc;
   const preSaleTotal        = subtotal * inp.markup;
   const ccFee               = preSaleTotal * RATES.CC_FEE_RATE / (1 - RATES.CC_FEE_RATE);
   const totalJobSale        = preSaleTotal + ccFee;
@@ -233,7 +235,7 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
     totalMaterials,
     footings:   inp.footings,
     roofMounts: inp.roofMounts,
-    misc:       inp.misc,
+    misc,
     subtotal, markup: inp.markup, ccFee,
     totalJobSale, totalProfit,
     costPerSqFt:  totalSqFt > 0 ? subtotal     / totalSqFt : 0,

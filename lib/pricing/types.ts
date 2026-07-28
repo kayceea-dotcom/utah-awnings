@@ -18,6 +18,12 @@ export type WrapType = "none" | "2x6" | "3x8";
 // edge steps (two separate beams/gutters) but the hanger stays continuous.
 export type JogType = "house" | "ground";
 
+// What the cover attaches to on the house side - informational only, no pricing impact.
+export type HouseAttachmentType = "stucco" | "siding" | "eave" | "angled_eave";
+// What the posts land on. Ground-mounted posts skip anchors entirely (set directly,
+// no surface to anchor into); concrete/deck both need wedge anchors.
+export type GroundAttachmentType = "concrete" | "deck" | "ground_mount";
+
 export interface BeamConfig {
   type: string;
   qty: number;
@@ -58,8 +64,9 @@ export interface NewportInputs {
   bayWindowPopout: boolean;
   downspouts: number;
   sprayPaint: boolean;
-  groundMountPosts1: boolean;
-  groundMountPosts2: boolean;
+  houseAttachment: HouseAttachmentType;
+  groundAttachment: GroundAttachmentType;
+  deckHeight: number;
   fanBeamQty: number;
   fanBeamLength: number;
   shadeBeamQty: number;

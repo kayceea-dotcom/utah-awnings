@@ -1,6 +1,6 @@
 import { RATES } from "./rates";
-import type { LineItem, QuoteResult } from "./types";
-import { li, nextStockLength } from "./shared";
+import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType } from "./types";
+import { li, nextStockLength, anchorQty, deckHeightSurcharge } from "./shared";
 
 export interface PergolaInputs {
   jobName: string;
@@ -21,7 +21,9 @@ export interface PergolaInputs {
   endCut: string;
   endCutSide: string;
   sprayPaint: boolean;
-  groundMount: boolean;
+  houseAttachment: HouseAttachmentType;
+  groundAttachment: GroundAttachmentType;
+  deckHeight: number;
   shadeBeamQty: number;
   priceIncrease: number;
   footings: number;
@@ -144,8 +146,9 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
   }
 
   // ── ANCHORS ──
-  if (totalPosts > 0) {
-    items.push(li("Wedge Anchors", totalPosts * 2, 0, RATES.anchor_wedge));
+  const wedgeAnchorQty = anchorQty(totalPosts, inp.groundAttachment);
+  if (wedgeAnchorQty > 0) {
+    items.push(li("Wedge Anchors", wedgeAnchorQty, 0, RATES.anchor_wedge));
   }
 
   // ── BEAM END CAPS — 2 per beam ──
@@ -159,11 +162,12 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
   }
 
   // ── PRICING SUMMARY ──
+  const misc                = inp.misc + deckHeightSurcharge(inp.groundAttachment, inp.deckHeight);
   const materialCost        = items.reduce((s, i) => s + i.amount, 0);
   const taxes               = materialCost * inp.taxRate;
   const priceIncreaseDollar = (materialCost + taxes) * inp.priceIncrease;
   const totalMaterials      = materialCost + taxes + priceIncreaseDollar;
-  const subtotal            = totalMaterials + inp.footings + inp.roofMounts + inp.misc;
+  const subtotal            = totalMaterials + inp.footings + inp.roofMounts + misc;
   const preSaleTotal        = subtotal * inp.markup;
   const ccFee               = preSaleTotal * RATES.CC_FEE_RATE / (1 - RATES.CC_FEE_RATE);
   const totalJobSale        = preSaleTotal + ccFee;
@@ -177,7 +181,7 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
     totalMaterials,
     footings:   inp.footings,
     roofMounts: inp.roofMounts,
-    misc:       inp.misc,
+    misc,
     subtotal, markup: inp.markup, ccFee,
     totalJobSale, totalProfit,
     costPerSqFt:  totalSqFt > 0 ? subtotal     / totalSqFt : 0,
