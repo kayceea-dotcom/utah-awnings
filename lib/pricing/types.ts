@@ -79,6 +79,10 @@ export interface LineItem {
   rate: number;
   amount: number;
   color?: string;
+  // Overrides what's shown in the material list's "Len" column, for items whose
+  // `length` is actually an area (qty x length x rate) rather than a real linear
+  // length - e.g. IRP/LRP panels, priced per sq ft with length = 4 x projection.
+  displayLength?: number;
 }
 
 export interface QuoteResult {

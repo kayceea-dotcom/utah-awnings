@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     // Build HTML table for order sheet
     const tableRows = lineItems.map((item) => {
       const qty = item.qty as number;
-      const length = item.length as number;
+      const length = (item.displayLength as number) ?? (item.length as number);
       const name = item.name as string;
       const color = item.color as string || "";
       return `

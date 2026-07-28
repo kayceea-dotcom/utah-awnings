@@ -70,17 +70,19 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
   const panelRate = inp.panelType === "lrp_4_032" ? RATES.IRP_4_032 : RATES.IRP_3_032;
   const is4in = inp.panelType === "lrp_4_032";
 
-  // ── PANELS — IRP/LRP is 4ft wide, priced per sq ft. Length is each panel's
-  // own area (4ft x projection), not just the projection, so qty x length x
-  // rate comes out to the real total square footage x $/sqft. ──
+  // ── PANELS — IRP/LRP is 4ft wide, priced per sq ft. `length` here is each panel's
+  // own area (4ft x projection), not just the projection, so qty x length x rate
+  // comes out to the real total square footage x $/sqft. displayLength overrides
+  // what the material list shows so it reads as the real linear length instead of
+  // that area value. ──
   const p1Qty = inp.projection1 > 0 ? Math.ceil(inp.width1 / 4) : 0;
   const p2Qty = inp.projection2 > 0 ? Math.ceil(inp.width2 / 4) : 0;
 
   if (p1Qty > 0) {
-    items.push(li("LRP Panel #1 (" + (is4in ? "4.25in" : "3in") + ")", p1Qty, 4 * inp.projection1, panelRate, "sq ft"));
+    items.push(li("LRP Panel #1 (" + (is4in ? "4.25in" : "3in") + ")", p1Qty, 4 * inp.projection1, panelRate, "sq ft", "", inp.projection1));
   }
   if (p2Qty > 0) {
-    items.push(li("LRP Panel #2 (" + (is4in ? "4.25in" : "3in") + ")", p2Qty, 4 * inp.projection2, panelRate, "sq ft"));
+    items.push(li("LRP Panel #2 (" + (is4in ? "4.25in" : "3in") + ")", p2Qty, 4 * inp.projection2, panelRate, "sq ft", "", inp.projection2));
   }
 
   // A 2nd run's jog only matters once there's a 2nd run at all. A house-wall jog keeps the

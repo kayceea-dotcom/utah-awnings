@@ -8,9 +8,9 @@ import type { LineItem } from "./types";
 
 export function li(
   name: string, qty: number, length: number, rate: number,
-  unit = "", color = ""
+  unit = "", color = "", displayLength?: number
 ): LineItem {
-  return { name, qty, length, unit, rate, amount: qty * (length || 1) * rate, color };
+  return { name, qty, length, unit, rate, amount: qty * (length || 1) * rate, color, displayLength };
 }
 
 // Real supplier stock lengths (not a uniform step) — smallest one that fits. 4/8ft

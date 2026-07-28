@@ -23,7 +23,7 @@ export default function MaterialList({ items }: { items: LineItem[] }) {
               <tr key={i} className="hover:bg-slate-50 transition">
                 <td className="px-4 py-2.5 text-slate-800 font-medium">{item.name}</td>
                 <td className="px-4 py-2.5 text-slate-600 font-mono">{item.qty}</td>
-                <td className="px-4 py-2.5 text-slate-600 font-mono">{item.length || "-"}</td>
+                <td className="px-4 py-2.5 text-slate-600 font-mono">{(item.displayLength ?? item.length) || "-"}</td>
                 <td className="px-4 py-2.5">
                   {item.color && (
                     <span className="inline-block px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-600 font-medium">
