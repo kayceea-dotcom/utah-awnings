@@ -1,6 +1,6 @@
 import { RATES } from "./rates";
 import type { LineItem, QuoteResult } from "./types";
-import { li, nextStockLength, wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems } from "./shared";
+import { li, nextStockLength, wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen } from "./shared";
 
 export type WPanType = "wpan_032" | "duraking_025" | "duraking_032" | "duraking_040";
 
@@ -81,12 +81,12 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   // Gutter spans combined width, rounded to next stock length
   const gutterStockLen = nextStockLength(totalWidth + 1.5);
   const maxProjection = Math.max(inp.projection1, inp.projection2 || 0);
-  const fasciaStockLen = nextStockLength(maxProjection);
   if (inp.gutterType === "roll_form") {
     items.push(li("Roll Form Gutter", 1, totalWidth + 1.5, RATES.gutter_roll_form_ft, "", inp.colorGutterFascia));
   } else {
     items.push(li("Extruded Gutter 2.5in", 1, gutterStockLen, RATES.gutter_extruded_ft, "", inp.colorGutterFascia));
-    items.push(li("Extruded Side Fascia", 2, fasciaStockLen, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
+    const { qty: fasciaQty, length: fasciaStockLen } = fasciaQtyLen(maxProjection);
+    items.push(li("Extruded Side Fascia", fasciaQty, fasciaStockLen, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
   }
 
   // ── WRAP KIT — front plate gutter, rafter tails, inside/outside brackets ──

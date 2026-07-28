@@ -2,7 +2,7 @@ import { RATES } from "./rates";
 import type { NewportInputs, LineItem, QuoteResult } from "./types";
 import {
   li, nextStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, anchorQty,
-  wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems,
+  wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen,
 } from "./shared";
 
 function panelRate(type: string): number {
@@ -69,10 +69,11 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   }
 
   // ── EXTRUDED SIDE FASCIA — only with extruded gutter; length keyed off the DEEPER of the two
-  // projections. Rate is a single fixed value, not split by wrap type. ──
+  // projections. Rate is a single fixed value, not split by wrap type. Up to a 12ft
+  // projection, 1 piece covers both sides (cut in half); past that, 2 separate pieces. ──
   if (inp.gutterType === "extruded" && (inp.projection1 > 0 || inp.projection2 > 0)) {
-    const fasciaLen = nextStockLength(Math.max(inp.projection1, inp.projection2));
-    items.push(li("Extruded Side Fascia", 2, fasciaLen, RATES.fascia_extruded_ft, "", inp.colorGutterFascia));
+    const { qty: fasciaQty, length: fasciaLen } = fasciaQtyLen(Math.max(inp.projection1, inp.projection2));
+    items.push(li("Extruded Side Fascia", fasciaQty, fasciaLen, RATES.fascia_extruded_ft, "", inp.colorGutterFascia));
   }
 
   // ── WRAP KIT — front plate gutter, rafter tails, inside/outside brackets ──

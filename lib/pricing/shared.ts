@@ -13,10 +13,23 @@ export function li(
   return { name, qty, length, unit, rate, amount: qty * (length || 1) * rate, color };
 }
 
-// Real supplier stock lengths (not a uniform step) — smallest one that fits.
-const STOCK_LENGTHS = [16, 20, 24, 32, 40, 48, 60, 72, 80];
+// Real supplier stock lengths (not a uniform step) — smallest one that fits. 4/8ft
+// pieces are cut-offs the supplier still stocks (e.g. the 8ft left over cutting a
+// 16ft piece off a 24ft gutter or steel beam), not a separate short product line.
+const STOCK_LENGTHS = [4, 8, 16, 20, 24, 32, 40, 48, 60, 72, 80];
 export function nextStockLength(ft: number): number {
   return STOCK_LENGTHS.find((len) => ft <= len) ?? STOCK_LENGTHS[STOCK_LENGTHS.length - 1];
+}
+
+// Extruded side fascia stock only goes up to 24ft. Up to a 12ft projection, one
+// piece covers both sides (cut in half) — 8ft -> one 16ft piece, 10ft -> one 20ft,
+// 12ft -> one 24ft. Past 12ft, a single piece can't cover both cuts anymore, so it's
+// back to 2 separate pieces, each its own stock length.
+export function fasciaQtyLen(maxProjection: number): { qty: number; length: number } {
+  if (maxProjection <= 12) {
+    return { qty: 1, length: nextStockLength(2 * maxProjection) };
+  }
+  return { qty: 2, length: nextStockLength(maxProjection) };
 }
 
 // Beam material rate depends on the selected beam type.
