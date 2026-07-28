@@ -290,7 +290,7 @@ export default function IndividualQuotePage() {
                   {/* Items table */}
                   {inp.items.length > 0 && (
                     <div className="overflow-x-auto border border-gray-200 rounded-xl">
-                      <table className="w-full text-sm">
+                      <table className="w-full min-w-[640px] text-sm">
                         <thead>
                           <tr className="bg-gray-50 text-left">
                             {["Item","Qty","Len","Color","Rate","Amount",""].map((h) => (
