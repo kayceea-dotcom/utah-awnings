@@ -1,6 +1,9 @@
 import { RATES } from "./rates";
-import type { LineItem, QuoteResult } from "./types";
-import { li, nextStockLength, wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen } from "./shared";
+import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType } from "./types";
+import {
+  li, nextStockLength, wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen,
+  anchorQty, deckHeightSurcharge,
+} from "./shared";
 
 export type WPanType = "wpan_032" | "duraking_025" | "duraking_032" | "duraking_040";
 
@@ -32,6 +35,9 @@ export interface WPanInputs {
   rafterTails: boolean;
   downspouts: number;
   sprayPaint: boolean;
+  houseAttachment: HouseAttachmentType;
+  groundAttachment: GroundAttachmentType;
+  deckHeight: number;
   fanBeamQty: number;
   fanBeamLength: number;
   priceIncrease: number;
@@ -192,8 +198,9 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   }
 
   // ── ANCHORS ──
-  if (totalPosts > 0) {
-    items.push(li("Wedge Anchors", totalPosts * 2, 0, RATES.anchor_wedge));
+  const wedgeAnchorQty = anchorQty(totalPosts, inp.groundAttachment);
+  if (wedgeAnchorQty > 0) {
+    items.push(li("Wedge Anchors", wedgeAnchorQty, 0, RATES.anchor_wedge));
   }
 
   // ── BEAM END CAPS ──
@@ -222,11 +229,12 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   }
 
   // ── PRICING SUMMARY ──
+  const misc                = inp.misc + deckHeightSurcharge(inp.groundAttachment, inp.deckHeight);
   const materialCost        = items.reduce((s, i) => s + i.amount, 0);
   const taxes               = materialCost * inp.taxRate;
   const priceIncreaseDollar = (materialCost + taxes) * inp.priceIncrease;
   const totalMaterials      = materialCost + taxes + priceIncreaseDollar;
-  const subtotal            = totalMaterials + inp.footings + inp.roofMounts + inp.misc;
+  const subtotal            = totalMaterials + inp.footings + inp.roofMounts + misc;
   const preSaleTotal        = subtotal * inp.markup;
   const ccFee               = preSaleTotal * RATES.CC_FEE_RATE / (1 - RATES.CC_FEE_RATE);
   const totalJobSale        = preSaleTotal + ccFee;
@@ -242,7 +250,7 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     totalMaterials,
     footings:   inp.footings,
     roofMounts: inp.roofMounts,
-    misc:       inp.misc,
+    misc,
     subtotal, markup: inp.markup, ccFee,
     totalJobSale, totalProfit,
     costPerSqFt:  totalSqFt > 0 ? subtotal     / totalSqFt : 0,
