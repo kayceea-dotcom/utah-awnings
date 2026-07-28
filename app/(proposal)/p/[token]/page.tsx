@@ -165,20 +165,21 @@ export default function ProposalPage() {
           <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
             <CheckCircle size={32} className="text-green-600" />
           </div>
-          <h1 className="text-xl font-bold text-gray-900 mb-2">You are all set!</h1>
+          <h1 className="text-xl font-bold text-gray-900 mb-2">
+            {paymentMethod === "card" ? "Contract received!" : "You are all set!"}
+          </h1>
           <p className="text-gray-500 text-sm mb-4">
             Thank you for choosing Utah Awnings. We will be in touch shortly to confirm your install date.
           </p>
-          {paymentMethod !== "card" && (
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-left">
-              <p className="text-blue-800 text-sm font-semibold mb-1">Next Steps</p>
-              <p className="text-blue-700 text-sm">
-                {paymentMethod === "check" && "Please make your deposit check payable to Utah Awnings and mail or deliver it to our office."}
-                {paymentMethod === "cash" && "Please bring your deposit payment to our office or arrange with your sales rep."}
-                {paymentMethod === "financing" && "A Utah Awnings team member will contact you shortly to discuss financing options."}
-              </p>
-            </div>
-          )}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-left">
+            <p className="text-blue-800 text-sm font-semibold mb-1">Next Steps</p>
+            <p className="text-blue-700 text-sm">
+              {paymentMethod === "card" && "Online card payment isn't available yet - a Utah Awnings team member will call you shortly to collect your deposit securely over the phone."}
+              {paymentMethod === "check" && "Please make your deposit check payable to Utah Awnings and mail or deliver it to our office."}
+              {paymentMethod === "cash" && "Please bring your deposit payment to our office or arrange with your sales rep."}
+              {paymentMethod === "financing" && "A Utah Awnings team member will contact you shortly to discuss financing options."}
+            </p>
+          </div>
           <p className="text-gray-400 text-xs mt-6">
             Questions? Call us at 801-979-5423
           </p>
