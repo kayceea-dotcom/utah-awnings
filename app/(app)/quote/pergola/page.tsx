@@ -11,6 +11,7 @@ import MaterialList from "@/components/quote/MaterialList";
 import { ChevronDown, ChevronUp, RefreshCw, DollarSign } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useProfile";
 import CoverDiagram from "@/components/quote/CoverDiagram";
+import ProductSwitcher from "@/components/quote/ProductSwitcher";
 
 const COLORS = ["White","Siennawood","Slate","Driftwood","Beechwood","Maplewood","Ebony","Sandlewood"];
 const COLOR_OPTS = COLORS.map((c) => ({ value: c, label: c }));
@@ -283,7 +284,7 @@ export default function PergolaQuotePage() {
 
   return (
     <>
-      <TopBar title="Pergola" subtitle="Open air rafter and lattice system - live pricing">
+      <TopBar title="Pergola" subtitle="Open air rafter and lattice system - live pricing" titleNode={<ProductSwitcher current="pergola" />}>
         <button onClick={() => setInp(DEFAULT)} className="btn-secondary text-xs px-3 py-2">
           <RefreshCw size={13} /> Reset
         </button>

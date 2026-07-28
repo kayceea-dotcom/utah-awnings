@@ -18,6 +18,7 @@ import { useProfile } from "@/lib/hooks/useProfile";
 import { useRouter } from "next/navigation";
 import SaveQuoteModal from "@/components/quote/SaveQuoteModal";
 import CoverDiagram from "@/components/quote/CoverDiagram";
+import ProductSwitcher from "@/components/quote/ProductSwitcher";
 
 const Viewer3DPanel = dynamicImport(() => import("@/components/viewer3d/Viewer3DPanel"), {
   ssr: false,
@@ -382,7 +383,7 @@ export default function FlatPanelQuotePage() {
 
   return (
     <>
-      <TopBar title="Flat Panel" subtitle="T6 flat pan roof system - live pricing">
+      <TopBar title="Flat Panel" subtitle="T6 flat pan roof system - live pricing" titleNode={<ProductSwitcher current="flat-panel" />}>
         <button onClick={() => setInp(DEFAULT)} className="btn-secondary text-xs px-3 py-2">
           <RefreshCw size={13} /> Reset
         </button>

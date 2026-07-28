@@ -8,6 +8,7 @@ import type { IRPInputs, IRPType } from "@/lib/pricing/irp";
 import TopBar from "@/components/TopBar";
 import Field from "@/components/quote/Field";
 import MaterialList from "@/components/quote/MaterialList";
+import ProductSwitcher from "@/components/quote/ProductSwitcher";
 import { ChevronDown, ChevronUp, RefreshCw, DollarSign } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useProfile";
 
@@ -273,7 +274,7 @@ export default function IRPQuotePage() {
 
   return (
     <>
-      <TopBar title="IRP / LRP" subtitle="Insulated roof panel system - live pricing">
+      <TopBar title="IRP / LRP" subtitle="Insulated roof panel system - live pricing" titleNode={<ProductSwitcher current="irp" />}>
         <button onClick={() => setInp(DEFAULT)} className="btn-secondary text-xs px-3 py-2">
           <RefreshCw size={13} /> Reset
         </button>

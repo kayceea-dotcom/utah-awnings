@@ -13,6 +13,7 @@ import { ChevronDown, ChevronUp, RefreshCw, Plus, Trash2, Send } from "lucide-re
 import { useProfile } from "@/lib/hooks/useProfile";
 import { useRouter } from "next/navigation";
 import SaveQuoteModal from "@/components/quote/SaveQuoteModal";
+import ProductSwitcher from "@/components/quote/ProductSwitcher";
 
 const COLORS = ["White","Siennawood","Slate","Driftwood","Beechwood","Maplewood","Ebony","Sandlewood"];
 const COLOR_OPTS = [{ value: "", label: "None" }, ...COLORS.map((c) => ({ value: c, label: c }))];
@@ -246,7 +247,7 @@ export default function IndividualQuotePage() {
 
   return (
     <>
-      <TopBar title="Individual Items" subtitle="Custom line-item / mixed job - live pricing">
+      <TopBar title="Individual Items" subtitle="Custom line-item / mixed job - live pricing" titleNode={<ProductSwitcher current="individual" />}>
         <button onClick={() => setInp(DEFAULT)} className="btn-secondary text-xs px-3 py-2">
           <RefreshCw size={13} /> Reset
         </button>
