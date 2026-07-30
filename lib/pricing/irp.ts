@@ -27,6 +27,7 @@ export interface IRPInputs {
   colorPostsBeam: string;
   wrapType: string;
   downspouts: number;
+  downspoutSide: "left" | "right";
   sprayPaint: boolean;
   houseAttachment: HouseAttachmentType;
   groundAttachment: GroundAttachmentType;

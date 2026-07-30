@@ -63,6 +63,7 @@ export interface NewportInputs {
   rafterTails: boolean;
   bayWindowPopout: boolean;
   downspouts: number;
+  downspoutSide: "left" | "right";
   sprayPaint: boolean;
   houseAttachment: HouseAttachmentType;
   groundAttachment: GroundAttachmentType;

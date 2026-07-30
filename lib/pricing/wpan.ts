@@ -34,6 +34,7 @@ export interface WPanInputs {
   wrapType: string;
   rafterTails: boolean;
   downspouts: number;
+  downspoutSide: "left" | "right";
   sprayPaint: boolean;
   houseAttachment: HouseAttachmentType;
   groundAttachment: GroundAttachmentType;

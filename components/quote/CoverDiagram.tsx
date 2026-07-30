@@ -6,7 +6,9 @@ interface CoverDiagramProps {
   projection2?: number;
   width2?: number;
   posts1?: number;
+  posts2?: number;
   downspouts?: number;
+  downspoutSide?: string;
   showRafterTails?: boolean;
   jogType?: string;
   className?: string;
@@ -16,7 +18,9 @@ export default function CoverDiagram({
   projection1, width1,
   projection2 = 0, width2 = 0,
   posts1 = 0,
+  posts2 = 0,
   downspouts = 1,
+  downspoutSide = "right",
   showRafterTails = true,
   jogType = "ground",
   className = "",
@@ -84,6 +88,21 @@ export default function CoverDiagram({
           : i === posts1 - 1 ? (width1 - 1.5) / width1
           : (1.5 + (width1 - 3) * i / (posts1 - 1)) / width1;
         postPositions.push(ox + pct * coverW1);
+      }
+    }
+  }
+
+  // Post X positions for run 2, same spacing rule within run 2's own width
+  const postPositions2: number[] = [];
+  if (hasRun2 && posts2 > 0) {
+    if (posts2 === 1) {
+      postPositions2.push(ox + coverW1 + coverW2 / 2);
+    } else {
+      for (let i = 0; i < posts2; i++) {
+        const pct = i === 0 ? 1.5 / width2
+          : i === posts2 - 1 ? (width2 - 1.5) / width2
+          : (1.5 + (width2 - 3) * i / (posts2 - 1)) / width2;
+        postPositions2.push(ox + coverW1 + pct * coverW2);
       }
     }
   }
@@ -196,7 +215,7 @@ export default function CoverDiagram({
             );
           })}
 
-          {/* Posts on beam */}
+          {/* Posts on beam (run 1) */}
           {postPositions.map((px, i) => (
             <g key={i}>
               <rect x={px - 5} y={beamY1 - 5} width={10} height={10}
@@ -206,17 +225,30 @@ export default function CoverDiagram({
             </g>
           ))}
 
-          {/* Downspouts — hang off the gutter at the front edge, not the house side.
-              1 downspout sits at the far right post; 2 or more sit at the far left
-              and far right posts (extras beyond 2 aren't placed - rare in practice). */}
+          {/* Posts on beam (run 2) - numbering continues from run 1's posts */}
+          {postPositions2.map((px, i) => (
+            <g key={"r2-post-" + i}>
+              <rect x={px - 5} y={beamY2 - 5} width={10} height={10}
+                fill="#1e293b" rx="1" />
+              <text x={px} y={beamY2 + 4} textAnchor="middle"
+                fontSize="7" fill="white" fontWeight="bold">{postPositions.length + i + 1}</text>
+            </g>
+          ))}
+
+          {/* Downspouts — hang just in front of (past) the corner post, at the true
+              front edge rather than the post's own beam-line position. 1 downspout
+              sits on whichever side is picked; 2 or more sit on both far left and
+              far right (extras beyond 2 aren't placed - rare in practice). */}
           {(() => {
-            const leftX  = postPositions.length > 0 ? postPositions[0] : ox;
-            const rightX = postPositions.length > 0 ? postPositions[postPositions.length - 1] : ox + coverW1;
+            const leftPos = { x: postPositions.length > 0 ? postPositions[0] : ox, y: frontEdgeY };
+            const rightPos = hasRun2
+              ? { x: postPositions2.length > 0 ? postPositions2[postPositions2.length - 1] : ox + coverW1 + coverW2, y: frontEdgeY2 }
+              : { x: postPositions.length > 0 ? postPositions[postPositions.length - 1] : ox + coverW1, y: frontEdgeY };
             const positions =
-              downspouts === 1 ? [rightX] :
-              downspouts >= 2  ? [leftX, rightX] : [];
-            return positions.map((dx, i) => (
-              <rect key={i} x={dx - 4} y={beamY1 - 4} width={8} height={8}
+              downspouts === 1 ? [downspoutSide === "left" ? leftPos : rightPos] :
+              downspouts >= 2  ? [leftPos, rightPos] : [];
+            return positions.map((p, i) => (
+              <rect key={i} x={p.x - 4} y={p.y - 4} width={8} height={8}
                 fill="#0ea5e9" rx="1" />
             ));
           })()}

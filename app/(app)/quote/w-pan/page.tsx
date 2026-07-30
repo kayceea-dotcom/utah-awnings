@@ -67,6 +67,10 @@ const GROUND_ATTACHMENTS = [
   { value: "deck",         label: "Deck" },
   { value: "ground_mount", label: "Ground Mount" },
 ];
+const DOWNSPOUT_SIDES = [
+  { value: "left",  label: "Left" },
+  { value: "right", label: "Right" },
+];
 
 const DEFAULT: WPanInputs = {
   jobName: "", salesman: "",
@@ -82,7 +86,7 @@ const DEFAULT: WPanInputs = {
   posts2: 0, postHeight2: 10,
   colorPans: "White", colorGutterFascia: "White", colorPostsBeam: "White",
   wrapType: "none", rafterTails: true,
-  downspouts: 1, sprayPaint: true,
+  downspouts: 1, downspoutSide: "right", sprayPaint: true,
   houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
   fanBeamQty: 0, fanBeamLength: 16,
   priceIncrease: 0, footings: 0, roofMounts: 0, misc: 0,
@@ -381,6 +385,9 @@ export default function WPanQuotePage() {
                 <SelectInput label="Height #2 (ft)" value={String(inp.postHeight2)} onChange={(v) => setField("postHeight2", Number(v))}
                   options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))} />
                 <NumInput label="Downspouts" value={inp.downspouts} onChange={(v) => setField("downspouts", v)} />
+                {inp.downspouts === 1 && (
+                  <SelectInput label="Downspout Side" value={inp.downspoutSide} onChange={(v) => setField("downspoutSide", v as never)} options={DOWNSPOUT_SIDES} />
+                )}
                 <ToggleInput label="Spray Paint" value={inp.sprayPaint} onChange={(v) => setField("sprayPaint", v)} yesLabel="include" />
               </SectionCard>
 
@@ -423,7 +430,9 @@ export default function WPanQuotePage() {
                 width2={inp.width2}
                 jogType={inp.jogType}
                 posts1={inp.posts1}
+                posts2={inp.posts2}
                 downspouts={inp.downspouts}
+                downspoutSide={inp.downspoutSide}
                 showRafterTails={inp.wrapType !== "none" && inp.rafterTails}
               />
               <PriceSummaryPanel result={result} />

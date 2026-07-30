@@ -272,7 +272,9 @@ export default function ProposalPage() {
                 width2={Number(inp.width2) || 0}
                 jogType={String(inp.jogType || "ground")}
                 posts1={Number(inp.posts1) || 0}
+                posts2={Number(inp.posts2) || 0}
                 downspouts={Number(inp.downspouts) || 1}
+                downspoutSide={String(inp.downspoutSide || "right")}
                 showRafterTails={showRafterTails}
               />
             </div>

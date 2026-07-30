@@ -54,6 +54,10 @@ const GROUND_ATTACHMENTS = [
   { value: "deck",         label: "Deck" },
   { value: "ground_mount", label: "Ground Mount" },
 ];
+const DOWNSPOUT_SIDES = [
+  { value: "left",  label: "Left" },
+  { value: "right", label: "Right" },
+];
 
 const DEFAULT: IRPInputs = {
   jobName: "", salesman: "",
@@ -66,7 +70,7 @@ const DEFAULT: IRPInputs = {
   posts2: 0, postHeight2: 10,
   colorPostsBeam: "White",
   wrapType: "none",
-  downspouts: 1, sprayPaint: false,
+  downspouts: 1, downspoutSide: "right", sprayPaint: false,
   houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
   priceIncrease: 0, footings: 0, roofMounts: 0, misc: 0,
   markup: 2.0, taxRate: 0.0745,
@@ -346,6 +350,9 @@ export default function IRPQuotePage() {
                 <SelectInput label="Height #2 (ft)" value={String(inp.postHeight2)} onChange={(v) => setField("postHeight2", Number(v))}
                   options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))} />
                 <NumInput label="Downspouts" value={inp.downspouts} onChange={(v) => setField("downspouts", v)} />
+                {inp.downspouts === 1 && (
+                  <SelectInput label="Downspout Side" value={inp.downspoutSide} onChange={(v) => setField("downspoutSide", v as never)} options={DOWNSPOUT_SIDES} />
+                )}
                 <ToggleInput label="Spray Paint" value={inp.sprayPaint} onChange={(v) => setField("sprayPaint", v)} yesLabel="include" />
               </SectionCard>
 
@@ -381,7 +388,9 @@ export default function IRPQuotePage() {
                 width2={inp.width2}
                 jogType={inp.jogType}
                 posts1={inp.posts1}
+                posts2={inp.posts2}
                 downspouts={inp.downspouts}
+                downspoutSide={inp.downspoutSide}
                 showRafterTails={false}
               />
               <PriceSummaryPanel result={result} />

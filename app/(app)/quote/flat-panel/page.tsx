@@ -90,6 +90,10 @@ const GROUND_ATTACHMENTS = [
   { value: "deck",         label: "Deck" },
   { value: "ground_mount", label: "Ground Mount" },
 ];
+const DOWNSPOUT_SIDES = [
+  { value: "left",  label: "Left" },
+  { value: "right", label: "Right" },
+];
 
 const DEFAULT: NewportInputs = {
   jobName: "", salesman: "",
@@ -105,7 +109,7 @@ const DEFAULT: NewportInputs = {
   colorPans: "White", colorGutterFascia: "White", colorPostsBeam: "White",
   wrapType: "2x6",
   rafterTails: true, bayWindowPopout: false,
-  downspouts: 1, sprayPaint: true,
+  downspouts: 1, downspoutSide: "right", sprayPaint: true,
   houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
   fanBeamQty: 0, fanBeamLength: 16,
   shadeBeamQty: 0,
@@ -462,6 +466,9 @@ export default function FlatPanelQuotePage() {
                 <SelectInput label="Height #2 (ft)" value={String(inp.postHeight2)} onChange={(v) => setField("postHeight2", Number(v))}
                   options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))} />
                 <NumInput label="Downspouts" value={inp.downspouts} onChange={(v) => setField("downspouts", v)} />
+                {inp.downspouts === 1 && (
+                  <SelectInput label="Downspout Side" value={inp.downspoutSide} onChange={(v) => setField("downspoutSide", v as never)} options={DOWNSPOUT_SIDES} />
+                )}
                 <ToggleInput label="Spray Paint" value={inp.sprayPaint} onChange={(v) => setField("sprayPaint", v)} yesLabel="include" />
               </SectionCard>
 
@@ -646,7 +653,9 @@ export default function FlatPanelQuotePage() {
                   width2={inp.width2}
                   jogType={inp.jogType}
                   posts1={inp.posts1}
+                  posts2={inp.posts2}
                   downspouts={inp.downspouts}
+                  downspoutSide={inp.downspoutSide}
                   showRafterTails={inp.wrapType !== "none" && inp.rafterTails}
                 />
               ) : (
