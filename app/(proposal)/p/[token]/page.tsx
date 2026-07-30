@@ -5,6 +5,7 @@ import CoverDiagram from "@/components/quote/CoverDiagram";
 import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { CheckCircle, PenLine, CreditCard, Banknote, Phone } from "lucide-react";
+import { estimateMonthlyPayment, HEARTH_PREQUALIFY_URL, FINANCING_APR, FINANCING_TERM_YEARS } from "@/lib/financing";
 
 const TERMS = [
   "Contractor to provide the improvements/remodeling/reconstruction/rehabilitation (hereinafter the work), in a workmanlike manner and in accordance with the plans and specifications provided or in accordance with the attached Scope of Work to the property listed above. Contractor is not responsible to repair existing conditions on home unless specified in this agreement. Contractor will build assuming that the property is built to meet current building codes, including electrical and framing. Any damage caused by contractor will be repaired/or paid to be repaired by Contractor as if property meets current building code requirements. Also, Contractor assumes that roofing and stucco have been installed properly, including flashing and drip edge, and will not be held responsible for leaking caused by improper installation of roofing and stucco. It is understood that the Awning is not intended to be a waterproof structure and shall not be deemed defective by reason of leakage; however, Contractor shall make every effort to make sure the Awning is as waterproof as possible.",
@@ -177,7 +178,7 @@ export default function ProposalPage() {
               {paymentMethod === "card" && "Online card payment isn't available yet - a Utah Awnings team member will call you shortly to collect your deposit securely over the phone."}
               {paymentMethod === "check" && "Please make your deposit check payable to Utah Awnings and mail or deliver it to our office."}
               {paymentMethod === "cash" && "Please bring your deposit payment to our office or arrange with your sales rep."}
-              {paymentMethod === "financing" && "A Utah Awnings team member will contact you shortly to discuss financing options."}
+              {paymentMethod === "financing" && "We've opened our financing partner's prequalification page in a new tab - complete that form to see your options. A Utah Awnings team member will also follow up."}
             </p>
           </div>
           <p className="text-gray-400 text-xs mt-6">
@@ -411,14 +412,20 @@ export default function ProposalPage() {
               </button>
 
               <button
-                onClick={() => handlePaymentChoice("financing")}
+                onClick={() => {
+                  window.open(HEARTH_PREQUALIFY_URL, "_blank", "noopener,noreferrer");
+                  handlePaymentChoice("financing");
+                }}
                 disabled={submitting}
                 className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 transition text-left disabled:opacity-50"
               >
                 <Phone size={20} className="text-blue-600" />
                 <div>
                   <p className="font-semibold text-gray-900 text-sm">Apply for Financing</p>
-                  <p className="text-xs text-gray-500">We will contact you with options</p>
+                  <p className="text-xs text-gray-500">
+                    As low as {fmt(estimateMonthlyPayment(q.total_job_sale as number, FINANCING_APR, FINANCING_TERM_YEARS))}/mo
+                    {" "}({FINANCING_TERM_YEARS}-year term, {FINANCING_APR}% APR)
+                  </p>
                 </div>
               </button>
             </div>
