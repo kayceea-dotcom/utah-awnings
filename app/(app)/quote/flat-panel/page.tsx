@@ -378,6 +378,13 @@ export default function FlatPanelQuotePage() {
     }
   }, [profile]);
 
+  useEffect(() => {
+    const hasRun2 = inp.projection2 > 0 && inp.width2 > 0;
+    if (inp.jogType === "ground" && hasRun2 && inp.downspouts < 2) {
+      setInp((p) => ({ ...p, downspouts: 2 }));
+    }
+  }, [inp.jogType, inp.projection2, inp.width2, inp.downspouts]);
+
   function setField<K extends keyof NewportInputs>(key: K, val: NewportInputs[K]) {
     setInp((p) => ({ ...p, [key]: val }));
   }
@@ -465,7 +472,8 @@ export default function FlatPanelQuotePage() {
                 <NumInput label="Posts #2 (qty)" value={inp.posts2} onChange={(v) => setField("posts2", v)} />
                 <SelectInput label="Height #2 (ft)" value={String(inp.postHeight2)} onChange={(v) => setField("postHeight2", Number(v))}
                   options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))} />
-                <NumInput label="Downspouts" value={inp.downspouts} onChange={(v) => setField("downspouts", v)} />
+                <NumInput label="Downspouts" value={inp.downspouts} onChange={(v) => setField("downspouts", v)}
+                  hint={inp.jogType === "ground" && inp.projection2 > 0 && inp.width2 > 0 ? "Min 2 - one per gutter section" : undefined} />
                 {inp.downspouts === 1 && (
                   <SelectInput label="Downspout Side" value={inp.downspoutSide} onChange={(v) => setField("downspoutSide", v as never)} options={DOWNSPOUT_SIDES} />
                 )}
