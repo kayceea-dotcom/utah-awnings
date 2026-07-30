@@ -206,14 +206,20 @@ export default function CoverDiagram({
             </g>
           ))}
 
-          {/* Downspouts on top gutter */}
-          {downspouts > 0 && Array.from({ length: downspouts }).map((_, i) => {
-            const dx = ox + (totalW / (downspouts + 1)) * (i + 1);
-            return (
-              <rect key={i} x={dx - 4} y={oy - 8} width={8} height={8}
+          {/* Downspouts — hang off the gutter at the front edge, not the house side.
+              1 downspout sits at the far right post; 2 or more sit at the far left
+              and far right posts (extras beyond 2 aren't placed - rare in practice). */}
+          {(() => {
+            const leftX  = postPositions.length > 0 ? postPositions[0] : ox;
+            const rightX = postPositions.length > 0 ? postPositions[postPositions.length - 1] : ox + coverW1;
+            const positions =
+              downspouts === 1 ? [rightX] :
+              downspouts >= 2  ? [leftX, rightX] : [];
+            return positions.map((dx, i) => (
+              <rect key={i} x={dx - 4} y={beamY1 - 4} width={8} height={8}
                 fill="#0ea5e9" rx="1" />
-            );
-          })}
+            ));
+          })()}
 
           {/* Width dimension (top) */}
           <line x1={ox} y1={oy - HOUSE_H - 8} x2={ox + coverW1} y2={oy - HOUSE_H - 8}
