@@ -253,6 +253,16 @@ export default function ProposalPage() {
         {!q.render_url && (() => {
           const inp = q.inputs as Record<string, unknown> | null;
           if (!inp) return null;
+          // Mirror each product's own quote-builder rules for whether rafter tails
+          // show: Pergola's rafters are always structural (no wrap kit involved),
+          // IRP's wrap kit never includes rafter tails, and Flat Panel/W-Pan only
+          // show them when a wrap kit is selected and Rafter Tails is toggled on.
+          const productType = String(q.product_type || q.style || "");
+          const showRafterTails = productType === "pergola"
+            ? true
+            : productType === "irp"
+              ? false
+              : inp.wrapType !== "none" && !!inp.rafterTails;
           return (
             <div className="mb-4">
               <CoverDiagram
@@ -260,8 +270,10 @@ export default function ProposalPage() {
                 width1={Number(inp.width1) || 0}
                 projection2={Number(inp.projection2) || 0}
                 width2={Number(inp.width2) || 0}
+                jogType={String(inp.jogType || "ground")}
                 posts1={Number(inp.posts1) || 0}
                 downspouts={Number(inp.downspouts) || 1}
+                showRafterTails={showRafterTails}
               />
             </div>
           );
