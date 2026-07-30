@@ -2,11 +2,14 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import TopBar from "@/components/TopBar";
 import { Send, ExternalLink, CheckCircle, Clock } from "lucide-react";
+import { getFollowUpStatus } from "@/lib/followups/engine";
+import type { ProposalFollowUpTimestamps } from "@/lib/followups/types";
+import FollowUpBadge from "@/components/FollowUpBadge";
 
 const fmt = (n: number) => n?.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
@@ -23,27 +26,41 @@ export default function ProposalPreviewPage() {
   const [ordering, setOrdering] = useState(false);
   const [ordered, setOrdered] = useState(false);
   const [error, setError] = useState("");
+  const [sendingFollowUp, setSendingFollowUp] = useState(false);
+  const [followUpError, setFollowUpError] = useState("");
   const supabase = createClient();
 
-  useEffect(() => {
-    async function load() {
-      const { data } = await supabase
-        .from("proposals")
-        .select("*, quotes(*, customers(*))")
-        .eq("token", token)
-        .single();
-      if (data) {
-        setProposal(data);
-        const q = data.quotes as Record<string, unknown>;
-        setQuote(q);
-        setCustomer(q.customers as Record<string, unknown>);
-        const s = data.status as string;
-        if (s === "sent" || s === "signed" || s === "accepted") setSent(true);
-      }
-      setLoading(false);
+  const load = useCallback(async () => {
+    const { data } = await supabase
+      .from("proposals")
+      .select("*, quotes(*, customers(*))")
+      .eq("token", token)
+      .single();
+    if (data) {
+      setProposal(data);
+      const q = data.quotes as Record<string, unknown>;
+      setQuote(q);
+      setCustomer(q.customers as Record<string, unknown>);
+      const s = data.status as string;
+      if (s === "sent" || s === "signed" || s === "accepted") setSent(true);
     }
+    setLoading(false);
+  }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
     load();
-  }, [token]);
+  }, [load]);
+
+  const followUpStatus = useMemo(() => {
+    if (!proposal) return null;
+    const timestamps: ProposalFollowUpTimestamps = {
+      initial_email_sent_at: proposal.initial_email_sent_at as string | null,
+      followup1_sent_at: proposal.followup1_sent_at as string | null,
+      followup2_sent_at: proposal.followup2_sent_at as string | null,
+      final_followup_sent_at: proposal.final_followup_sent_at as string | null,
+    };
+    return getFollowUpStatus(timestamps);
+  }, [proposal]);
 
   async function handleSendOrder() {
     setOrdering(true);
@@ -75,8 +92,26 @@ export default function ProposalPreviewPage() {
       setError(data.error || "Failed to send");
     } else {
       setSent(true);
+      await load();
     }
     setSending(false);
+  }
+
+  async function handleSendFollowUp(stepKey: string) {
+    setSendingFollowUp(true);
+    setFollowUpError("");
+    const res = await fetch("/api/proposal/followup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ proposalToken: token, stepKey }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setFollowUpError(data.error || "Failed to send follow-up");
+    } else {
+      await load();
+    }
+    setSendingFollowUp(false);
   }
 
   if (loading) {
@@ -184,6 +219,29 @@ export default function ProposalPreviewPage() {
               <Send size={15} />
               {sending ? "Sending..." : sent ? "Resend Email" : "Email Proposal to " + (c.name as string)}
             </button>
+
+            {followUpStatus?.kind === "action_due" && followUpStatus.step.key !== "initial" && (
+              <button onClick={() => handleSendFollowUp(followUpStatus.step.key)} disabled={sendingFollowUp}
+                className="btn-primary w-full disabled:opacity-50">
+                <Send size={15} />
+                {sendingFollowUp ? "Sending..." : followUpStatus.step.actionLabel}
+              </button>
+            )}
+            {followUpStatus?.kind === "waiting" && (
+              <div className="text-xs text-gray-500 flex items-center gap-1.5 justify-center py-2">
+                <Clock size={13} /> Waiting for next follow-up
+              </div>
+            )}
+            {followUpStatus?.kind === "complete" && (
+              <div className="flex justify-center py-1">
+                <FollowUpBadge status={followUpStatus} />
+              </div>
+            )}
+            {followUpError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                <p className="text-red-600 text-sm">{followUpError}</p>
+              </div>
+            )}
 
             <button onClick={handleSendOrder} disabled={ordering}
               className="btn-secondary w-full disabled:opacity-50">

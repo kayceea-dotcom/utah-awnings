@@ -96,10 +96,15 @@ export async function POST(request: NextRequest) {
       `,
     });
 
-    // Update proposal status to sent
+    // Update proposal status to sent, and stamp the initial follow-up
+    // timestamp the first time only (resends must not reset the follow-up clock)
+    const updates: Record<string, unknown> = { status: "sent" };
+    if (!proposal.initial_email_sent_at) {
+      updates.initial_email_sent_at = new Date().toISOString();
+    }
     await supabase
       .from("proposals")
-      .update({ status: "sent" })
+      .update(updates)
       .eq("token", proposalToken);
 
     return NextResponse.json({ success: true });

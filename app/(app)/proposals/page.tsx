@@ -8,13 +8,20 @@ import { useProfile } from "@/lib/hooks/useProfile";
 import { useRouter } from "next/navigation";
 import TopBar from "@/components/TopBar";
 import StatusBadge from "@/components/StatusBadge";
+import FollowUpBadge from "@/components/FollowUpBadge";
 import { Search, FileText, Plus } from "lucide-react";
+import { getFollowUpStatus, matchesFollowUpFilter } from "@/lib/followups/engine";
+import { FOLLOWUP_STEPS } from "@/lib/followups/steps";
 
 interface ProposalRow {
   token: string;
   status: string;
   created_at: string;
   quote_id: string;
+  initial_email_sent_at: string | null;
+  followup1_sent_at: string | null;
+  followup2_sent_at: string | null;
+  final_followup_sent_at: string | null;
   quotes: {
     total_job_sale: number;
     product_type: string;
@@ -26,12 +33,19 @@ interface ProposalRow {
 
 const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 const STATUS_OPTS = ["all", "draft", "sent", "signed", "ordered", "accepted", "pending_payment"];
+const FOLLOWUP_FILTER_OPTS = [
+  { value: "all", label: "All Follow-ups" },
+  ...FOLLOWUP_STEPS.filter((s) => s.enabled).map((s) => ({ value: s.key, label: "Needs " + s.label })),
+  { value: "waiting", label: "Waiting" },
+  { value: "complete", label: "Complete" },
+];
 
 export default function ProposalsPage() {
   const [rows, setRows] = useState<ProposalRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [followUpFilter, setFollowUpFilter] = useState("all");
   const { profile, loading: profileLoading } = useProfile();
   const router = useRouter();
   const supabase = createClient();
@@ -42,7 +56,7 @@ export default function ProposalsPage() {
     async function load() {
       const { data } = await supabase
         .from("proposals")
-        .select("token, status, created_at, quote_id, quotes!inner(total_job_sale, product_type, inputs, created_by, company_id, customers(name))")
+        .select("token, status, created_at, quote_id, initial_email_sent_at, followup1_sent_at, followup2_sent_at, final_followup_sent_at, quotes!inner(total_job_sale, product_type, inputs, created_by, company_id, customers(name))")
         .eq("quotes.company_id", profile!.company_id)
         .order("created_at", { ascending: false });
 
@@ -56,9 +70,24 @@ export default function ProposalsPage() {
     load();
   }, [profile, profileLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const rowsWithFollowUp = useMemo(
+    () =>
+      rows.map((r) => ({
+        ...r,
+        followUp: getFollowUpStatus({
+          initial_email_sent_at: r.initial_email_sent_at,
+          followup1_sent_at: r.followup1_sent_at,
+          followup2_sent_at: r.followup2_sent_at,
+          final_followup_sent_at: r.final_followup_sent_at,
+        }),
+      })),
+    [rows]
+  );
+
   const filtered = useMemo(() => {
-    let list = rows;
+    let list = rowsWithFollowUp;
     if (statusFilter !== "all") list = list.filter((r) => r.status === statusFilter);
+    if (followUpFilter !== "all") list = list.filter((r) => matchesFollowUpFilter(r.followUp, followUpFilter));
     const q = search.trim().toLowerCase();
     if (q) {
       list = list.filter((r) => {
@@ -68,7 +97,7 @@ export default function ProposalsPage() {
       });
     }
     return list;
-  }, [rows, search, statusFilter]);
+  }, [rowsWithFollowUp, search, statusFilter, followUpFilter]);
 
   return (
     <>
@@ -98,6 +127,13 @@ export default function ProposalsPage() {
                 ))}
               </select>
             </div>
+            <div className="relative sm:w-52 flex-shrink-0">
+              <select className="select" value={followUpFilter} onChange={(e) => setFollowUpFilter(e.target.value)}>
+                {FOLLOWUP_FILTER_OPTS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="card overflow-hidden">
@@ -110,14 +146,14 @@ export default function ProposalsPage() {
               <div className="px-5 py-8 text-center text-gray-400 text-sm">Loading...</div>
             ) : filtered.length === 0 ? (
               <div className="px-5 py-8 text-center text-gray-400 text-sm">
-                {search || statusFilter !== "all" ? "No proposals match your filters." : "No proposals yet."}
+                {search || statusFilter !== "all" || followUpFilter !== "all" ? "No proposals match your filters." : "No proposals yet."}
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[700px] text-sm">
+                <table className="w-full min-w-[850px] text-sm">
                   <thead>
                     <tr className="bg-gray-50 text-left">
-                      {["Job Name","Customer","Product","Status","Total","Created"].map((h) => (
+                      {["Job Name","Customer","Product","Status","Follow-up","Total","Created"].map((h) => (
                         <th key={h} className="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
                       ))}
                     </tr>
@@ -132,6 +168,7 @@ export default function ProposalsPage() {
                         <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{r.quotes?.customers?.name || "-"}</td>
                         <td className="px-4 py-3 text-gray-600 whitespace-nowrap capitalize">{(r.quotes?.product_type || "").replace("_", " ")}</td>
                         <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
+                        <td className="px-4 py-3"><FollowUpBadge status={r.followUp} /></td>
                         <td className="px-4 py-3 text-gray-900 font-mono font-semibold whitespace-nowrap">{fmt(r.quotes?.total_job_sale || 0)}</td>
                         <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{new Date(r.created_at).toLocaleDateString()}</td>
                       </tr>
