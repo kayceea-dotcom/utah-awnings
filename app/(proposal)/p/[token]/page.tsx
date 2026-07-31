@@ -292,7 +292,12 @@ export default function ProposalPage() {
             </div>
             <div className="flex justify-between py-2 border-b border-gray-100">
               <span className="text-gray-600">Contract Total</span>
-              <span className="font-bold text-lg" style={{ color: "#CC2229" }}>{fmt(q.total_job_sale as number)}</span>
+              <div className="text-right">
+                <p className="font-bold text-lg" style={{ color: "#CC2229" }}>{fmt(q.total_job_sale as number)}</p>
+                <p className="text-xs text-gray-500">
+                  or as low as {fmt(estimateMonthlyPayment(q.total_job_sale as number, FINANCING_APR, FINANCING_TERM_YEARS))}/mo with financing
+                </p>
+              </div>
             </div>
             <div className="flex justify-between py-2 border-b border-gray-100">
               <span className="text-gray-600">Down Payment ({q.deposit_pct as number}%)</span>
