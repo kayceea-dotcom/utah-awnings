@@ -45,7 +45,8 @@ export default function ProposalPreviewPage() {
       setQuote(q);
       setCustomer(q.customers as Record<string, unknown>);
       const s = data.status as string;
-      if (s === "sent" || s === "signed" || s === "accepted") setSent(true);
+      if (s === "sent" || s === "signed" || s === "accepted" || s === "ordered" || s === "pending_payment") setSent(true);
+      if (s === "ordered") setOrdered(true);
     }
     setLoading(false);
   }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -162,6 +163,9 @@ export default function ProposalPreviewPage() {
   const q = quote;
 
   const statusBadge = () => {
+    if (status === "ordered") {
+      return <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-700"><Send size={12} /> ORDERED</span>;
+    }
     if (status === "signed" || status === "accepted") {
       return <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700"><CheckCircle size={12} /> SIGNED</span>;
     }
