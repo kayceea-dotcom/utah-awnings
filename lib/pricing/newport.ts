@@ -1,4 +1,5 @@
 import { RATES } from "./rates";
+import { CATALOG_BY_KEY } from "./catalog";
 import type { NewportInputs, LineItem, QuoteResult } from "./types";
 import {
   li, nextStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, anchorQty,
@@ -7,6 +8,10 @@ import {
 
 function panelRate(type: string): number {
   return (RATES as Record<string, number>)[type] ?? 0;
+}
+
+function panelLabel(type: string): string {
+  return CATALOG_BY_KEY[type]?.label ?? type;
 }
 
 function panelWidthFt(type: string): number {
@@ -24,10 +29,10 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   const p2Qty = inp.projection2 > 0 ? Math.ceil(inp.width2 / panelWidthFt(inp.panelType2)) : 0;
 
   if (p1Qty > 0) {
-    items.push(li("Panel #1", p1Qty, inp.projection1, panelRate(inp.panelType1), "ft", inp.colorPans));
+    items.push(li("Panel #1 (" + panelLabel(inp.panelType1) + ")", p1Qty, inp.projection1, panelRate(inp.panelType1), "ft", inp.colorPans));
   }
   if (p2Qty > 0 && inp.panelType2) {
-    items.push(li("Panel #2", p2Qty, inp.projection2, panelRate(inp.panelType2), "ft", inp.colorPans));
+    items.push(li("Panel #2 (" + panelLabel(inp.panelType2) + ")", p2Qty, inp.projection2, panelRate(inp.panelType2), "ft", inp.colorPans));
   }
 
   const combinedWidth = inp.width1 + inp.width2;

@@ -1,4 +1,5 @@
 import { RATES } from "./rates";
+import { CATALOG_BY_KEY } from "./catalog";
 import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType } from "./types";
 import {
   li, nextStockLength, wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen,
@@ -58,6 +59,21 @@ function panelRate(type: WPanType): number {
   }
 }
 
+// WPanType values don't exactly match their CATALOG keys (e.g. "duraking_025" vs
+// catalog's "duraking_025_ft"), so map to the catalog key before looking up the label.
+function panelCatalogKey(type: WPanType): string {
+  switch(type) {
+    case "duraking_025": return "duraking_025_ft";
+    case "duraking_032": return "duraking_032_ft";
+    case "duraking_040": return "duraking_040_ft";
+    default: return "wpan_sqft";
+  }
+}
+
+function panelLabel(type: WPanType): string {
+  return CATALOG_BY_KEY[panelCatalogKey(type)]?.label ?? type;
+}
+
 export function calcWPan(inp: WPanInputs): QuoteResult {
   const items: LineItem[] = [];
 
@@ -69,10 +85,10 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   const rate = panelRate(inp.panelType);
 
   if (p1Qty > 0) {
-    items.push(li("W-Pan Panel #1", p1Qty, inp.projection1, rate, "sq ft", inp.colorPans));
+    items.push(li("W-Pan Panel #1 (" + panelLabel(inp.panelType) + ")", p1Qty, inp.projection1, rate, "sq ft", inp.colorPans));
   }
   if (p2Qty > 0) {
-    items.push(li("W-Pan Panel #2", p2Qty, inp.projection2, rate, "sq ft", inp.colorPans));
+    items.push(li("W-Pan Panel #2 (" + panelLabel(inp.panelType) + ")", p2Qty, inp.projection2, rate, "sq ft", inp.colorPans));
   }
 
   // ── HANGER ──

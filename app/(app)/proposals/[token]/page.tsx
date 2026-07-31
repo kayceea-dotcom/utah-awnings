@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import TopBar from "@/components/TopBar";
-import { Send, ExternalLink, CheckCircle, Clock } from "lucide-react";
+import { Send, ExternalLink, CheckCircle, Clock, Eye, X } from "lucide-react";
 import { getFollowUpStatus } from "@/lib/followups/engine";
 import type { ProposalFollowUpTimestamps } from "@/lib/followups/types";
 import FollowUpBadge from "@/components/FollowUpBadge";
@@ -26,6 +26,9 @@ export default function ProposalPreviewPage() {
   const [ordering, setOrdering] = useState(false);
   const [ordered, setOrdered] = useState(false);
   const [error, setError] = useState("");
+  const [previewing, setPreviewing] = useState(false);
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [previewError, setPreviewError] = useState("");
   const [sendingFollowUp, setSendingFollowUp] = useState(false);
   const [followUpError, setFollowUpError] = useState("");
   const supabase = createClient();
@@ -62,7 +65,24 @@ export default function ProposalPreviewPage() {
     return getFollowUpStatus(timestamps);
   }, [proposal]);
 
-  async function handleSendOrder() {
+  async function handlePreviewOrder() {
+    setPreviewing(true);
+    setPreviewError("");
+    const res = await fetch("/api/order-sheet/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ proposalToken: token }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setPreviewError(data.error || "Failed to build order preview");
+    } else {
+      setPreviewHtml(data.html);
+    }
+    setPreviewing(false);
+  }
+
+  async function handleConfirmSendOrder() {
     setOrdering(true);
     setError("");
     const res = await fetch("/api/order-sheet", {
@@ -75,6 +95,7 @@ export default function ProposalPreviewPage() {
       setError(data.error || "Failed to send order");
     } else {
       setOrdered(true);
+      setPreviewHtml(null);
     }
     setOrdering(false);
   }
@@ -243,11 +264,16 @@ export default function ProposalPreviewPage() {
               </div>
             )}
 
-            <button onClick={handleSendOrder} disabled={ordering}
+            <button onClick={handlePreviewOrder} disabled={previewing}
               className="btn-secondary w-full disabled:opacity-50">
-              <Send size={15} className="text-orange-500" />
-              {ordering ? "Sending Order..." : ordered ? "Order Sent to Supplier" : "Send Order to Wholesale Patio"}
+              <Eye size={15} className="text-orange-500" />
+              {previewing ? "Building Preview..." : ordered ? "Order Sent - Preview Again" : "Preview Order for Wholesale Patio"}
             </button>
+            {previewError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                <p className="text-red-600 text-sm">{previewError}</p>
+              </div>
+            )}
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
                 <p className="text-red-600 text-sm">{error}</p>
@@ -260,6 +286,36 @@ export default function ProposalPreviewPage() {
           </button>
         </div>
       </main>
+
+      {previewHtml && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <p className="font-bold text-gray-800 text-sm">Order Preview - Wholesale Patio</p>
+              <button onClick={() => setPreviewHtml(null)} className="text-gray-400 hover:text-gray-600">
+                <X size={18} />
+              </button>
+            </div>
+            <iframe srcDoc={previewHtml} sandbox="" className="flex-1 w-full" style={{ minHeight: "60vh" }} />
+            <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
+              <button onClick={() => setPreviewHtml(null)} className="btn-secondary flex-1 justify-center">
+                Cancel
+              </button>
+              <button onClick={handleConfirmSendOrder} disabled={ordering} className="btn-primary flex-1 disabled:opacity-50">
+                <Send size={15} />
+                {ordering ? "Sending..." : "Send to Supplier"}
+              </button>
+            </div>
+            {error && (
+              <div className="px-5 pb-4">
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                  <p className="text-red-600 text-sm">{error}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }

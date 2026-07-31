@@ -107,13 +107,6 @@ export default function ProposalPage() {
       status: "signed",
     }).eq("token", token);
 
-    // Auto-send order sheet to supplier
-    fetch("/api/order-sheet", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ proposalToken: token }),
-    }).catch(console.error);
-
     setStep("payment");
     setSigning(false);
   }
