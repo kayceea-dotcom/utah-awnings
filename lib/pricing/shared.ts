@@ -94,6 +94,13 @@ export function wrapKitRates(wrapType: string): WrapKitRates {
   };
 }
 
+// Every wrap-kit finishing piece's rate is keyed off this same 2x6/3x8 choice,
+// so the order sheet needs the dimension right on each line, not just implied
+// by a wrap-type field elsewhere on the form.
+function wrapDim(rates: WrapKitRates): string {
+  return rates.is3x8 ? "3x8" : "2x6";
+}
+
 // Post/beam finishing pieces every wrap-kit product gets: post plates, sideplates,
 // mitered caps, foam inserts, end caps, plugs. Independent of hanger/gutter type,
 // so it applies the same whether the product has a generic gutter system (Flat
@@ -108,23 +115,24 @@ export function wrapKitFinishingItems(rates: WrapKitRates, opts: {
 }): LineItem[] {
   const items: LineItem[] = [];
   const totalPosts = opts.posts1 + opts.posts2;
+  const dim = wrapDim(rates);
 
   if (opts.posts1 > 0) {
-    items.push(li("Post Plates #1 (Mitered)", opts.posts1 * 2, opts.postHeight1 + 1, rates.wrapRate, "", opts.colorPostsBeam));
+    items.push(li("Post Plates #1 (" + dim + ", Mitered)", opts.posts1 * 2, opts.postHeight1 + 1, rates.wrapRate, "", opts.colorPostsBeam));
   }
   if (opts.posts2 > 0) {
-    items.push(li("Post Plates #2 (Mitered)", opts.posts2 * 2, opts.postHeight2 + 1, rates.wrapRate, "", opts.colorPostsBeam));
+    items.push(li("Post Plates #2 (" + dim + ", Mitered)", opts.posts2 * 2, opts.postHeight2 + 1, rates.wrapRate, "", opts.colorPostsBeam));
   }
   if (opts.projection1 > 0) {
-    items.push(li("Sideplates Cut One Side", 2, opts.projection1 + 2, rates.sideRate, "", opts.colorPostsBeam));
+    items.push(li("Sideplates Cut One Side (" + dim + ")", 2, opts.projection1 + 2, rates.sideRate, "", opts.colorPostsBeam));
   }
   if (totalPosts > 0) {
-    items.push(li("Mitered Caps", totalPosts * 2, 0, rates.miterCapRate, "", opts.colorPostsBeam));
+    items.push(li("Mitered Caps (" + dim + ")", totalPosts * 2, 0, rates.miterCapRate, "", opts.colorPostsBeam));
     items.push(li("Foam Inserts 2x6", totalPosts * 2, 0, RATES.foam_insert_2x6, "ea"));
   }
   if (opts.width1 > 0) {
     const spacingQty = Math.round(opts.width1 / 2);
-    items.push(li("End Caps", spacingQty + 2, 0, rates.endcapRate, "", opts.colorPostsBeam));
+    items.push(li("End Caps (" + dim + ")", spacingQty + 2, 0, rates.endcapRate, "", opts.colorPostsBeam));
   }
   if (opts.panelQty1 > 0) {
     items.push(li("Plugs", Math.round(opts.panelQty1 * 0.7) + 1, 0, RATES.plug_5_8));
@@ -144,18 +152,19 @@ export function wrapKitRafterItems(rates: WrapKitRates, opts: {
   colorPostsBeam: string;
 }): LineItem[] {
   const items: LineItem[] = [];
+  const dim = wrapDim(rates);
 
   if (opts.gutterType === "extruded" && opts.width1 > 0) {
-    items.push(li("Front Plate Gutter", 1, opts.width1 + 1, rates.wrapRate, "", opts.colorGutterFascia));
+    items.push(li("Front Plate Gutter (" + dim + ")", 1, opts.width1 + 1, rates.wrapRate, "", opts.colorGutterFascia));
   }
   if (opts.width1 > 0) {
     const spacingQty = Math.round(opts.width1 / 2);
     if (opts.rafterTails) {
-      items.push(li("Rafter Tails", spacingQty, 0, rates.rafterRate, "", opts.colorPostsBeam));
+      items.push(li("Rafter Tails (" + dim + ")", spacingQty, 0, rates.rafterRate, "", opts.colorPostsBeam));
     }
     const bracketQty = spacingQty + 2;
-    items.push(li("Inside Brackets", bracketQty, 0, rates.insideBrktRate));
-    items.push(li("Outside Brackets", bracketQty, 0, rates.outsideBrktRate, "", opts.colorPostsBeam));
+    items.push(li("Inside Brackets (" + dim + ")", bracketQty, 0, rates.insideBrktRate));
+    items.push(li("Outside Brackets (" + dim + ")", bracketQty, 0, rates.outsideBrktRate, "", opts.colorPostsBeam));
   }
 
   return items;
