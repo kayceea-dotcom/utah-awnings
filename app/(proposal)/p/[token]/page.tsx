@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import CoverDiagram from "@/components/quote/CoverDiagram";
 import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { CheckCircle, PenLine, CreditCard, Banknote, Phone } from "lucide-react";
+import { CheckCircle, Check, PenLine, CreditCard, Banknote, Phone } from "lucide-react";
 import { estimateMonthlyPayment, HEARTH_PREQUALIFY_URL, FINANCING_APR, FINANCING_TERM_YEARS } from "@/lib/financing";
 
 const TERMS = [
@@ -276,32 +276,53 @@ export default function ProposalPage() {
         })()}
 
         {/* Pricing */}
-        <div className="bg-white rounded-2xl p-6 mb-4 shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">Contract Summary</p>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between py-2 border-b border-gray-100">
-              <span className="text-gray-600">Estimated Install Date</span>
-              <span className="font-semibold">{q.estimated_install_date ? new Date(q.estimated_install_date as string).toLocaleDateString() : "TBD"}</span>
-            </div>
-            <div className="flex justify-between py-2 border-b border-gray-100">
-              <span className="text-gray-600">Contract Total</span>
-              <div className="text-right">
-                <p className="font-bold text-lg" style={{ color: "#CC2229" }}>{fmt(q.total_job_sale as number)}</p>
-                <p className="text-xs text-gray-500">
-                  or as low as {fmt(estimateMonthlyPayment(q.total_job_sale as number, FINANCING_APR, FINANCING_TERM_YEARS))}/mo with financing
-                </p>
+        <div className="bg-white rounded-2xl p-6 sm:p-8 mb-4 shadow-sm">
+          <div className="flex justify-between items-center mb-6">
+            <p className="text-xs font-bold uppercase tracking-widest text-gray-400">Contract Summary</p>
+            <p className="text-xs text-gray-400">
+              Install: {q.estimated_install_date ? new Date(q.estimated_install_date as string).toLocaleDateString() : "TBD"}
+            </p>
+          </div>
+
+          {/* Trust builders */}
+          <div className="flex flex-col gap-2.5 pb-6 mb-6 border-b border-gray-100">
+            {["Lifetime Material Warranty", "15-Year Labor Warranty", "Professionally Engineered & Installed"].map((label) => (
+              <div key={label} className="flex items-center gap-2.5">
+                <span className="w-4 h-4 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                  <Check size={11} className="text-gray-500" strokeWidth={3} />
+                </span>
+                <span className="text-sm text-gray-500">{label}</span>
               </div>
+            ))}
+          </div>
+
+          {/* Down payment / balance */}
+          <div className="space-y-4 mb-7">
+            <div className="flex justify-between items-baseline">
+              <span className="text-sm text-gray-400">Today&apos;s Down Payment ({q.deposit_pct as number}%)</span>
+              <span className="text-lg font-bold text-gray-900">{fmt(q.deposit_amount as number)}</span>
             </div>
-            <div className="flex justify-between py-2 border-b border-gray-100">
-              <span className="text-gray-600">Down Payment ({q.deposit_pct as number}%)</span>
-              <span className="font-semibold">{fmt(q.deposit_amount as number)}</span>
-            </div>
-            <div className="flex justify-between py-2">
-              <span className="text-gray-600">Due on Completion</span>
-              <span className="font-semibold">{fmt(q.balance_due as number)}</span>
+            <div className="flex justify-between items-baseline">
+              <span className="text-sm text-gray-400">Balance Due Upon Completion</span>
+              <span className="text-lg font-bold text-gray-900">{fmt(q.balance_due as number)}</span>
             </div>
           </div>
-          <p className="text-xs text-gray-400 mt-3 italic">Install dates are approximations and you will be notified the day before the install.</p>
+
+          <div className="border-t border-gray-100 mb-7" />
+
+          {/* Total investment + financing */}
+          <div className="text-center">
+            <p className="text-xs uppercase tracking-widest text-gray-400 mb-2">Total Investment</p>
+            <p className="text-4xl sm:text-5xl font-extrabold tracking-tight" style={{ color: "#222222" }}>
+              {fmt(q.total_job_sale as number)}
+            </p>
+            <p className="mt-3 text-xl sm:text-2xl font-bold" style={{ color: "#2E7D32" }}>
+              As low as {fmt(estimateMonthlyPayment(q.total_job_sale as number, FINANCING_APR, FINANCING_TERM_YEARS))}/mo with financing
+            </p>
+            <p className="text-xs text-gray-400 mt-1.5">Subject to credit approval.</p>
+          </div>
+
+          <p className="text-xs text-gray-400 mt-7 italic text-center">Install dates are approximations and you will be notified the day before the install.</p>
         </div>
 
         {/* Terms */}
