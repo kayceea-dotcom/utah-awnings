@@ -227,8 +227,18 @@ export default function ProposalPage() {
           <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
             <div><span className="text-gray-500">Style:</span> <span className="font-medium capitalize">{q.style as string}</span></div>
             <div><span className="text-gray-500">Panel Type:</span> <span className="font-medium">{q.panel_type as string}</span></div>
-            <div><span className="text-gray-500">Color:</span> <span className="font-medium">{q.color as string}</span></div>
+            <div><span className="text-gray-500">Panel Color:</span> <span className="font-medium">{q.color as string}</span></div>
+            {(() => {
+              const inp = q.inputs as Record<string, unknown> | null;
+              const trimColor = (inp?.colorGutterFascia as string) || "";
+              return trimColor ? <div><span className="text-gray-500">Gutter/Fascia Color:</span> <span className="font-medium">{trimColor}</span></div> : null;
+            })()}
             <div><span className="text-gray-500">Beam:</span> <span className="font-medium">{q.beam_type as string}</span></div>
+            {(() => {
+              const inp = q.inputs as Record<string, unknown> | null;
+              const trimColor = (inp?.colorPostsBeam as string) || "";
+              return trimColor ? <div><span className="text-gray-500">Posts/Beam Color:</span> <span className="font-medium">{trimColor}</span></div> : null;
+            })()}
             <div><span className="text-gray-500">Wrap:</span> <span className="font-medium">{q.wrap as string}</span></div>
             <div><span className="text-gray-500">End Cut:</span> <span className="font-medium">{q.end_cut as string}</span></div>
             {q.fan_beam ? <div><span className="text-gray-500">Fan Beam:</span> <span className="font-medium">{String(q.fan_beam)}</span></div> : null}

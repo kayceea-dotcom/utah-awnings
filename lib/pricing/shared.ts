@@ -101,6 +101,16 @@ function wrapDim(rates: WrapKitRates): string {
   return rates.is3x8 ? "3x8" : "2x6";
 }
 
+// Beam end cut (lib/pricing/types.ts EndCut) is only captured for Flat Panel
+// (Newport) quotes today - other products simply won't pass an endCut, so
+// these pieces come through unlabeled for them, same as before.
+export const END_CUT_LABELS: Record<string, string> = {
+  scallop: "Scallop", beveled: "Beveled", mitered: "Mitered", corbel: "Corbel",
+};
+function endCutSuffix(endCut?: string): string {
+  return endCut && END_CUT_LABELS[endCut] ? ", " + END_CUT_LABELS[endCut] : "";
+}
+
 // Post/beam finishing pieces every wrap-kit product gets: post plates, sideplates,
 // mitered caps, foam inserts, end caps, plugs. Independent of hanger/gutter type,
 // so it applies the same whether the product has a generic gutter system (Flat
@@ -112,6 +122,7 @@ export function wrapKitFinishingItems(rates: WrapKitRates, opts: {
   width1: number;
   panelQty1: number;
   colorPostsBeam: string;
+  endCut?: string;
 }): LineItem[] {
   const items: LineItem[] = [];
   const totalPosts = opts.posts1 + opts.posts2;
@@ -124,7 +135,7 @@ export function wrapKitFinishingItems(rates: WrapKitRates, opts: {
     items.push(li("Post Plates #2 (" + dim + ", Mitered)", opts.posts2 * 2, opts.postHeight2 + 1, rates.wrapRate, "", opts.colorPostsBeam));
   }
   if (opts.projection1 > 0) {
-    items.push(li("Sideplates Cut One Side (" + dim + ")", 2, opts.projection1 + 2, rates.sideRate, "", opts.colorPostsBeam));
+    items.push(li("Sideplates Cut One Side (" + dim + endCutSuffix(opts.endCut) + ")", 2, opts.projection1 + 2, rates.sideRate, "", opts.colorPostsBeam));
   }
   if (totalPosts > 0) {
     items.push(li("Mitered Caps (" + dim + ")", totalPosts * 2, 0, rates.miterCapRate, "", opts.colorPostsBeam));
@@ -150,6 +161,7 @@ export function wrapKitRafterItems(rates: WrapKitRates, opts: {
   rafterTails: boolean;
   colorGutterFascia: string;
   colorPostsBeam: string;
+  endCut?: string;
 }): LineItem[] {
   const items: LineItem[] = [];
   const dim = wrapDim(rates);
@@ -160,7 +172,7 @@ export function wrapKitRafterItems(rates: WrapKitRates, opts: {
   if (opts.width1 > 0) {
     const spacingQty = Math.round(opts.width1 / 2);
     if (opts.rafterTails) {
-      items.push(li("Rafter Tails (" + dim + ")", spacingQty, 0, rates.rafterRate, "", opts.colorPostsBeam));
+      items.push(li("Rafter Tails (" + dim + endCutSuffix(opts.endCut) + ")", spacingQty, 0, rates.rafterRate, "", opts.colorPostsBeam));
     }
     const bracketQty = spacingQty + 2;
     items.push(li("Inside Brackets (" + dim + ")", bracketQty, 0, rates.insideBrktRate));
