@@ -556,7 +556,7 @@ export default function FlatPanelQuotePage() {
                                 setField("beams", updated);
                               }} />
                           </Field>
-                          <Field label="Position from House (ft)" hint="0 = front beam">
+                          <Field label="Position from House (ft)" hint="0 = at the house wall">
                             <input type="number" className="input"
                               value={beam.positionFromHouse === 0 ? "" : beam.positionFromHouse} placeholder="0"
                               onChange={(e) => {
@@ -665,6 +665,7 @@ export default function FlatPanelQuotePage() {
                   downspouts={inp.downspouts}
                   downspoutSide={inp.downspoutSide}
                   showRafterTails={inp.wrapType !== "none" && inp.rafterTails}
+                  beams={inp.beams}
                 />
               ) : (
                 <>

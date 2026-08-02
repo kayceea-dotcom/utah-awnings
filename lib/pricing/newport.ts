@@ -21,6 +21,21 @@ function beamLabel(type: string, endCut: string): string {
   return type + ", " + (END_CUT_LABELS[endCut] ?? endCut);
 }
 
+// "double_3x8" (Additional / Multi-Span Beams) means two 3x8 beams sandwiched
+// together, not a distinct catalog rate - price/label it as 2x a single 3x8.
+function multiBeamMaterialRate(type: string): number {
+  return type === "double_3x8" ? beamMaterialRate("3x8") * 2 : beamMaterialRate(type);
+}
+function multiBeamSteelRate(type: string): number {
+  return type === "double_3x8" ? steelInsertRate("3x8") * 2 : steelInsertRate(type);
+}
+function multiBeamEndcapRate(type: string): number {
+  return type === "double_3x8" ? beamEndcapRate("3x8") * 2 : beamEndcapRate(type);
+}
+function multiBeamLabel(type: string): string {
+  return type === "double_3x8" ? "Double 3x8" : type;
+}
+
 function panelWidthFt(type: string): number {
   return type.startsWith("flat_8_") ? 8 / 12 : 0.5;
 }
@@ -110,7 +125,8 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   }
 
   // ── POSTS ──
-  const totalPosts = inp.posts1 + inp.posts2;
+  const multiSpanPosts = (inp.beams || []).reduce((s, b) => s + (b.posts || 0), 0);
+  const totalPosts = inp.posts1 + inp.posts2 + multiSpanPosts;
   if (inp.posts1 > 0) {
     items.push(li("3x3 Post Sleeve #1", inp.posts1, inp.postHeight1, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
     items.push(li("3x3 Steel Post #1",  inp.posts1, inp.postHeight1, RATES.post_3x3_steel_ft));
@@ -119,6 +135,22 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("3x3 Post Sleeve #2", inp.posts2, inp.postHeight2, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
     items.push(li("3x3 Steel Post #2",  inp.posts2, inp.postHeight2, RATES.post_3x3_steel_ft));
   }
+
+  // ── MULTI-SPAN BEAMS — additional beams beyond the two primary runs (Additional /
+  // Multi-Span Beams section), each with its own posts. Numbered #3, #4... to
+  // continue from the two primary beams, matching the builder UI's "Beam {idx+3}" label. ──
+  (inp.beams || []).forEach((beam, idx) => {
+    const num = idx + 3;
+    if (beam.length > 0 && beam.qty > 0) {
+      items.push(li("Beam #" + num + " (" + multiBeamLabel(beam.type) + ")", beam.qty, beam.length, multiBeamMaterialRate(beam.type), "", inp.colorPostsBeam));
+      items.push(li("Steel Insert #" + num, beam.qty, nextStockLength(beam.length), multiBeamSteelRate(beam.type)));
+      items.push(li("Beam End Caps #" + num, beam.qty * 2, 0, multiBeamEndcapRate(beam.type), "", inp.colorPostsBeam));
+    }
+    if (beam.posts > 0) {
+      items.push(li("3x3 Post Sleeve #" + num, beam.posts, beam.postHeight, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
+      items.push(li("3x3 Steel Post #" + num,  beam.posts, beam.postHeight, RATES.post_3x3_steel_ft));
+    }
+  });
 
   // ── WRAP KIT — post plates, sideplates, mitered caps, foam inserts, end caps, plugs ──
   if (hasWrap) {

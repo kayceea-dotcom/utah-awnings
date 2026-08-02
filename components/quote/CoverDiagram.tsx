@@ -1,5 +1,7 @@
 "use client";
 
+import type { BeamConfig } from "@/lib/pricing/types";
+
 interface CoverDiagramProps {
   projection1: number;
   width1: number;
@@ -11,7 +13,24 @@ interface CoverDiagramProps {
   downspoutSide?: string;
   showRafterTails?: boolean;
   jogType?: string;
+  beams?: BeamConfig[];
   className?: string;
+}
+
+// Post X positions evenly spaced across a run's width - 1.5ft inset from each
+// end, matching the beam's own real support spacing. Shared by the two
+// primary runs and any additional/multi-span beam (they all use the same rule).
+function spacedPostXs(count: number, widthFt: number, xOffsetPx: number, coverWidthPx: number): number[] {
+  if (count <= 0) return [];
+  if (count === 1) return [xOffsetPx + coverWidthPx / 2];
+  const xs: number[] = [];
+  for (let i = 0; i < count; i++) {
+    const pct = i === 0 ? 1.5 / widthFt
+      : i === count - 1 ? (widthFt - 1.5) / widthFt
+      : (1.5 + (widthFt - 3) * i / (count - 1)) / widthFt;
+    xs.push(xOffsetPx + pct * coverWidthPx);
+  }
+  return xs;
 }
 
 export default function CoverDiagram({
@@ -23,6 +42,7 @@ export default function CoverDiagram({
   downspoutSide = "right",
   showRafterTails = true,
   jogType = "ground",
+  beams = [],
   className = "",
 }: CoverDiagramProps) {
   if (!projection1 || !width1) {
@@ -78,34 +98,19 @@ export default function CoverDiagram({
   const beamY2 = run2FrontY - 1.5 * scale;
 
   // Post X positions along beam - 1.5ft from each end, evenly spaced
-  const postPositions: number[] = [];
-  if (posts1 > 0) {
-    if (posts1 === 1) {
-      postPositions.push(ox + coverW1 / 2);
-    } else {
-      for (let i = 0; i < posts1; i++) {
-        const pct = i === 0 ? 1.5 / width1
-          : i === posts1 - 1 ? (width1 - 1.5) / width1
-          : (1.5 + (width1 - 3) * i / (posts1 - 1)) / width1;
-        postPositions.push(ox + pct * coverW1);
-      }
-    }
-  }
+  const postPositions = spacedPostXs(posts1, width1, ox, coverW1);
 
   // Post X positions for run 2, same spacing rule within run 2's own width
-  const postPositions2: number[] = [];
-  if (hasRun2 && posts2 > 0) {
-    if (posts2 === 1) {
-      postPositions2.push(ox + coverW1 + coverW2 / 2);
-    } else {
-      for (let i = 0; i < posts2; i++) {
-        const pct = i === 0 ? 1.5 / width2
-          : i === posts2 - 1 ? (width2 - 1.5) / width2
-          : (1.5 + (width2 - 3) * i / (posts2 - 1)) / width2;
-        postPositions2.push(ox + coverW1 + pct * coverW2);
-      }
-    }
-  }
+  const postPositions2 = hasRun2 ? spacedPostXs(posts2, width2, ox + coverW1, coverW2) : [];
+
+  // Multi-span beams (Additional / Multi-Span Beams) - run 1 only. Y position is
+  // measured from the house wall (0 = at the house), clamped inside the cover so
+  // an out-of-range value doesn't draw off the diagram. Posts space across the
+  // same width1 run using the same 1.5ft-inset rule as the primary beam.
+  const multiSpanBeams = beams.map((b) => {
+    const y = run1TopY + Math.max(0, Math.min(b.positionFromHouse, projection1)) * scale;
+    return { y, postXs: spacedPostXs(b.posts, width1, ox, coverW1) };
+  });
 
   // Rafter tail count (run 1)
   const tailCount = Math.round(width1 / 2);
@@ -185,6 +190,12 @@ export default function CoverDiagram({
               stroke="#15803d" strokeWidth="3" />
           )}
 
+          {/* Multi-span beams (Additional / Multi-Span Beams) - run 1 only */}
+          {multiSpanBeams.map((b, i) => (
+            <line key={"ms-beam-" + i} x1={ox} y1={b.y} x2={ox + coverW1} y2={b.y}
+              stroke="#7c3aed" strokeWidth="3" strokeDasharray="8,3" />
+          ))}
+
           {/* Side plates - full height + tail (run 1) */}
           <line x1={ox} y1={run1TopY} x2={ox} y2={tailTipY}
             stroke="#1e40af" strokeWidth="2.5" />
@@ -234,6 +245,24 @@ export default function CoverDiagram({
                 fontSize="7" fill="white" fontWeight="bold">{postPositions.length + i + 1}</text>
             </g>
           ))}
+
+          {/* Posts on multi-span beams - numbering continues from run 1 + run 2's posts */}
+          {(() => {
+            let numberSoFar = postPositions.length + postPositions2.length;
+            return multiSpanBeams.map((b, bi) =>
+              b.postXs.map((px, i) => {
+                numberSoFar += 1;
+                return (
+                  <g key={"ms-post-" + bi + "-" + i}>
+                    <rect x={px - 5} y={b.y - 5} width={10} height={10}
+                      fill="#7c3aed" rx="1" />
+                    <text x={px} y={b.y + 4} textAnchor="middle"
+                      fontSize="7" fill="white" fontWeight="bold">{numberSoFar}</text>
+                  </g>
+                );
+              })
+            );
+          })()}
 
           {/* Downspouts — hang just in front of (past) the corner post, at the true
               front edge rather than the post's own beam-line position. 1 downspout
@@ -292,6 +321,13 @@ export default function CoverDiagram({
           <line x1={ox + 110} y1={svgH - 12} x2={ox + 122} y2={svgH - 12}
             stroke="#1e40af" strokeWidth="3" />
           <text x={ox + 126} y={svgH - 8} fontSize="9" fill="#475569">Beam</text>
+          {multiSpanBeams.length > 0 && (
+            <>
+              <line x1={ox + 162} y1={svgH - 12} x2={ox + 174} y2={svgH - 12}
+                stroke="#7c3aed" strokeWidth="3" strokeDasharray="8,3" />
+              <text x={ox + 178} y={svgH - 8} fontSize="9" fill="#475569">Multi-Span Beam</text>
+            </>
+          )}
         </svg>
       </div>
     </div>
