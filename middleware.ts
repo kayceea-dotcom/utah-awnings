@@ -28,8 +28,12 @@ export async function middleware(request: NextRequest) {
   const isAuthPage = request.nextUrl.pathname.startsWith("/login") ||
     request.nextUrl.pathname.startsWith("/accept-invite");
 
-  // If not logged in and not on an auth page, redirect to login
-  if (!user && !isAuthPage) {
+  // The customer-facing proposal link (/p/[token]) is public - homeowners
+  // never have an account, they just click the link from their email.
+  const isPublicPage = request.nextUrl.pathname.startsWith("/p/");
+
+  // If not logged in and not on an auth page or public page, redirect to login
+  if (!user && !isAuthPage && !isPublicPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
