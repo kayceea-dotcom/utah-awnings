@@ -4,7 +4,7 @@ import type { NewportInputs, LineItem, QuoteResult } from "./types";
 import {
   li, nextStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, beamTypeLabel, anchorQty,
   wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen, deckHeightSurcharge,
-  END_CUT_LABELS,
+  postMaterialLength, groundMountSurcharge, finalizePricing, END_CUT_LABELS,
 } from "./shared";
 
 function panelRate(type: string): number {
@@ -114,12 +114,14 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   const multiSpanPosts = (inp.beams || []).reduce((s, b) => s + (b.posts || 0), 0);
   const totalPosts = inp.posts1 + inp.posts2 + multiSpanPosts;
   if (inp.posts1 > 0) {
-    items.push(li("3x3 Post Sleeve #1", inp.posts1, inp.postHeight1, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
-    items.push(li("3x3 Steel Post #1",  inp.posts1, inp.postHeight1, RATES.post_3x3_steel_ft));
+    const len1 = postMaterialLength(inp.postHeight1, inp.groundAttachment);
+    items.push(li("3x3 Post Sleeve #1", inp.posts1, len1, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
+    items.push(li("3x3 Steel Post #1",  inp.posts1, len1, RATES.post_3x3_steel_ft));
   }
   if (inp.posts2 > 0) {
-    items.push(li("3x3 Post Sleeve #2", inp.posts2, inp.postHeight2, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
-    items.push(li("3x3 Steel Post #2",  inp.posts2, inp.postHeight2, RATES.post_3x3_steel_ft));
+    const len2 = postMaterialLength(inp.postHeight2, inp.groundAttachment);
+    items.push(li("3x3 Post Sleeve #2", inp.posts2, len2, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
+    items.push(li("3x3 Steel Post #2",  inp.posts2, len2, RATES.post_3x3_steel_ft));
   }
 
   // ── MULTI-SPAN BEAMS — additional beams beyond the two primary runs (Additional /
@@ -133,8 +135,9 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
       items.push(li("Beam End Caps #" + num, beam.qty * 2, 0, beamEndcapRate(beam.type), "", inp.colorPostsBeam));
     }
     if (beam.posts > 0) {
-      items.push(li("3x3 Post Sleeve #" + num, beam.posts, beam.postHeight, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
-      items.push(li("3x3 Steel Post #" + num,  beam.posts, beam.postHeight, RATES.post_3x3_steel_ft));
+      const lenN = postMaterialLength(beam.postHeight, inp.groundAttachment);
+      items.push(li("3x3 Post Sleeve #" + num, beam.posts, lenN, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
+      items.push(li("3x3 Steel Post #" + num,  beam.posts, lenN, RATES.post_3x3_steel_ft));
     }
   });
 
@@ -236,32 +239,22 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   }
 
   // ── PRICING SUMMARY ──
-  const misc                = inp.misc + deckHeightSurcharge(inp.groundAttachment, inp.deckHeight);
-  const materialCost        = items.reduce((s, i) => s + i.amount, 0);
-  const taxes               = materialCost * inp.taxRate;
-  const priceIncreaseDollar = (materialCost + taxes) * inp.priceIncrease;
-  const totalMaterials      = materialCost + taxes + priceIncreaseDollar;
-  const subtotal            = totalMaterials + inp.footings + inp.roofMounts + misc;
-  const preSaleTotal        = subtotal * inp.markup;
-  const ccFee               = preSaleTotal * RATES.CC_FEE_RATE / (1 - RATES.CC_FEE_RATE);
-  const totalJobSale        = preSaleTotal + ccFee;
-  const totalProfit         = totalJobSale - subtotal;
-  const totalSqFt           =
+  const misc = inp.misc + deckHeightSurcharge(inp.groundAttachment, inp.deckHeight)
+             + groundMountSurcharge(inp.groundAttachment, totalPosts);
+  const materialCost = items.reduce((s, i) => s + i.amount, 0);
+  const pricing = finalizePricing(materialCost, {
+    taxRate: inp.taxRate, priceIncrease: inp.priceIncrease,
+    footings: inp.footings, roofMounts: inp.roofMounts, misc, markup: inp.markup,
+  });
+  const totalSqFt =
     (inp.projection1 > 0 ? inp.projection1 * inp.width1 : 0) +
     (inp.projection2 > 0 ? inp.projection2 * inp.width2 : 0);
 
   return {
     lineItems: items.filter((i) => i.amount !== 0),
-    materialCost, taxes,
-    priceIncrease: priceIncreaseDollar,
-    totalMaterials,
-    footings:   inp.footings,
-    roofMounts: inp.roofMounts,
-    misc,
-    subtotal, markup: inp.markup, ccFee,
-    totalJobSale, totalProfit,
-    costPerSqFt:  totalSqFt > 0 ? subtotal     / totalSqFt : 0,
-    pricePerSqFt: totalSqFt > 0 ? totalJobSale / totalSqFt : 0,
+    ...pricing,
+    costPerSqFt:  totalSqFt > 0 ? pricing.subtotal     / totalSqFt : 0,
+    pricePerSqFt: totalSqFt > 0 ? pricing.totalJobSale / totalSqFt : 0,
     totalSqFt,
   };
 }

@@ -2,7 +2,8 @@ import { RATES } from "./rates";
 import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType } from "./types";
 import {
   li, nextStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, anchorQty,
-  wrapKitRates, wrapKitFinishingItems, deckHeightSurcharge,
+  wrapKitRates, wrapKitFinishingItems, deckHeightSurcharge, postMaterialLength, groundMountSurcharge,
+  finalizePricing,
 } from "./shared";
 
 export type IRPType = "lrp_3_032" | "lrp_4_032";
@@ -149,12 +150,14 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
   // ── POSTS ──
   const totalPosts = inp.posts1 + inp.posts2;
   if (inp.posts1 > 0) {
-    items.push(li("3x3 Post Sleeve #1", inp.posts1, inp.postHeight1, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
-    items.push(li("3x3 Steel Post #1",  inp.posts1, inp.postHeight1, RATES.post_3x3_steel_ft));
+    const len1 = postMaterialLength(inp.postHeight1, inp.groundAttachment);
+    items.push(li("3x3 Post Sleeve #1", inp.posts1, len1, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
+    items.push(li("3x3 Steel Post #1",  inp.posts1, len1, RATES.post_3x3_steel_ft));
   }
   if (inp.posts2 > 0) {
-    items.push(li("3x3 Post Sleeve #2", inp.posts2, inp.postHeight2, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
-    items.push(li("3x3 Steel Post #2",  inp.posts2, inp.postHeight2, RATES.post_3x3_steel_ft));
+    const len2 = postMaterialLength(inp.postHeight2, inp.groundAttachment);
+    items.push(li("3x3 Post Sleeve #2", inp.posts2, len2, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
+    items.push(li("3x3 Steel Post #2",  inp.posts2, len2, RATES.post_3x3_steel_ft));
   }
 
   // ── WRAP KIT — post plates, sideplates, mitered caps, foam inserts, end caps, plugs.
@@ -215,32 +218,22 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
   }
 
   // ── PRICING SUMMARY ──
-  const misc                = inp.misc + deckHeightSurcharge(inp.groundAttachment, inp.deckHeight);
-  const materialCost        = items.reduce((s, i) => s + i.amount, 0);
-  const taxes               = materialCost * inp.taxRate;
-  const priceIncreaseDollar = (materialCost + taxes) * inp.priceIncrease;
-  const totalMaterials      = materialCost + taxes + priceIncreaseDollar;
-  const subtotal            = totalMaterials + inp.footings + inp.roofMounts + misc;
-  const preSaleTotal        = subtotal * inp.markup;
-  const ccFee               = preSaleTotal * RATES.CC_FEE_RATE / (1 - RATES.CC_FEE_RATE);
-  const totalJobSale        = preSaleTotal + ccFee;
-  const totalProfit         = totalJobSale - subtotal;
-  const totalSqFt           =
+  const misc = inp.misc + deckHeightSurcharge(inp.groundAttachment, inp.deckHeight)
+             + groundMountSurcharge(inp.groundAttachment, totalPosts);
+  const materialCost = items.reduce((s, i) => s + i.amount, 0);
+  const pricing = finalizePricing(materialCost, {
+    taxRate: inp.taxRate, priceIncrease: inp.priceIncrease,
+    footings: inp.footings, roofMounts: inp.roofMounts, misc, markup: inp.markup,
+  });
+  const totalSqFt =
     (inp.projection1 > 0 ? inp.projection1 * inp.width1 : 0) +
     (inp.projection2 > 0 ? inp.projection2 * inp.width2 : 0);
 
   return {
     lineItems: items.filter((i) => i.amount !== 0),
-    materialCost, taxes,
-    priceIncrease: priceIncreaseDollar,
-    totalMaterials,
-    footings:   inp.footings,
-    roofMounts: inp.roofMounts,
-    misc,
-    subtotal, markup: inp.markup, ccFee,
-    totalJobSale, totalProfit,
-    costPerSqFt:  totalSqFt > 0 ? subtotal     / totalSqFt : 0,
-    pricePerSqFt: totalSqFt > 0 ? totalJobSale / totalSqFt : 0,
+    ...pricing,
+    costPerSqFt:  totalSqFt > 0 ? pricing.subtotal     / totalSqFt : 0,
+    pricePerSqFt: totalSqFt > 0 ? pricing.totalJobSale / totalSqFt : 0,
     totalSqFt,
   };
 }

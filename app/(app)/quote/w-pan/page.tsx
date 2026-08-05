@@ -4,6 +4,8 @@ export const dynamic = "force-dynamic";
 
 import { useState, useMemo, useEffect } from "react";
 import { calcWPan } from "@/lib/pricing/wpan";
+import { groundMountSurcharge } from "@/lib/pricing/shared";
+import { useEditableMaterialList } from "@/lib/hooks/useEditableMaterialList";
 import type { WPanInputs, WPanType } from "@/lib/pricing/wpan";
 import TopBar from "@/components/TopBar";
 import Field from "@/components/quote/Field";
@@ -284,6 +286,10 @@ export default function WPanQuotePage() {
   const router = useRouter();
 
   const result = useMemo(() => calcWPan(inp), [inp]);
+  const groundMountHoles = inp.posts1 + inp.posts2;
+  const groundMountAddOn = groundMountSurcharge(inp.groundAttachment, groundMountHoles);
+  const editableList = useEditableMaterialList(result, inp);
+  const effectiveResult = editableList.displayResult;
 
   useEffect(() => {
     if (profile?.full_name) {
@@ -416,18 +422,38 @@ export default function WPanQuotePage() {
                 <NumInput label="Price Increase" value={inp.priceIncrease} onChange={(v) => setField("priceIncrease", v)} hint="e.g. 0.10 = 10%" />
                 <NumInput label="Footings ($)" value={inp.footings} onChange={(v) => setField("footings", v)} />
                 <NumInput label="Roof Mounts ($)" value={inp.roofMounts} onChange={(v) => setField("roofMounts", v)} />
-                <NumInput label="Misc ($)" value={inp.misc} onChange={(v) => setField("misc", v)} />
+                <NumInput label="Misc ($)" value={inp.misc} onChange={(v) => setField("misc", v)}
+                  hint={groundMountAddOn > 0 ? `+$${groundMountAddOn} auto-added for ground-mount concrete/labor (${groundMountHoles} holes @ $100)` : undefined} />
               </SectionCard>
 
               <div className="hidden lg:block">
-                <PriceSummaryPanel result={result} />
+                <PriceSummaryPanel result={effectiveResult} />
               </div>
 
               <button onClick={() => setShowMaterials((v) => !v)} className="btn-secondary w-full">
                 <DollarSign size={15} />
-                {showMaterials ? "Hide" : "Show"} Material List ({result.lineItems.length} items)
+                {showMaterials ? "Hide" : "Show"} Material List ({effectiveResult.lineItems.length} items)
               </button>
-              {showMaterials && <MaterialList items={result.lineItems} />}
+              {showMaterials && (
+                <>
+                  <div className="flex justify-end gap-2 -mb-2">
+                    {editableList.editing ? (
+                      <button onClick={editableList.resetToCalculated} className="text-xs text-gray-500 hover:text-gray-700 underline">
+                        Reset to calculated
+                      </button>
+                    ) : (
+                      <button onClick={editableList.startEditing} className="text-xs text-gray-500 hover:text-gray-700 underline">
+                        Edit for custom job
+                      </button>
+                    )}
+                  </div>
+                  <MaterialList
+                    items={effectiveResult.lineItems}
+                    editable={editableList.editing}
+                    onItemsChange={editableList.setEditedItems}
+                  />
+                </>
+              )}
             </div>
 
             <div className="hidden lg:block w-80 flex-shrink-0 sticky top-20 space-y-4">
@@ -443,18 +469,18 @@ export default function WPanQuotePage() {
                 downspoutSide={inp.downspoutSide}
                 showRafterTails={inp.wrapType !== "none" && inp.rafterTails}
               />
-              <PriceSummaryPanel result={result} />
+              <PriceSummaryPanel result={effectiveResult} />
             </div>
           </div>
         </div>
       </main>
 
-      <MobilePriceBar result={result} onExpand={() => setShowPricePanel(true)} />
+      <MobilePriceBar result={effectiveResult} onExpand={() => setShowPricePanel(true)} />
 
       {showPricePanel && (
         <div className="lg:hidden fixed inset-0 z-50 bg-black/60 flex items-end">
           <div className="bg-white w-full rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto">
-            <PriceSummaryPanel result={result} onClose={() => setShowPricePanel(false)} />
+            <PriceSummaryPanel result={effectiveResult} onClose={() => setShowPricePanel(false)} />
           </div>
         </div>
       )}
@@ -463,11 +489,11 @@ export default function WPanQuotePage() {
         <SaveQuoteModal
           productType="w_pan"
           inputs={inp as unknown as Record<string, unknown>}
-          lineItems={result.lineItems}
-          materialCost={result.materialCost}
-          totalJobSale={result.totalJobSale}
-          totalProfit={result.totalProfit}
-          markup={result.markup}
+          lineItems={effectiveResult.lineItems}
+          materialCost={effectiveResult.materialCost}
+          totalJobSale={effectiveResult.totalJobSale}
+          totalProfit={effectiveResult.totalProfit}
+          markup={effectiveResult.markup}
           onClose={() => setShowSaveModal(false)}
           onSuccess={(token) => {
             setShowSaveModal(false);

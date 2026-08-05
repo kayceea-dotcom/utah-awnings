@@ -13,6 +13,56 @@ export function li(
   return { name, qty, length, unit, rate, amount: qty * (length || 1) * rate, color, displayLength };
 }
 
+export interface PricingSummaryOpts {
+  taxRate: number;
+  priceIncrease: number;
+  footings: number;
+  roofMounts: number;
+  misc: number;
+  markup: number;
+}
+
+export interface PricingSummary {
+  materialCost: number;
+  taxes: number;
+  priceIncrease: number;
+  totalMaterials: number;
+  footings: number;
+  roofMounts: number;
+  misc: number;
+  subtotal: number;
+  markup: number;
+  ccFee: number;
+  totalJobSale: number;
+  totalProfit: number;
+}
+
+// Turns a material cost total into the rest of the pricing breakdown (taxes,
+// price increase, footings/roof mounts/misc, markup, credit-card fee). Same
+// formula for every product - pulled out so the quote builder can re-run it
+// against a manually-edited material list without duplicating this math, not
+// just so the 4 calculators stay in sync with each other.
+export function finalizePricing(materialCost: number, opts: PricingSummaryOpts): PricingSummary {
+  const taxes = materialCost * opts.taxRate;
+  const priceIncreaseDollar = (materialCost + taxes) * opts.priceIncrease;
+  const totalMaterials = materialCost + taxes + priceIncreaseDollar;
+  const subtotal = totalMaterials + opts.footings + opts.roofMounts + opts.misc;
+  const preSaleTotal = subtotal * opts.markup;
+  const ccFee = preSaleTotal * RATES.CC_FEE_RATE / (1 - RATES.CC_FEE_RATE);
+  const totalJobSale = preSaleTotal + ccFee;
+  const totalProfit = totalJobSale - subtotal;
+  return {
+    materialCost, taxes,
+    priceIncrease: priceIncreaseDollar,
+    totalMaterials,
+    footings: opts.footings,
+    roofMounts: opts.roofMounts,
+    misc: opts.misc,
+    subtotal, markup: opts.markup, ccFee,
+    totalJobSale, totalProfit,
+  };
+}
+
 // Real supplier stock lengths (not a uniform step) — smallest one that fits. 4/8ft
 // pieces are cut-offs the supplier still stocks (e.g. the 8ft left over cutting a
 // 16ft piece off a 24ft gutter or steel beam), not a separate short product line.
@@ -76,6 +126,20 @@ export function anchorQty(totalPosts: number, groundAttachment: string): number 
 // folded into the Misc $ field rather than its own line item.
 export function deckHeightSurcharge(groundAttachment: string, deckHeight: number): number {
   return groundAttachment === "deck" && deckHeight >= 12 ? 250 : 0;
+}
+
+// Ground-mounted posts are set directly into a dug/poured hole rather than
+// bolted onto a footing/deck surface, so the physical post material needs an
+// extra 2ft of buried length beyond the visible/entered post height.
+export function postMaterialLength(heightFt: number, groundAttachment: string): number {
+  return groundAttachment === "ground_mount" ? heightFt + 2 : heightFt;
+}
+
+// $100 per hole for the concrete + labor to set each ground-mounted post.
+// Not a purchasable material - excluded from the material list/order sheet on
+// purpose - folded into the Misc $ bucket instead, same as deckHeightSurcharge.
+export function groundMountSurcharge(groundAttachment: string, totalPosts: number): number {
+  return groundAttachment === "ground_mount" ? totalPosts * 100 : 0;
 }
 
 // ── Wrap kit ──────────────────────────────────────────────────────────────

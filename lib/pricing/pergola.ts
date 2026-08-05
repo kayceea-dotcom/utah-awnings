@@ -1,6 +1,6 @@
 import { RATES } from "./rates";
 import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType } from "./types";
-import { li, nextStockLength, anchorQty, deckHeightSurcharge } from "./shared";
+import { li, nextStockLength, anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing } from "./shared";
 
 export interface PergolaInputs {
   jobName: string;
@@ -82,8 +82,9 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
   // ── POSTS ──
   const totalPosts = inp.posts;
   if (totalPosts > 0) {
-    items.push(li("3x3 Post Sleeve", totalPosts, inp.postHeight, RATES.post_3x3_sleeve_ft, "", inp.colorPergola));
-    items.push(li("3x3 Steel Post", totalPosts, inp.postHeight, RATES.post_3x3_steel_ft));
+    const postLen = postMaterialLength(inp.postHeight, inp.groundAttachment);
+    items.push(li("3x3 Post Sleeve", totalPosts, postLen, RATES.post_3x3_sleeve_ft, "", inp.colorPergola));
+    items.push(li("3x3 Steel Post", totalPosts, postLen, RATES.post_3x3_steel_ft));
     // Post plates mitered one end
     items.push(li("2x6 Post Plates (Mitered)", totalPosts * 2, inp.postHeight + 1, RATES.post_plate_2x6_ft, "", inp.colorPergola));
   }
@@ -162,30 +163,20 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
   }
 
   // ── PRICING SUMMARY ──
-  const misc                = inp.misc + deckHeightSurcharge(inp.groundAttachment, inp.deckHeight);
-  const materialCost        = items.reduce((s, i) => s + i.amount, 0);
-  const taxes               = materialCost * inp.taxRate;
-  const priceIncreaseDollar = (materialCost + taxes) * inp.priceIncrease;
-  const totalMaterials      = materialCost + taxes + priceIncreaseDollar;
-  const subtotal            = totalMaterials + inp.footings + inp.roofMounts + misc;
-  const preSaleTotal        = subtotal * inp.markup;
-  const ccFee               = preSaleTotal * RATES.CC_FEE_RATE / (1 - RATES.CC_FEE_RATE);
-  const totalJobSale        = preSaleTotal + ccFee;
-  const totalProfit         = totalJobSale - subtotal;
-  const totalSqFt           = inp.projection > 0 ? inp.projection * inp.width : 0;
+  const misc = inp.misc + deckHeightSurcharge(inp.groundAttachment, inp.deckHeight)
+             + groundMountSurcharge(inp.groundAttachment, totalPosts);
+  const materialCost = items.reduce((s, i) => s + i.amount, 0);
+  const pricing = finalizePricing(materialCost, {
+    taxRate: inp.taxRate, priceIncrease: inp.priceIncrease,
+    footings: inp.footings, roofMounts: inp.roofMounts, misc, markup: inp.markup,
+  });
+  const totalSqFt = inp.projection > 0 ? inp.projection * inp.width : 0;
 
   return {
     lineItems: items.filter((i) => i.amount !== 0),
-    materialCost, taxes,
-    priceIncrease: priceIncreaseDollar,
-    totalMaterials,
-    footings:   inp.footings,
-    roofMounts: inp.roofMounts,
-    misc,
-    subtotal, markup: inp.markup, ccFee,
-    totalJobSale, totalProfit,
-    costPerSqFt:  totalSqFt > 0 ? subtotal     / totalSqFt : 0,
-    pricePerSqFt: totalSqFt > 0 ? totalJobSale / totalSqFt : 0,
+    ...pricing,
+    costPerSqFt:  totalSqFt > 0 ? pricing.subtotal     / totalSqFt : 0,
+    pricePerSqFt: totalSqFt > 0 ? pricing.totalJobSale / totalSqFt : 0,
     totalSqFt,
   };
 }
