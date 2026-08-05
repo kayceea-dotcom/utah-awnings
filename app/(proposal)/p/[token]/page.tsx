@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { CheckCircle, Check, PenLine, CreditCard, Banknote, Phone } from "lucide-react";
 import { estimateMonthlyPayment, HEARTH_PREQUALIFY_URL, FINANCING_APR, FINANCING_TERM_YEARS } from "@/lib/financing";
 import type { BeamConfig } from "@/lib/pricing/types";
+import { beamTypeLabel } from "@/lib/pricing/shared";
 
 const TERMS = [
   "Contractor to provide the improvements/remodeling/reconstruction/rehabilitation (hereinafter the work), in a workmanlike manner and in accordance with the plans and specifications provided or in accordance with the attached Scope of Work to the property listed above. Contractor is not responsible to repair existing conditions on home unless specified in this agreement. Contractor will build assuming that the property is built to meet current building codes, including electrical and framing. Any damage caused by contractor will be repaired/or paid to be repaired by Contractor as if property meets current building code requirements. Also, Contractor assumes that roofing and stucco have been installed properly, including flashing and drip edge, and will not be held responsible for leaking caused by improper installation of roofing and stucco. It is understood that the Awning is not intended to be a waterproof structure and shall not be deemed defective by reason of leakage; however, Contractor shall make every effort to make sure the Awning is as waterproof as possible.",
@@ -234,7 +235,7 @@ export default function ProposalPage() {
               const trimColor = (inp?.colorGutterFascia as string) || "";
               return trimColor ? <div><span className="text-gray-500">Gutter/Fascia Color:</span> <span className="font-medium">{trimColor}</span></div> : null;
             })()}
-            <div><span className="text-gray-500">Beam:</span> <span className="font-medium">{q.beam_type as string}</span></div>
+            <div><span className="text-gray-500">Beam:</span> <span className="font-medium">{beamTypeLabel(q.beam_type as string)}</span></div>
             {(() => {
               const inp = q.inputs as Record<string, unknown> | null;
               const trimColor = (inp?.colorPostsBeam as string) || "";
@@ -282,6 +283,8 @@ export default function ProposalPage() {
                 downspoutSide={String(inp.downspoutSide || "right")}
                 showRafterTails={showRafterTails}
                 beams={(inp.beams as BeamConfig[]) || []}
+                beamType1={String(inp.beamType1 || "3x8")}
+                beamType2={String(inp.beamType2 || "3x8")}
               />
             </div>
           );

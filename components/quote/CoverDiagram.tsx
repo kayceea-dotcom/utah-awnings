@@ -14,6 +14,8 @@ interface CoverDiagramProps {
   showRafterTails?: boolean;
   jogType?: string;
   beams?: BeamConfig[];
+  beamType1?: string;
+  beamType2?: string;
   className?: string;
 }
 
@@ -43,6 +45,8 @@ export default function CoverDiagram({
   showRafterTails = true,
   jogType = "ground",
   beams = [],
+  beamType1 = "3x8",
+  beamType2 = "3x8",
   className = "",
 }: CoverDiagramProps) {
   if (!projection1 || !width1) {
@@ -179,15 +183,31 @@ export default function CoverDiagram({
               stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="5,3" />
           )}
 
-          {/* Beam line run 1 - horizontal, 1.5ft from front edge; flush with run 2 on a house jog */}
-          <line x1={ox} y1={beamY1} x2={ox + coverW1} y2={beamY1}
-            stroke="#1e40af" strokeWidth="3" />
+          {/* Beam line run 1 - horizontal, 1.5ft from front edge; flush with run 2 on a house jog.
+              A double beam mounts front + back of the posts (for extra span), shown as 2 lines
+              straddling the post instead of the single beam sitting on top of it. */}
+          {beamType1 === "double_3x8" ? (
+            <>
+              <line x1={ox} y1={beamY1 - 3} x2={ox + coverW1} y2={beamY1 - 3} stroke="#1e40af" strokeWidth="2" />
+              <line x1={ox} y1={beamY1 + 3} x2={ox + coverW1} y2={beamY1 + 3} stroke="#1e40af" strokeWidth="2" />
+            </>
+          ) : (
+            <line x1={ox} y1={beamY1} x2={ox + coverW1} y2={beamY1}
+              stroke="#1e40af" strokeWidth="3" />
+          )}
 
           {/* Beam line run 2 */}
           {hasRun2 && (
-            <line x1={ox + coverW1} y1={beamY2}
-                  x2={ox + coverW1 + coverW2} y2={beamY2}
-              stroke="#15803d" strokeWidth="3" />
+            beamType2 === "double_3x8" ? (
+              <>
+                <line x1={ox + coverW1} y1={beamY2 - 3} x2={ox + coverW1 + coverW2} y2={beamY2 - 3} stroke="#15803d" strokeWidth="2" />
+                <line x1={ox + coverW1} y1={beamY2 + 3} x2={ox + coverW1 + coverW2} y2={beamY2 + 3} stroke="#15803d" strokeWidth="2" />
+              </>
+            ) : (
+              <line x1={ox + coverW1} y1={beamY2}
+                    x2={ox + coverW1 + coverW2} y2={beamY2}
+                stroke="#15803d" strokeWidth="3" />
+            )
           )}
 
           {/* Multi-span beams (Additional / Multi-Span Beams) - run 1 only */}

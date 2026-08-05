@@ -2,7 +2,7 @@ import { RATES } from "./rates";
 import { CATALOG_BY_KEY } from "./catalog";
 import type { NewportInputs, LineItem, QuoteResult } from "./types";
 import {
-  li, nextStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, anchorQty,
+  li, nextStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, beamTypeLabel, anchorQty,
   wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen, deckHeightSurcharge,
   END_CUT_LABELS,
 } from "./shared";
@@ -15,25 +15,11 @@ function panelLabel(type: string): string {
   return CATALOG_BY_KEY[type]?.label ?? type;
 }
 
-// Only the 3x8 beam takes the selected end-cut treatment (3x3/I-beam don't).
+// Only 3x8/double-3x8 beams take the selected end-cut treatment (3x3/I-beam don't).
 function beamLabel(type: string, endCut: string): string {
-  if (type !== "3x8" || !endCut) return type;
-  return type + ", " + (END_CUT_LABELS[endCut] ?? endCut);
-}
-
-// "double_3x8" (Additional / Multi-Span Beams) means two 3x8 beams sandwiched
-// together, not a distinct catalog rate - price/label it as 2x a single 3x8.
-function multiBeamMaterialRate(type: string): number {
-  return type === "double_3x8" ? beamMaterialRate("3x8") * 2 : beamMaterialRate(type);
-}
-function multiBeamSteelRate(type: string): number {
-  return type === "double_3x8" ? steelInsertRate("3x8") * 2 : steelInsertRate(type);
-}
-function multiBeamEndcapRate(type: string): number {
-  return type === "double_3x8" ? beamEndcapRate("3x8") * 2 : beamEndcapRate(type);
-}
-function multiBeamLabel(type: string): string {
-  return type === "double_3x8" ? "Double 3x8" : type;
+  const takesEndCut = type === "3x8" || type === "double_3x8";
+  if (!takesEndCut || !endCut) return beamTypeLabel(type);
+  return beamTypeLabel(type) + ", " + (END_CUT_LABELS[endCut] ?? endCut);
 }
 
 function panelWidthFt(type: string): number {
@@ -142,9 +128,9 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   (inp.beams || []).forEach((beam, idx) => {
     const num = idx + 3;
     if (beam.length > 0 && beam.qty > 0) {
-      items.push(li("Beam #" + num + " (" + multiBeamLabel(beam.type) + ")", beam.qty, beam.length, multiBeamMaterialRate(beam.type), "", inp.colorPostsBeam));
-      items.push(li("Steel Insert #" + num, beam.qty, nextStockLength(beam.length), multiBeamSteelRate(beam.type)));
-      items.push(li("Beam End Caps #" + num, beam.qty * 2, 0, multiBeamEndcapRate(beam.type), "", inp.colorPostsBeam));
+      items.push(li("Beam #" + num + " (" + beamTypeLabel(beam.type) + ")", beam.qty, beam.length, beamMaterialRate(beam.type), "", inp.colorPostsBeam));
+      items.push(li("Steel Insert #" + num, beam.qty, nextStockLength(beam.length), steelInsertRate(beam.type)));
+      items.push(li("Beam End Caps #" + num, beam.qty * 2, 0, beamEndcapRate(beam.type), "", inp.colorPostsBeam));
     }
     if (beam.posts > 0) {
       items.push(li("3x3 Post Sleeve #" + num, beam.posts, beam.postHeight, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));

@@ -41,10 +41,11 @@ const PANEL_TYPES = [
 ];
 
 const BEAM_TYPES = [
-  { value: "3x8",      label: "3x8 Beam" },
-  { value: "3x3",      label: "3x3 Beam" },
-  { value: "4_i_beam", label: "4in I-Beam" },
-  { value: "7_i_beam", label: "7in I-Beam" },
+  { value: "3x8",        label: "3x8 Beam" },
+  { value: "double_3x8", label: "Double 3x8 Beam" },
+  { value: "3x3",        label: "3x3 Beam" },
+  { value: "4_i_beam",   label: "4in I-Beam" },
+  { value: "7_i_beam",   label: "7in I-Beam" },
 ];
 
 const END_CUTS = [
@@ -187,13 +188,13 @@ function NumInput({ label, value, onChange, hint, span }: {
   );
 }
 
-function SelectInput({ label, value, onChange, options, span }: {
+function SelectInput({ label, value, onChange, options, span, hint }: {
   label: string; value: string; onChange: (v: string) => void;
-  options: { value: string; label: string }[]; span?: number;
+  options: { value: string; label: string }[]; span?: number; hint?: string;
 }) {
   return (
     <div className={span === 2 ? "col-span-2" : ""}>
-      <Field label={label}>
+      <Field label={label} hint={hint}>
         <div className="relative">
           <select
             className="select pr-8"
@@ -442,10 +443,12 @@ export default function FlatPanelQuotePage() {
               </SectionCard>
 
               <SectionCard id="structure" title="Structure" open={open.has("structure")} onToggle={toggleSection}>
-                <SelectInput label="Beam Type #1" value={inp.beamType1} onChange={(v) => setField("beamType1", v as never)} options={BEAM_TYPES} />
+                <SelectInput label="Beam Type #1" value={inp.beamType1} onChange={(v) => setField("beamType1", v as never)} options={BEAM_TYPES}
+                  hint={inp.beamType1 === "double_3x8" ? "Mounted front + back of posts for greater span" : undefined} />
                 <SelectInput label="End Cut #1" value={inp.beamEndCut1} onChange={(v) => setField("beamEndCut1", v as never)} options={END_CUTS} />
                 <SelectInput label="Beam Type #2" value={inp.beamType2} onChange={(v) => setField("beamType2", v as never)}
-                  options={[{ value: "", label: "None" }, ...BEAM_TYPES]} />
+                  options={[{ value: "", label: "None" }, ...BEAM_TYPES]}
+                  hint={inp.beamType2 === "double_3x8" ? "Mounted front + back of posts for greater span" : undefined} />
                 <SelectInput label="End Cut #2" value={inp.beamEndCut2} onChange={(v) => setField("beamEndCut2", v as never)}
                   options={[{ value: "", label: "N/A" }, ...END_CUTS]} />
                 <SelectInput label="Hanger Type" value={inp.hangerType} onChange={(v) => setField("hangerType", v as never)} options={HANGERS} />
@@ -666,6 +669,8 @@ export default function FlatPanelQuotePage() {
                   downspoutSide={inp.downspoutSide}
                   showRafterTails={inp.wrapType !== "none" && inp.rafterTails}
                   beams={inp.beams}
+                  beamType1={inp.beamType1}
+                  beamType2={inp.beamType2}
                 />
               ) : (
                 <>
