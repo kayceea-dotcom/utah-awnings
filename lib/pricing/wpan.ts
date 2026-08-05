@@ -2,7 +2,7 @@ import { RATES } from "./rates";
 import { CATALOG_BY_KEY } from "./catalog";
 import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType } from "./types";
 import {
-  li, nextStockLength, wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen,
+  li, nextStockLength, rollFormGutterStockLength, wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen,
   anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing,
 } from "./shared";
 
@@ -105,7 +105,7 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   const gutterStockLen = nextStockLength(totalWidth + 1.5);
   const maxProjection = Math.max(inp.projection1, inp.projection2 || 0);
   if (inp.gutterType === "roll_form") {
-    items.push(li("Roll Form Gutter", 1, totalWidth + 1.5, RATES.gutter_roll_form_ft, "", inp.colorGutterFascia));
+    items.push(li("Roll Form Gutter", 1, rollFormGutterStockLength(totalWidth + 1.5), RATES.gutter_roll_form_ft, "", inp.colorGutterFascia));
   } else {
     items.push(li("Extruded Gutter 2.5in", 1, gutterStockLen, RATES.gutter_extruded_ft, "", inp.colorGutterFascia));
     const { qty: fasciaQty, length: fasciaStockLen } = fasciaQtyLen(maxProjection);

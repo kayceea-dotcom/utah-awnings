@@ -2,7 +2,7 @@ import { RATES } from "./rates";
 import { CATALOG_BY_KEY } from "./catalog";
 import type { NewportInputs, LineItem, QuoteResult } from "./types";
 import {
-  li, nextStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, beamTypeLabel, anchorQty,
+  li, nextStockLength, rollFormGutterStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, beamTypeLabel, anchorQty,
   wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen, deckHeightSurcharge,
   postMaterialLength, groundMountSurcharge, finalizePricing, END_CUT_LABELS,
 } from "./shared";
@@ -74,11 +74,14 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   const splitGutter = hasSecondRun && inp.jogType === "ground";
   const gutterName = inp.gutterType === "roll_form" ? "Roll Form Gutter" : "Extruded Gutter";
   const gutterRate = inp.gutterType === "roll_form" ? RATES.gutter_roll_form_ft : RATES.gutter_extruded_ft;
+  // Roll form gutter only ships in 30ft/36ft; extruded stays on the general stock ladder.
+  const gutterStockLength = (ft: number) =>
+    inp.gutterType === "roll_form" ? rollFormGutterStockLength(ft) : nextStockLength(ft);
   if (splitGutter) {
-    if (inp.width1 > 0) items.push(li(gutterName + " #1", gutterMultiplier, nextStockLength(inp.width1), gutterRate, "", inp.colorGutterFascia));
-    if (inp.width2 > 0) items.push(li(gutterName + " #2", gutterMultiplier, nextStockLength(inp.width2), gutterRate, "", inp.colorGutterFascia));
+    if (inp.width1 > 0) items.push(li(gutterName + " #1", gutterMultiplier, gutterStockLength(inp.width1), gutterRate, "", inp.colorGutterFascia));
+    if (inp.width2 > 0) items.push(li(gutterName + " #2", gutterMultiplier, gutterStockLength(inp.width2), gutterRate, "", inp.colorGutterFascia));
   } else if (combinedWidth > 0) {
-    items.push(li(gutterName, gutterMultiplier, nextStockLength(combinedWidth), gutterRate, "", inp.colorGutterFascia));
+    items.push(li(gutterName, gutterMultiplier, gutterStockLength(combinedWidth), gutterRate, "", inp.colorGutterFascia));
   }
 
   // ── EXTRUDED SIDE FASCIA — only with extruded gutter; length keyed off the DEEPER of the two
@@ -152,11 +155,13 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     }));
   }
 
-  // ── GUTTER SPLICE — needed whenever a gutter run exceeds max stock length (24ft); when the
-  // gutter is split (ground/deck jog), check each piece separately instead of the combined width ──
+  // ── GUTTER SPLICE — needed whenever a gutter run exceeds max stock length (36ft for roll
+  // form, 24ft for extruded); when the gutter is split (ground/deck jog), check each piece
+  // separately instead of the combined width ──
+  const gutterMaxStock = inp.gutterType === "roll_form" ? 36 : 24;
   const gutterSpliceQty = splitGutter
-    ? (inp.width1 > 24 ? 1 : 0) + (inp.width2 > 24 ? 1 : 0)
-    : combinedWidth > 24 ? 1 : 0;
+    ? (inp.width1 > gutterMaxStock ? 1 : 0) + (inp.width2 > gutterMaxStock ? 1 : 0)
+    : combinedWidth > gutterMaxStock ? 1 : 0;
   if (gutterSpliceQty > 0) {
     items.push(li("Gutter Splice", gutterSpliceQty, 0, RATES.gutter_splice));
   }

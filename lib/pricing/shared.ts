@@ -65,10 +65,19 @@ export function finalizePricing(materialCost: number, opts: PricingSummaryOpts):
 
 // Real supplier stock lengths (not a uniform step) — smallest one that fits. 4/8ft
 // pieces are cut-offs the supplier still stocks (e.g. the 8ft left over cutting a
-// 16ft piece off a 24ft gutter or steel beam), not a separate short product line.
+// 16ft piece off a 24ft steel beam), not a separate short product line. Does NOT
+// apply to roll form gutter — see rollFormGutterStockLength below.
 const STOCK_LENGTHS = [4, 8, 16, 20, 24, 32, 40, 48, 60, 72, 80];
 export function nextStockLength(ft: number): number {
   return STOCK_LENGTHS.find((len) => ft <= len) ?? STOCK_LENGTHS[STOCK_LENGTHS.length - 1];
+}
+
+// Roll form gutter only ships in 2 lengths — 30ft and 36ft — a completely
+// different set than the general stock-length ladder above (which has neither
+// value). Extruded gutter stays on the general ladder.
+const ROLL_FORM_GUTTER_LENGTHS = [30, 36];
+export function rollFormGutterStockLength(ft: number): number {
+  return ROLL_FORM_GUTTER_LENGTHS.find((len) => ft <= len) ?? ROLL_FORM_GUTTER_LENGTHS[ROLL_FORM_GUTTER_LENGTHS.length - 1];
 }
 
 // Extruded side fascia stock only goes up to 24ft. Up to a 12ft projection, one
