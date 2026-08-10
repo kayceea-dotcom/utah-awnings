@@ -12,3 +12,16 @@ export function estimateMonthlyPayment(principal: number, aprPercent: number, te
 export const HEARTH_PREQUALIFY_URL = "https://app.gethearth.com/financing/103/62/prequalify";
 export const FINANCING_APR = 7.9;
 export const FINANCING_TERM_YEARS = 12;
+
+export interface FinancingOption {
+  termYears: number;
+  apr: number;
+}
+
+// Shown on the rep-facing Price Summary while writing a bid - separate from
+// the single customer-facing estimate above (FINANCING_APR/FINANCING_TERM_YEARS).
+export const BID_FINANCING_OPTIONS: FinancingOption[] = [
+  { termYears: 3, apr: 18.12 },
+  { termYears: 5, apr: 19.37 },
+  { termYears: 7, apr: 9.99 },
+];

@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { useState, useMemo, useEffect } from "react";
 import { calcWPan } from "@/lib/pricing/wpan";
 import { groundMountSurcharge } from "@/lib/pricing/shared";
+import { estimateMonthlyPayment, BID_FINANCING_OPTIONS } from "@/lib/financing";
 import { useEditableMaterialList } from "@/lib/hooks/useEditableMaterialList";
 import type { WPanInputs, WPanType } from "@/lib/pricing/wpan";
 import TopBar from "@/components/TopBar";
@@ -219,6 +220,18 @@ function PriceSummaryPanel({ result, onClose }: { result: ReturnType<typeof calc
           <span>{result.totalSqFt.toFixed(0)} sq ft</span>
           <span>·</span>
           <span>{fmt(result.pricePerSqFt)}/sq ft</span>
+        </div>
+      </div>
+      <div>
+        <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2">Financing Estimates</p>
+        <div className="grid grid-cols-3 gap-2">
+          {BID_FINANCING_OPTIONS.map((opt) => (
+            <div key={opt.termYears} className="rounded-xl p-2.5 border border-gray-200 bg-gray-50 text-center">
+              <p className="text-xs text-gray-500 font-semibold">{opt.termYears} yr</p>
+              <p className="text-sm font-bold text-gray-800">{fmt(estimateMonthlyPayment(result.totalJobSale, opt.apr, opt.termYears))}/mo</p>
+              <p className="text-[10px] text-gray-400">{opt.apr}% APR</p>
+            </div>
+          ))}
         </div>
       </div>
       <div className="space-y-1.5 text-sm">
