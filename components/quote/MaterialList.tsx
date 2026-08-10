@@ -1,9 +1,15 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Trash2, Plus } from "lucide-react";
 import type { LineItem } from "@/lib/pricing/types";
+import { CATALOG, CATALOG_BY_KEY, CATEGORIES } from "@/lib/pricing/catalog";
+import { RATES } from "@/lib/pricing/rates";
 
 const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+
+const COLORS = ["White", "Siennawood", "Slate", "Driftwood", "Beechwood", "Maplewood", "Ebony", "Sandlewood"];
+const COLOR_OPTS = [{ value: "", label: "None" }, ...COLORS.map((c) => ({ value: c, label: c }))];
 
 function recalcAmount(item: LineItem): LineItem {
   return { ...item, amount: item.qty * (item.length || 1) * item.rate };
@@ -19,6 +25,25 @@ interface MaterialListProps {
 }
 
 export default function MaterialList({ items, editable = false, onItemsChange }: MaterialListProps) {
+  // Add-item draft form state - picks a real catalog part (name + rate) instead
+  // of a blank "New Item" row, same picker UX as the Individual Items page.
+  const [draftCategory, setDraftCategory] = useState(CATEGORIES[0]);
+  const [draftKey, setDraftKey] = useState(CATALOG.find((c) => c.category === CATEGORIES[0])?.key ?? "");
+  const [draftQty, setDraftQty] = useState(1);
+  const [draftLength, setDraftLength] = useState(0);
+  const [draftColor, setDraftColor] = useState("");
+
+  const draftEntry = CATALOG_BY_KEY[draftKey];
+  const categoryItems = CATALOG.filter((c) => c.category === draftCategory);
+
+  useEffect(() => {
+    // Keep the item picker valid when the category changes
+    const first = CATALOG.find((c) => c.category === draftCategory);
+    if (first && !categoryItems.some((c) => c.key === draftKey)) {
+      setDraftKey(first.key);
+    }
+  }, [draftCategory]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!items.length && !editable) return null;
 
   function updateItem(i: number, patch: Partial<LineItem>) {
@@ -32,8 +57,21 @@ export default function MaterialList({ items, editable = false, onItemsChange }:
   }
 
   function addItem() {
-    if (!onItemsChange) return;
-    onItemsChange([...items, recalcAmount({ name: "New Item", qty: 1, length: 0, unit: "", rate: 0, amount: 0, color: "" })]);
+    if (!onItemsChange || !draftKey || draftQty <= 0) return;
+    const rate = (RATES as Record<string, number>)[draftKey] ?? 0;
+    const length = draftEntry?.unit === "ea" ? 0 : draftLength;
+    const newItem = recalcAmount({
+      name: draftEntry?.label ?? draftKey,
+      qty: draftQty,
+      length,
+      unit: draftEntry?.unit ?? "",
+      rate,
+      amount: 0,
+      color: draftColor,
+    });
+    onItemsChange([...items, newItem]);
+    setDraftQty(1);
+    setDraftLength(0);
   }
 
   const headers = editable
@@ -42,14 +80,52 @@ export default function MaterialList({ items, editable = false, onItemsChange }:
 
   return (
     <div className="card overflow-hidden">
-      <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+      <div className="px-5 py-4 border-b border-slate-100">
         <h2 className="section-heading">Material List ({items.length} items)</h2>
-        {editable && (
-          <button onClick={addItem} className="text-xs btn-secondary px-3 py-1.5">
-            <Plus size={13} /> Add Item
-          </button>
-        )}
       </div>
+
+      {editable && (
+        <div className="p-4 bg-slate-50 border-b border-slate-100 space-y-3">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1 block">Category</label>
+              <select className="select text-sm" value={draftCategory} onChange={(e) => setDraftCategory(e.target.value)}>
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="col-span-2 lg:col-span-1">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1 block">Item</label>
+              <select className="select text-sm" value={draftKey} onChange={(e) => setDraftKey(e.target.value)}>
+                {categoryItems.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1 block">Qty</label>
+              <input type="number" className="input text-sm" value={draftQty === 0 ? "" : draftQty} placeholder="0"
+                onChange={(e) => setDraftQty(parseFloat(e.target.value) || 0)} />
+            </div>
+            {draftEntry?.unit !== "ea" && (
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1 block">
+                  Length ({draftEntry?.unit ?? "ft"})
+                </label>
+                <input type="number" className="input text-sm" value={draftLength === 0 ? "" : draftLength} placeholder="0"
+                  onChange={(e) => setDraftLength(parseFloat(e.target.value) || 0)} />
+              </div>
+            )}
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1 block">Color</label>
+              <select className="select text-sm" value={draftColor} onChange={(e) => setDraftColor(e.target.value)}>
+                {COLOR_OPTS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+          </div>
+          <button onClick={addItem} className="btn-primary w-full text-sm">
+            <Plus size={15} /> Add Item
+          </button>
+        </div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
