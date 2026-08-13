@@ -9,7 +9,7 @@ export function estimateMonthlyPayment(principal: number, aprPercent: number, te
   return (principal * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -numPayments));
 }
 
-export const HEARTH_PREQUALIFY_URL = "https://app.gethearth.com/financing/103/62/prequalify";
+export const HEARTH_PREQUALIFY_URL = "https://app.gethearth.com/financing/64652/113682/prequalify?utm_campaign=64652&utm_content=general&utm_medium=custom-lp&utm_source=contractor&utm_term=113682";
 export const FINANCING_APR = 7.9;
 export const FINANCING_TERM_YEARS = 12;
 
