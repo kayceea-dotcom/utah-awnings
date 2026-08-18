@@ -196,6 +196,19 @@ function endCutSuffix(endCut?: string): string {
   return endCut && END_CUT_LABELS[endCut] ? ", " + END_CUT_LABELS[endCut] : "";
 }
 
+// Shade Beam: an extra freestanding support beam (Sampson post + 3x3 sleeve
+// wrap + outside brackets), qty/length entered directly by the rep - not
+// derived from the cover's own posts/beams. Shared across all 4 products so
+// the 3-piece material breakdown stays identical everywhere it's offered.
+export function shadeBeamItems(qty: number, length: number, color = ""): LineItem[] {
+  if (qty <= 0 || length <= 0) return [];
+  return [
+    li("Shade Beam Post", qty, length, RATES.sampson_post_ft),
+    li("Shade Beam Sleeve", qty, length, RATES.post_3x3_sleeve_ft, "", color),
+    li("Shade Beam Brackets", qty * 2, 0, RATES.outside_brkt_3x8, "", color),
+  ];
+}
+
 // Post/beam finishing pieces every wrap-kit product gets: post plates, sideplates,
 // mitered caps, foam inserts, end caps, plugs. Independent of hanger/gutter type,
 // so it applies the same whether the product has a generic gutter system (Flat

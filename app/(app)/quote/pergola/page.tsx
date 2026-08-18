@@ -80,12 +80,12 @@ const DEFAULT: PergolaInputs = {
   endCut: "scallop", endCutSide: "one_end",
   sprayPaint: false,
   houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
-  shadeBeamQty: 0,
+  shadeBeamQty: 0, shadeBeamLength: 16,
   priceIncrease: 0, footings: 0, roofMounts: 0, misc: 0,
   markup: 1.8, taxRate: 0.0745,
 };
 
-type SectionId = "job" | "dimensions" | "structure" | "attachment" | "posts" | "colors" | "pricing";
+type SectionId = "job" | "dimensions" | "structure" | "attachment" | "posts" | "colors" | "extras" | "pricing";
 
 function SectionCard({ id, title, open, onToggle, children }: {
   id: SectionId; title: string; open: boolean;
@@ -282,7 +282,7 @@ function PriceSummaryPanel({ result, onClose }: { result: ReturnType<typeof calc
 export default function PergolaQuotePage() {
   const [inp, setInp] = useState<PergolaInputs>(DEFAULT);
   const [open, setOpen] = useState<Set<SectionId>>(
-    new Set(["job","dimensions","structure","attachment","posts","colors","pricing"] as SectionId[])
+    new Set(["job","dimensions","structure","attachment","posts","colors","extras","pricing"] as SectionId[])
   );
   const [showMaterials, setShowMaterials] = useState(false);
   const [showPricePanel, setShowPricePanel] = useState(false);
@@ -373,6 +373,11 @@ export default function PergolaQuotePage() {
 
               <SectionCard id="colors" title="Colors" open={open.has("colors")} onToggle={toggleSection}>
                 <SelectInput label="Pergola Color" value={inp.colorPergola} onChange={(v) => setField("colorPergola", v as never)} options={COLOR_OPTS} span={2} />
+              </SectionCard>
+
+              <SectionCard id="extras" title="Shade Beam" open={open.has("extras")} onToggle={toggleSection}>
+                <NumInput label="Shade Beam Qty" value={inp.shadeBeamQty} onChange={(v) => setField("shadeBeamQty", v)} />
+                <NumInput label="Shade Beam Length (ft)" value={inp.shadeBeamLength} onChange={(v) => setField("shadeBeamLength", v)} />
               </SectionCard>
 
               <SectionCard id="pricing" title="Pricing Adjustments" open={open.has("pricing")} onToggle={toggleSection}>

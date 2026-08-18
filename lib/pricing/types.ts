@@ -71,6 +71,7 @@ export interface NewportInputs {
   fanBeamQty: number;
   fanBeamLength: number;
   shadeBeamQty: number;
+  shadeBeamLength: number;
   priceIncrease: number;
   footings: number;
   roofMounts: number;

@@ -37,6 +37,7 @@ export const CATALOG: CatalogEntry[] = [
   // Posts
   { key: "post_3x3_sleeve_ft", label: "3x3 Post Sleeve", category: "Posts", unit: "ft" },
   { key: "post_3x3_steel_ft", label: "3x3 Steel Post", category: "Posts", unit: "ft" },
+  { key: "sampson_post_ft", label: "Sampson Post", category: "Posts", unit: "ft" },
 
   // Hangers
   { key: "hanger_roll_form_ft", label: "Hanger - Roll Form", category: "Hangers", unit: "ft" },

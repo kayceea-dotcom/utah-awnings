@@ -92,6 +92,7 @@ const DEFAULT: WPanInputs = {
   downspouts: 1, downspoutSide: "right", sprayPaint: true,
   houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
   fanBeamQty: 0, fanBeamLength: 16,
+  shadeBeamQty: 0, shadeBeamLength: 16,
   priceIncrease: 0, footings: 0, roofMounts: 0, misc: 0,
   markup: 1.9, taxRate: 0.0745,
 };
@@ -424,9 +425,11 @@ export default function WPanQuotePage() {
                 <SelectInput label="Posts / Beam" value={inp.colorPostsBeam} onChange={(v) => setField("colorPostsBeam", v)} options={COLOR_OPTS} span={2} />
               </SectionCard>
 
-              <SectionCard id="extras" title="Fan Beam" open={open.has("extras")} onToggle={toggleSection}>
+              <SectionCard id="extras" title="Fan Beam / Shade Beam" open={open.has("extras")} onToggle={toggleSection}>
                 <NumInput label="Fan Beam Qty" value={inp.fanBeamQty} onChange={(v) => setField("fanBeamQty", v)} />
                 <NumInput label="Fan Beam Length (ft)" value={inp.fanBeamLength} onChange={(v) => setField("fanBeamLength", v)} />
+                <NumInput label="Shade Beam Qty" value={inp.shadeBeamQty} onChange={(v) => setField("shadeBeamQty", v)} />
+                <NumInput label="Shade Beam Length (ft)" value={inp.shadeBeamLength} onChange={(v) => setField("shadeBeamLength", v)} />
               </SectionCard>
 
               <SectionCard id="pricing" title="Pricing Adjustments" open={open.has("pricing")} onToggle={toggleSection}>

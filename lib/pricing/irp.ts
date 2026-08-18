@@ -3,7 +3,7 @@ import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType }
 import {
   li, nextStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, anchorQty,
   wrapKitRates, wrapKitFinishingItems, deckHeightSurcharge, postMaterialLength, groundMountSurcharge,
-  finalizePricing,
+  finalizePricing, shadeBeamItems,
 } from "./shared";
 
 export type IRPType = "lrp_3_032" | "lrp_4_032";
@@ -33,6 +33,8 @@ export interface IRPInputs {
   houseAttachment: HouseAttachmentType;
   groundAttachment: GroundAttachmentType;
   deckHeight: number;
+  shadeBeamQty: number;
+  shadeBeamLength: number;
   priceIncrease: number;
   footings: number;
   roofMounts: number;
@@ -216,6 +218,9 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
   if (combinedBeamLength > 0) {
     items.push(li("Silicone Clear", Math.ceil(combinedBeamLength / 10), 0, RATES.silicone_clear));
   }
+
+  // ── SHADE BEAM ──
+  items.push(...shadeBeamItems(inp.shadeBeamQty, inp.shadeBeamLength, inp.colorPostsBeam));
 
   // ── PRICING SUMMARY ──
   const misc = inp.misc + deckHeightSurcharge(inp.groundAttachment, inp.deckHeight)

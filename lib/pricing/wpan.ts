@@ -3,7 +3,7 @@ import { CATALOG_BY_KEY } from "./catalog";
 import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType } from "./types";
 import {
   li, nextStockLength, rollFormGutterStockLength, wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen,
-  anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing,
+  anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems,
 } from "./shared";
 
 export type WPanType = "wpan_032" | "duraking_025" | "duraking_032" | "duraking_040";
@@ -42,6 +42,8 @@ export interface WPanInputs {
   deckHeight: number;
   fanBeamQty: number;
   fanBeamLength: number;
+  shadeBeamQty: number;
+  shadeBeamLength: number;
   priceIncrease: number;
   footings: number;
   roofMounts: number;
@@ -246,6 +248,9 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     items.push(li("Fan Beam",     inp.fanBeamQty, inp.fanBeamLength, RATES.fan_beam_ft));
     items.push(li("Fan Beam Cap", inp.fanBeamQty, inp.fanBeamLength, RATES.fan_beam_cap_ft, "", "Match Top Color"));
   }
+
+  // ── SHADE BEAM ──
+  items.push(...shadeBeamItems(inp.shadeBeamQty, inp.shadeBeamLength, inp.colorPostsBeam));
 
   // ── PRICING SUMMARY ──
   const misc = inp.misc + deckHeightSurcharge(inp.groundAttachment, inp.deckHeight)

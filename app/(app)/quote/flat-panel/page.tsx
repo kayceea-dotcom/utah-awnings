@@ -116,7 +116,7 @@ const DEFAULT: NewportInputs = {
   downspouts: 1, downspoutSide: "right", sprayPaint: true,
   houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
   fanBeamQty: 0, fanBeamLength: 16,
-  shadeBeamQty: 0,
+  shadeBeamQty: 0, shadeBeamLength: 16,
   priceIncrease: 0, footings: 0, roofMounts: 0, misc: 0,
   markup: 1.8, taxRate: 0.0745,
   beams: [],
@@ -626,6 +626,7 @@ export default function FlatPanelQuotePage() {
                 <NumInput label="Fan Beam Qty" value={inp.fanBeamQty} onChange={(v) => setField("fanBeamQty", v)} />
                 <NumInput label="Fan Beam Length (ft)" value={inp.fanBeamLength} onChange={(v) => setField("fanBeamLength", v)} />
                 <NumInput label="Shade Beam Qty" value={inp.shadeBeamQty} onChange={(v) => setField("shadeBeamQty", v)} />
+                <NumInput label="Shade Beam Length (ft)" value={inp.shadeBeamLength} onChange={(v) => setField("shadeBeamLength", v)} />
               </SectionCard>
 
               <SectionCard id="pricing" title="Pricing Adjustments" open={open.has("pricing")} onToggle={toggleSection}>

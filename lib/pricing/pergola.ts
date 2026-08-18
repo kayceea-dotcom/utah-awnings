@@ -1,6 +1,6 @@
 import { RATES } from "./rates";
 import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType } from "./types";
-import { li, nextStockLength, anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing } from "./shared";
+import { li, nextStockLength, anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems } from "./shared";
 
 export interface PergolaInputs {
   jobName: string;
@@ -25,6 +25,7 @@ export interface PergolaInputs {
   groundAttachment: GroundAttachmentType;
   deckHeight: number;
   shadeBeamQty: number;
+  shadeBeamLength: number;
   priceIncrease: number;
   footings: number;
   roofMounts: number;
@@ -161,6 +162,9 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
   if (inp.beamLength > 0) {
     items.push(li("Silicone Clear", Math.ceil(inp.beamLength / 10), 0, RATES.silicone_clear));
   }
+
+  // ── SHADE BEAM ──
+  items.push(...shadeBeamItems(inp.shadeBeamQty, inp.shadeBeamLength, inp.colorPergola));
 
   // ── PRICING SUMMARY ──
   const misc = inp.misc + deckHeightSurcharge(inp.groundAttachment, inp.deckHeight)

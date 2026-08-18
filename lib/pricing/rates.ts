@@ -25,6 +25,7 @@ export const RATES = {
   // Posts
   post_3x3_sleeve_ft:  4.71,
   post_3x3_steel_ft:   8.477,
+  sampson_post_ft:     6.91,
 
   // Hangers (per ft, except elevated_roof_mount which is a flat fee)
   hanger_roll_form_ft:   3.37,

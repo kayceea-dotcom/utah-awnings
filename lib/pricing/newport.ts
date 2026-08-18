@@ -4,7 +4,7 @@ import type { NewportInputs, LineItem, QuoteResult } from "./types";
 import {
   li, nextStockLength, rollFormGutterStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, beamTypeLabel, anchorQty,
   wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen, deckHeightSurcharge,
-  postMaterialLength, groundMountSurcharge, finalizePricing, END_CUT_LABELS,
+  postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, END_CUT_LABELS,
 } from "./shared";
 
 function panelRate(type: string): number {
@@ -242,6 +242,9 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("Fan Beam",     inp.fanBeamQty, inp.fanBeamLength, RATES.fan_beam_ft));
     items.push(li("Fan Beam Cap", inp.fanBeamQty, inp.fanBeamLength, RATES.fan_beam_cap_ft, "", "Match Top Color"));
   }
+
+  // ── SHADE BEAM ──
+  items.push(...shadeBeamItems(inp.shadeBeamQty, inp.shadeBeamLength, inp.colorPostsBeam));
 
   // ── PRICING SUMMARY ──
   const misc = inp.misc + deckHeightSurcharge(inp.groundAttachment, inp.deckHeight)
