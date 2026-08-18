@@ -143,13 +143,13 @@ export default function MaterialList({ items, editable = false, onItemsChange }:
                     <input className="input text-sm py-1" style={{ minHeight: "auto" }} value={item.name} onChange={(e) => updateItem(i, { name: e.target.value })} />
                   ) : item.name}
                 </td>
-                <td className="px-4 py-2 text-slate-600 font-mono w-20">
+                <td className="px-4 py-2 text-slate-600 font-mono w-28">
                   {editable ? (
                     <input type="number" className="input text-sm py-1" style={{ minHeight: "auto" }} placeholder="0"
                       value={item.qty === 0 ? "" : item.qty} onChange={(e) => updateItem(i, { qty: parseFloat(e.target.value) || 0 })} />
                   ) : item.qty}
                 </td>
-                <td className="px-4 py-2 text-slate-600 font-mono w-20">
+                <td className="px-4 py-2 text-slate-600 font-mono w-28">
                   {editable ? (
                     <input type="number" className="input text-sm py-1" style={{ minHeight: "auto" }} placeholder="0"
                       value={item.length === 0 ? "" : item.length} onChange={(e) => updateItem(i, { length: parseFloat(e.target.value) || 0 })} />
@@ -164,7 +164,7 @@ export default function MaterialList({ items, editable = false, onItemsChange }:
                     </span>
                   ) : null}
                 </td>
-                <td className="px-4 py-2 text-slate-500 font-mono text-xs w-24">
+                <td className="px-4 py-2 text-slate-500 font-mono text-xs w-28">
                   {editable ? (
                     <input type="number" step="0.01" className="input text-sm py-1" style={{ minHeight: "auto" }} placeholder="0"
                       value={item.rate === 0 ? "" : item.rate} onChange={(e) => updateItem(i, { rate: parseFloat(e.target.value) || 0 })} />
