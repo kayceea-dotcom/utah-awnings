@@ -1,5 +1,5 @@
 import { RATES } from "./rates";
-import { li } from "./shared";
+import { li, finalizePricing } from "./shared";
 import { CATALOG_BY_KEY } from "./catalog";
 import type { LineItem, QuoteResult } from "./types";
 
@@ -15,7 +15,7 @@ export interface IndividualInputs {
   jobName: string;
   salesman: string;
   items: IndividualLineInput[];
-  priceIncrease: number;
+  discount: number;
   footings: number;
   roofMounts: number;
   misc: number;
@@ -32,27 +32,15 @@ export function calcIndividual(inp: IndividualInputs): QuoteResult {
       return li(entry?.label ?? it.rateKey, it.qty, it.length, rate, entry?.unit ?? "", it.color);
     });
 
-  // ── PRICING SUMMARY ──
-  const materialCost        = items.reduce((s, i) => s + i.amount, 0);
-  const taxes               = materialCost * inp.taxRate;
-  const priceIncreaseDollar = (materialCost + taxes) * inp.priceIncrease;
-  const totalMaterials      = materialCost + taxes + priceIncreaseDollar;
-  const subtotal            = totalMaterials + inp.footings + inp.roofMounts + inp.misc;
-  const preSaleTotal        = subtotal * inp.markup;
-  const ccFee               = preSaleTotal * RATES.CC_FEE_RATE / (1 - RATES.CC_FEE_RATE);
-  const totalJobSale        = preSaleTotal + ccFee;
-  const totalProfit         = totalJobSale - subtotal;
+  const materialCost = items.reduce((s, i) => s + i.amount, 0);
+  const pricing = finalizePricing(materialCost, {
+    taxRate: inp.taxRate, discount: inp.discount,
+    footings: inp.footings, roofMounts: inp.roofMounts, misc: inp.misc, markup: inp.markup,
+  });
 
   return {
     lineItems: items.filter((i) => i.amount !== 0),
-    materialCost, taxes,
-    priceIncrease: priceIncreaseDollar,
-    totalMaterials,
-    footings:   inp.footings,
-    roofMounts: inp.roofMounts,
-    misc:       inp.misc,
-    subtotal, markup: inp.markup, ccFee,
-    totalJobSale, totalProfit,
+    ...pricing,
     costPerSqFt: 0,
     pricePerSqFt: 0,
     totalSqFt: 0,

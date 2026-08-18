@@ -76,7 +76,7 @@ const DEFAULT: IRPInputs = {
   downspouts: 1, downspoutSide: "right", sprayPaint: false,
   houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
   shadeBeamQty: 0, shadeBeamLength: 16,
-  priceIncrease: 0, footings: 0, roofMounts: 0, misc: 0,
+  discount: 0, footings: 0, roofMounts: 0, misc: 0,
   markup: 2.0, taxRate: 0.0745,
 };
 
@@ -222,7 +222,6 @@ function PriceSummaryPanel({ result, onClose }: { result: ReturnType<typeof calc
         {([
           ["Material Cost",   result.materialCost],
           ["Tax",             result.taxes],
-          ...(result.priceIncrease ? [["Price Increase", result.priceIncrease]] : []),
           ["Total Materials", result.totalMaterials],
           ...(result.footings   ? [["Footings",    result.footings]]   : []),
           ...(result.roofMounts ? [["Roof Mounts", result.roofMounts]] : []),
@@ -243,6 +242,12 @@ function PriceSummaryPanel({ result, onClose }: { result: ReturnType<typeof calc
           <span>CC Fee (3.25%)</span>
           <span className="font-mono text-gray-800">{fmt(result.ccFee)}</span>
         </div>
+        {result.discount > 0 && (
+          <div className="flex justify-between text-gray-600">
+            <span>Discount</span>
+            <span className="font-mono text-gray-800">-{fmt(result.discount)}</span>
+          </div>
+        )}
         <div className="border-t border-gray-200 my-2" />
         <div className="flex justify-between font-bold text-gray-900">
           <span>Total Job Sale</span>
@@ -396,7 +401,7 @@ export default function IRPQuotePage() {
               <SectionCard id="pricing" title="Pricing Adjustments" open={open.has("pricing")} onToggle={toggleSection}>
                 <NumInput label="Markup" value={inp.markup} onChange={(v) => setField("markup", v)} hint="2.0 = 100% above cost" />
                 <NumInput label="Tax Rate" value={inp.taxRate} onChange={(v) => setField("taxRate", v)} hint="e.g. 0.0745" />
-                <NumInput label="Price Increase" value={inp.priceIncrease} onChange={(v) => setField("priceIncrease", v)} hint="e.g. 0.10 = 10%" />
+                <NumInput label="Discount ($)" value={inp.discount} onChange={(v) => setField("discount", v)} hint="Flat $ off the final Total Job Sale" />
                 <NumInput label="Footings ($)" value={inp.footings} onChange={(v) => setField("footings", v)} />
                 <NumInput label="Roof Mounts ($)" value={inp.roofMounts} onChange={(v) => setField("roofMounts", v)} />
                 <NumInput label="Misc ($)" value={inp.misc} onChange={(v) => setField("misc", v)}

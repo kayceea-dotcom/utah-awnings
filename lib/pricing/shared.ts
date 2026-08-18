@@ -15,7 +15,7 @@ export function li(
 
 export interface PricingSummaryOpts {
   taxRate: number;
-  priceIncrease: number;
+  discount: number;
   footings: number;
   roofMounts: number;
   misc: number;
@@ -25,7 +25,6 @@ export interface PricingSummaryOpts {
 export interface PricingSummary {
   materialCost: number;
   taxes: number;
-  priceIncrease: number;
   totalMaterials: number;
   footings: number;
   roofMounts: number;
@@ -33,32 +32,36 @@ export interface PricingSummary {
   subtotal: number;
   markup: number;
   ccFee: number;
+  discount: number;
   totalJobSale: number;
   totalProfit: number;
 }
 
 // Turns a material cost total into the rest of the pricing breakdown (taxes,
-// price increase, footings/roof mounts/misc, markup, credit-card fee). Same
-// formula for every product - pulled out so the quote builder can re-run it
-// against a manually-edited material list without duplicating this math, not
-// just so the 4 calculators stay in sync with each other.
+// footings/roof mounts/misc, markup, credit-card fee, discount). Same formula
+// for every product - pulled out so the quote builder can re-run it against a
+// manually-edited material list without duplicating this math, not just so
+// the 4 calculators stay in sync with each other.
+//
+// Discount is a flat $ amount taken off the final Total Job Sale (after markup
+// and CC fee), not off the material cost - so it reduces the customer's price
+// and the recorded profit by exactly the same dollar amount, dollar for dollar.
 export function finalizePricing(materialCost: number, opts: PricingSummaryOpts): PricingSummary {
   const taxes = materialCost * opts.taxRate;
-  const priceIncreaseDollar = (materialCost + taxes) * opts.priceIncrease;
-  const totalMaterials = materialCost + taxes + priceIncreaseDollar;
+  const totalMaterials = materialCost + taxes;
   const subtotal = totalMaterials + opts.footings + opts.roofMounts + opts.misc;
   const preSaleTotal = subtotal * opts.markup;
   const ccFee = preSaleTotal * RATES.CC_FEE_RATE / (1 - RATES.CC_FEE_RATE);
-  const totalJobSale = preSaleTotal + ccFee;
+  const totalJobSale = preSaleTotal + ccFee - opts.discount;
   const totalProfit = totalJobSale - subtotal;
   return {
     materialCost, taxes,
-    priceIncrease: priceIncreaseDollar,
     totalMaterials,
     footings: opts.footings,
     roofMounts: opts.roofMounts,
     misc: opts.misc,
     subtotal, markup: opts.markup, ccFee,
+    discount: opts.discount,
     totalJobSale, totalProfit,
   };
 }

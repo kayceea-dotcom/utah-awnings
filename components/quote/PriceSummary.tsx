@@ -21,7 +21,6 @@ export default function PriceSummary({ result }: { result: QuoteResult }) {
         {([
           ["Material Cost",   result.materialCost],
           ["Tax",             result.taxes],
-          ...(result.priceIncrease ? [["Price Increase", result.priceIncrease]] : []),
           ["Total Materials", result.totalMaterials],
           ...(result.footings   ? [["Footings",    result.footings]]   : []),
           ...(result.roofMounts ? [["Roof Mounts", result.roofMounts]] : []),
@@ -42,6 +41,12 @@ export default function PriceSummary({ result }: { result: QuoteResult }) {
           <span>CC Fee (3.25%)</span>
           <span className="font-mono text-slate-800">{fmt(result.ccFee)}</span>
         </div>
+        {result.discount > 0 && (
+          <div className="flex justify-between text-slate-600">
+            <span>Discount</span>
+            <span className="font-mono text-slate-800">-{fmt(result.discount)}</span>
+          </div>
+        )}
         <div className="border-t border-slate-200 my-2" />
         <div className="flex justify-between font-semibold text-slate-900">
           <span>Total Job Sale</span>

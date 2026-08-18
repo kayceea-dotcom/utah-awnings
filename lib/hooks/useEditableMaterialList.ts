@@ -12,7 +12,7 @@ import { finalizePricing } from "@/lib/pricing/shared";
 // edited material cost via finalizePricing, using the same misc/footings/
 // roofMounts/markup the auto-calculation already produced, so the total the
 // customer sees always matches what's actually in the material list.
-export function useEditableMaterialList(result: QuoteResult, inp: { taxRate: number; priceIncrease: number; footings: number; roofMounts: number; markup: number }) {
+export function useEditableMaterialList(result: QuoteResult, inp: { taxRate: number; discount: number; footings: number; roofMounts: number; markup: number }) {
   const [editing, setEditing] = useState(false);
   const [editedItems, setEditedItems] = useState<LineItem[]>([]);
 
@@ -32,7 +32,7 @@ export function useEditableMaterialList(result: QuoteResult, inp: { taxRate: num
 
   const materialCost = editedItems.reduce((s, i) => s + i.amount, 0);
   const pricing = finalizePricing(materialCost, {
-    taxRate: inp.taxRate, priceIncrease: inp.priceIncrease,
+    taxRate: inp.taxRate, discount: inp.discount,
     footings: inp.footings, roofMounts: inp.roofMounts,
     misc: result.misc, markup: inp.markup,
   });

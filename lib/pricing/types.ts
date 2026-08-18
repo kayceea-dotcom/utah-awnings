@@ -72,7 +72,7 @@ export interface NewportInputs {
   fanBeamLength: number;
   shadeBeamQty: number;
   shadeBeamLength: number;
-  priceIncrease: number;
+  discount: number;
   footings: number;
   roofMounts: number;
   misc: number;
@@ -98,7 +98,6 @@ export interface QuoteResult {
   lineItems: LineItem[];
   materialCost: number;
   taxes: number;
-  priceIncrease: number;
   totalMaterials: number;
   footings: number;
   roofMounts: number;
@@ -106,6 +105,7 @@ export interface QuoteResult {
   subtotal: number;
   markup: number;
   ccFee: number;
+  discount: number;
   totalJobSale: number;
   totalProfit: number;
   costPerSqFt: number;

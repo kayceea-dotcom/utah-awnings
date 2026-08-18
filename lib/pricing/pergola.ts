@@ -26,7 +26,7 @@ export interface PergolaInputs {
   deckHeight: number;
   shadeBeamQty: number;
   shadeBeamLength: number;
-  priceIncrease: number;
+  discount: number;
   footings: number;
   roofMounts: number;
   misc: number;
@@ -171,7 +171,7 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
              + groundMountSurcharge(inp.groundAttachment, totalPosts);
   const materialCost = items.reduce((s, i) => s + i.amount, 0);
   const pricing = finalizePricing(materialCost, {
-    taxRate: inp.taxRate, priceIncrease: inp.priceIncrease,
+    taxRate: inp.taxRate, discount: inp.discount,
     footings: inp.footings, roofMounts: inp.roofMounts, misc, markup: inp.markup,
   });
   const totalSqFt = inp.projection > 0 ? inp.projection * inp.width : 0;
