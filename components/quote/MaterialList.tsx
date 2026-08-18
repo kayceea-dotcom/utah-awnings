@@ -155,9 +155,11 @@ export default function MaterialList({ items, editable = false, onItemsChange }:
                       value={item.length || ""} onChange={(e) => updateItem(i, { length: parseFloat(e.target.value) || 0 })} />
                   ) : ((item.displayLength ?? item.length) || "-")}
                 </td>
-                <td className="px-4 py-2 w-28">
+                <td className="px-2 py-2 w-40">
                   {editable ? (
-                    <input className="input text-sm py-1" style={{ minHeight: "auto" }} value={item.color || ""} onChange={(e) => updateItem(i, { color: e.target.value })} />
+                    <select className="select text-sm py-1 px-2" style={{ minHeight: "auto" }} value={item.color || ""} onChange={(e) => updateItem(i, { color: e.target.value })}>
+                      {COLOR_OPTS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </select>
                   ) : item.color ? (
                     <span className="inline-block px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-600 font-medium">
                       {item.color}
