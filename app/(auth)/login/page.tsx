@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
@@ -9,13 +9,25 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const supabase = createClient();
 
   async function handleLogin() {
+    // Some browser/password-manager autofill sets the input's value without
+    // firing React's onChange, leaving `email`/`password` state empty even
+    // though the fields look filled in - read the actual DOM value as a
+    // fallback so the button isn't permanently stuck disabled in that case.
+    const emailValue = email || emailRef.current?.value || "";
+    const passwordValue = password || passwordRef.current?.value || "";
+    if (!emailValue || !passwordValue) {
+      setError("Please enter your email and password.");
+      return;
+    }
     setLoading(true);
     setError("");
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email: emailValue, password: passwordValue });
     if (error) {
       setError(error.message);
       setLoading(false);
@@ -46,6 +58,7 @@ export default function LoginPage() {
             <div>
               <label className="label">Email</label>
               <input
+                ref={emailRef}
                 type="email"
                 className="input"
                 placeholder="you@example.com"
@@ -58,6 +71,7 @@ export default function LoginPage() {
             <div>
               <label className="label">Password</label>
               <input
+                ref={passwordRef}
                 type="password"
                 className="input"
                 placeholder="••••••••"
@@ -75,7 +89,7 @@ export default function LoginPage() {
 
             <button
               onClick={handleLogin}
-              disabled={loading || !email || !password}
+              disabled={loading}
               className="btn-primary w-full justify-center py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Signing in..." : "Sign In"}
