@@ -56,7 +56,7 @@ export default function SideProfileDiagram({
   }
 
   const {
-    svgW, svgH, groundY, deckY, deckHpx,
+    svgW, svgH, groundY, deckY, deckHpx, scale,
     postX, postWidth, postTopY, postBottomY, embeddedBottomY,
     beamTopY, beamHeight, beamWidth,
     panelTopY, panelHeight, panelFrontX,
@@ -106,21 +106,35 @@ export default function SideProfileDiagram({
           <line x1={houseX - 20} y1={groundY} x2={svgW - 10} y2={groundY} stroke="#64748b" strokeWidth="1.5" />
           <rect x={houseX - 20} y={groundY} width={svgW - 10 - (houseX - 20)} height={8} fill="url(#sp-hatch)" opacity={0.5} />
 
-          {/* Deck platform */}
-          {isDeck && deckY !== null && (
-            <>
-              <rect x={houseX - 20} y={deckY} width={svgW - 10 - (houseX - 20)} height={Math.max(deckHpx, 4)}
-                fill="#fef3c7" stroke="#d97706" strokeWidth="1" />
-              {/* Deck height dimension */}
-              <line x1={houseX - 30} y1={deckY} x2={houseX - 30} y2={groundY} stroke="#d97706" strokeWidth="1" />
-              <line x1={houseX - 34} y1={deckY} x2={houseX - 26} y2={deckY} stroke="#d97706" strokeWidth="1" />
-              <line x1={houseX - 34} y1={groundY} x2={houseX - 26} y2={groundY} stroke="#d97706" strokeWidth="1" />
-              <text x={houseX - 30} y={(deckY + groundY) / 2 + 3} textAnchor="middle" fontSize="7" fontWeight="700" fill="#d97706"
-                transform={"rotate(-90," + (houseX - 30) + "," + (deckY + groundY) / 2 + ")"}>
-                {deckHeight}&apos; deck
-              </text>
-            </>
-          )}
+          {/* Deck platform - a 12in skirt/rim board at the surface (what you'd
+              actually see looking at the deck's edge), with a support post
+              coming down from its front end to the ground, rather than
+              drawing the whole deck height as one solid block */}
+          {isDeck && deckY !== null && (() => {
+            const deckSkirtPx = Math.min(scale, deckHpx);
+            const skirtBottomY = deckY + deckSkirtPx;
+            const deckPostX = svgW - 26;
+            const deckPostW = 6;
+            return (
+              <>
+                <rect x={houseX - 20} y={deckY} width={svgW - 10 - (houseX - 20)} height={Math.max(deckSkirtPx, 4)}
+                  fill="#fef3c7" stroke="#d97706" strokeWidth="1" />
+                {skirtBottomY < groundY && (
+                  <rect x={deckPostX - deckPostW / 2} y={skirtBottomY} width={deckPostW} height={groundY - skirtBottomY}
+                    fill="#92400e" stroke="#78350f" strokeWidth="1" />
+                )}
+                {/* Deck height dimension - still measures the real (full)
+                    deck height, only the drawing above is simplified */}
+                <line x1={houseX - 30} y1={deckY} x2={houseX - 30} y2={groundY} stroke="#d97706" strokeWidth="1" />
+                <line x1={houseX - 34} y1={deckY} x2={houseX - 26} y2={deckY} stroke="#d97706" strokeWidth="1" />
+                <line x1={houseX - 34} y1={groundY} x2={houseX - 26} y2={groundY} stroke="#d97706" strokeWidth="1" />
+                <text x={houseX - 30} y={(deckY + groundY) / 2 + 3} textAnchor="middle" fontSize="7" fontWeight="700" fill="#d97706"
+                  transform={"rotate(-90," + (houseX - 30) + "," + (deckY + groundY) / 2 + ")"}>
+                  {deckHeight}&apos; deck
+                </text>
+              </>
+            );
+          })()}
 
           {/* Footing (concrete/deck) or embedded post (ground mount) */}
           {isGroundMount ? (

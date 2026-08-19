@@ -31,7 +31,7 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
   if (!geo) return null;
 
   const {
-    svgW, svgH, groundY, deckY, deckHpx,
+    svgW, svgH, groundY, deckY, deckHpx, scale,
     postX, postWidth, postTopY, postBottomY, embeddedBottomY,
     beamTopY, beamHeight, beamWidth,
     panelTopY, panelHeight, panelFrontX,
@@ -80,19 +80,32 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
           <Line x1={houseX - 20} y1={groundY} x2={svgW - 10} y2={groundY} stroke="#64748b" strokeWidth={1.5} />
           <Rect x={houseX - 20} y={groundY} width={svgW - 10 - (houseX - 20)} height={8} fill="#e2e8f0" />
 
-          {/* Deck platform */}
-          {isDeck && deckY !== null && (
-            <G>
-              <Rect x={houseX - 20} y={deckY} width={svgW - 10 - (houseX - 20)} height={Math.max(deckHpx, 4)} fill="#fef3c7" stroke="#d97706" strokeWidth={1} />
-              <Line x1={houseX - 30} y1={deckY} x2={houseX - 30} y2={groundY} stroke="#d97706" strokeWidth={1} />
-              <Line x1={houseX - 34} y1={deckY} x2={houseX - 26} y2={deckY} stroke="#d97706" strokeWidth={1} />
-              <Line x1={houseX - 34} y1={groundY} x2={houseX - 26} y2={groundY} stroke="#d97706" strokeWidth={1} />
-              <Text x={houseX - 30} y={(deckY + groundY) / 2 + 3} textAnchor="middle" fill="#d97706" style={{ ...bold, fontSize: 7 }}
-                transform={"rotate(-90," + (houseX - 30) + "," + (deckY + groundY) / 2 + ")"}>
-                {deckHeight}&apos; deck
-              </Text>
-            </G>
-          )}
+          {/* Deck platform - a 12in skirt/rim board at the surface (what you'd
+              actually see looking at the deck's edge), with a support post
+              coming down from its front end to the ground, rather than
+              drawing the whole deck height as one solid block */}
+          {isDeck && deckY !== null && (() => {
+            const deckSkirtPx = Math.min(scale, deckHpx);
+            const skirtBottomY = deckY + deckSkirtPx;
+            const deckPostX = svgW - 26;
+            const deckPostW = 6;
+            return (
+              <G>
+                <Rect x={houseX - 20} y={deckY} width={svgW - 10 - (houseX - 20)} height={Math.max(deckSkirtPx, 4)} fill="#fef3c7" stroke="#d97706" strokeWidth={1} />
+                {skirtBottomY < groundY && (
+                  <Rect x={deckPostX - deckPostW / 2} y={skirtBottomY} width={deckPostW} height={groundY - skirtBottomY}
+                    fill="#92400e" stroke="#78350f" strokeWidth={1} />
+                )}
+                <Line x1={houseX - 30} y1={deckY} x2={houseX - 30} y2={groundY} stroke="#d97706" strokeWidth={1} />
+                <Line x1={houseX - 34} y1={deckY} x2={houseX - 26} y2={deckY} stroke="#d97706" strokeWidth={1} />
+                <Line x1={houseX - 34} y1={groundY} x2={houseX - 26} y2={groundY} stroke="#d97706" strokeWidth={1} />
+                <Text x={houseX - 30} y={(deckY + groundY) / 2 + 3} textAnchor="middle" fill="#d97706" style={{ ...bold, fontSize: 7 }}
+                  transform={"rotate(-90," + (houseX - 30) + "," + (deckY + groundY) / 2 + ")"}>
+                  {deckHeight}&apos; deck
+                </Text>
+              </G>
+            );
+          })()}
 
           {/* Footing / embedded post */}
           {isGroundMount ? (
