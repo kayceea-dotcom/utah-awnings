@@ -2,9 +2,9 @@ import { Svg, Rect, Line, Text, G, View, StyleSheet } from "@react-pdf/renderer"
 import { computeCoverDiagramGeometry, type CoverDiagramGeometryInput } from "./coverDiagramGeometry";
 
 const styles = StyleSheet.create({
-  wrap: { borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 4, marginTop: 4, marginBottom: 4 },
-  label: { fontSize: 8, fontFamily: "Helvetica-Bold", color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, padding: 8, borderBottomWidth: 1, borderBottomColor: "#f1f5f9" },
-  svgBox: { alignItems: "center", padding: 8 },
+  wrap: { borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 4, marginTop: 2, marginBottom: 2 },
+  label: { fontSize: 8, fontFamily: "Helvetica-Bold", color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, padding: 5, borderBottomWidth: 1, borderBottomColor: "#f1f5f9" },
+  svgBox: { alignItems: "center", padding: 4 },
   empty: { fontSize: 9, color: "#999999", padding: 12, textAlign: "center" },
 });
 
@@ -32,11 +32,13 @@ export default function CoverDiagramPdf({ input }: { input: CoverDiagramGeometry
     showRafterTails,
   } = geo;
 
-  // Scale the whole diagram down to fit a comfortable width on the printed
-  // page - the on-screen version can run wide for big covers, but the PDF
-  // page is a fixed ~530pt of usable width.
-  const MAX_PDF_W = 300;
-  const pdfScale = svgW > MAX_PDF_W ? MAX_PDF_W / svgW : 1;
+  // Scale the whole diagram down to fit a comfortable box on the printed
+  // page - the on-screen version can run wide/tall for big covers, but the
+  // contract needs everything through the signature to fit on one page, so
+  // both dimensions are capped (whichever is more restrictive wins).
+  const MAX_PDF_W = 220;
+  const MAX_PDF_H = 170;
+  const pdfScale = Math.min(MAX_PDF_W / svgW, MAX_PDF_H / svgH, 1);
   const displayW = svgW * pdfScale;
   const displayH = svgH * pdfScale;
 

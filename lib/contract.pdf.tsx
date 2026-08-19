@@ -5,33 +5,33 @@ import CoverDiagramPdf from "./coverDiagram.pdf";
 const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
 const styles = StyleSheet.create({
-  page: { padding: 32, fontSize: 10, fontFamily: "Helvetica", color: "#1a1a1a" },
-  headerRow: { flexDirection: "row", justifyContent: "space-between", borderBottomWidth: 2, borderBottomColor: "#CC2229", paddingBottom: 12, marginBottom: 16 },
+  page: { padding: 28, fontSize: 10, fontFamily: "Helvetica", color: "#1a1a1a" },
+  headerRow: { flexDirection: "row", justifyContent: "space-between", borderBottomWidth: 2, borderBottomColor: "#CC2229", paddingBottom: 8, marginBottom: 10 },
   companyName: { fontSize: 18, color: "#CC2229", fontFamily: "Helvetica-Bold", marginBottom: 3 },
   companyLine: { fontSize: 9, color: "#666666" },
   logo: { height: 32, maxWidth: 160, marginBottom: 6, objectFit: "contain" },
   docTitle: { fontSize: 14, fontFamily: "Helvetica-Bold", textAlign: "right" },
   docDate: { fontSize: 9, color: "#666666", textAlign: "right", marginTop: 3 },
-  sectionLabel: { fontSize: 9, fontFamily: "Helvetica-Bold", color: "#999999", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6, marginTop: 14 },
+  sectionLabel: { fontSize: 9, fontFamily: "Helvetica-Bold", color: "#999999", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4, marginTop: 8 },
   infoTable: {},
-  infoRow: { flexDirection: "row", marginBottom: 4 },
+  infoRow: { flexDirection: "row", marginBottom: 2 },
   infoCell: { width: "50%", fontSize: 10 },
   infoLabel: { fontFamily: "Helvetica-Bold" },
-  totalsBox: { marginTop: 8, borderTopWidth: 1, borderTopColor: "#e2e8f0", paddingTop: 10 },
-  totalsRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 5 },
+  totalsBox: { marginTop: 4, borderTopWidth: 1, borderTopColor: "#e2e8f0", paddingTop: 6 },
+  totalsRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 3 },
   totalsLabel: { fontSize: 10, color: "#666666" },
   totalsValue: { fontSize: 11, fontFamily: "Helvetica-Bold" },
-  grandTotalRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: "#1a1a1a" },
+  grandTotalRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 4, paddingTop: 4, borderTopWidth: 1, borderTopColor: "#1a1a1a" },
   grandTotalLabel: { fontSize: 11, fontFamily: "Helvetica-Bold" },
   grandTotalValue: { fontSize: 14, fontFamily: "Helvetica-Bold", color: "#CC2229" },
   termItem: { flexDirection: "row", marginBottom: 6 },
   termNumber: { width: 16, fontSize: 8, fontFamily: "Helvetica-Bold", color: "#999999" },
   termText: { flex: 1, fontSize: 8, lineHeight: 1.4, color: "#444444" },
-  signedBox: { marginTop: 14, borderWidth: 1, borderColor: "#bbf7d0", backgroundColor: "#f0fdf4", borderRadius: 4, padding: 12 },
+  signedBox: { marginTop: 8, borderWidth: 1, borderColor: "#bbf7d0", backgroundColor: "#f0fdf4", borderRadius: 4, padding: 8 },
   signedLabel: { fontSize: 10, fontFamily: "Helvetica-Bold", color: "#15803d", marginBottom: 3 },
-  signedMeta: { fontSize: 9, color: "#166534", marginBottom: 8 },
-  signatureImg: { height: 50, maxWidth: 220, objectFit: "contain" },
-  unsignedBox: { marginTop: 14, borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 4, padding: 12 },
+  signedMeta: { fontSize: 9, color: "#166534", marginBottom: 6 },
+  signatureImg: { height: 44, maxWidth: 200, objectFit: "contain" },
+  unsignedBox: { marginTop: 8, borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 4, padding: 8 },
   unsignedText: { fontSize: 9, color: "#999999", fontStyle: "italic" },
 });
 
@@ -131,7 +131,7 @@ export default function ContractPdf({ data }: { data: ContractData }) {
         </View>
 
         {isSigned ? (
-          <View style={styles.signedBox}>
+          <View style={styles.signedBox} wrap={false}>
             <Text style={styles.signedLabel}>Customer Signed</Text>
             <Text style={styles.signedMeta}>
               Signed on {data.signedAt ? new Date(data.signedAt).toLocaleString() : "-"}
@@ -140,11 +140,13 @@ export default function ContractPdf({ data }: { data: ContractData }) {
             {data.signatureData ? <Image src={data.signatureData} style={styles.signatureImg} /> : null}
           </View>
         ) : (
-          <View style={styles.unsignedBox}>
+          <View style={styles.unsignedBox} wrap={false}>
             <Text style={styles.unsignedText}>Not yet signed by the customer.</Text>
           </View>
         )}
+      </Page>
 
+      <Page size="LETTER" style={styles.page}>
         <Text style={styles.sectionLabel}>Terms & Conditions</Text>
         {data.terms.map((term, i) => (
           <View style={styles.termItem} key={i} wrap={false}>
