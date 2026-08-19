@@ -65,6 +65,9 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
               <Polygon points={roofBackX + ",6 " + (houseX - 4) + "," + wallStubTopY + " " + roofBackX + "," + wallStubTopY}
                 fill="#a8a29e" stroke="#57534e" strokeWidth={1.5} />
               <Rect x={houseX - 10} y={wallStubTopY} width={10} height={(roofY + 20) - wallStubTopY} fill="#cbd5e1" stroke="#64748b" strokeWidth={1.5} />
+              {/* Eave header/fascia board - caps the roofline where it meets
+                  the wall, right where the awning's hanger actually attaches */}
+              <Rect x={houseX - 12} y={wallStubTopY - 7} width={14} height={9} fill="#92400e" stroke="#78350f" strokeWidth={1} />
             </G>
           ) : (
             <Rect x={houseX - 10} y={10} width={10} height={roofY - 10 + 20} fill="#cbd5e1" stroke="#64748b" strokeWidth={1.5} />

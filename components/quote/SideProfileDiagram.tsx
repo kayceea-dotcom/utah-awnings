@@ -91,6 +91,9 @@ export default function SideProfileDiagram({
               <polygon points={roofBackX + ",6 " + (houseX - 4) + "," + wallStubTopY + " " + roofBackX + "," + wallStubTopY}
                 fill="#a8a29e" stroke="#57534e" strokeWidth="1.5" />
               <rect x={houseX - 10} y={wallStubTopY} width={10} height={(roofY + 20) - wallStubTopY} fill="url(#sp-hatch)" stroke="#64748b" strokeWidth="1.5" />
+              {/* Eave header/fascia board - caps the roofline where it meets
+                  the wall, right where the awning's hanger actually attaches */}
+              <rect x={houseX - 12} y={wallStubTopY - 7} width={14} height={9} fill="#92400e" stroke="#78350f" strokeWidth="1" />
             </>
           ) : (
             <rect x={houseX - 10} y={10} width={10} height={roofY - 10 + 20} fill="url(#sp-hatch)" stroke="#64748b" strokeWidth="1.5" />
