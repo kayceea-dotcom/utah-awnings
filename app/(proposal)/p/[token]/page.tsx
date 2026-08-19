@@ -8,14 +8,7 @@ import { CheckCircle, Check, PenLine, CreditCard, Banknote, Phone } from "lucide
 import { estimateMonthlyPayment, HEARTH_PREQUALIFY_URL, FINANCING_APR, FINANCING_TERM_YEARS } from "@/lib/financing";
 import type { BeamConfig } from "@/lib/pricing/types";
 import { beamTypeLabel } from "@/lib/pricing/shared";
-
-const TERMS = [
-  "Contractor to provide the improvements/remodeling/reconstruction/rehabilitation (hereinafter the work), in a workmanlike manner and in accordance with the plans and specifications provided or in accordance with the attached Scope of Work to the property listed above. Contractor is not responsible to repair existing conditions on home unless specified in this agreement. Contractor will build assuming that the property is built to meet current building codes, including electrical and framing. Any damage caused by contractor will be repaired/or paid to be repaired by Contractor as if property meets current building code requirements. Also, Contractor assumes that roofing and stucco have been installed properly, including flashing and drip edge, and will not be held responsible for leaking caused by improper installation of roofing and stucco. It is understood that the Awning is not intended to be a waterproof structure and shall not be deemed defective by reason of leakage; however, Contractor shall make every effort to make sure the Awning is as waterproof as possible.",
-  "Owner agrees, binds, and obligates him/herself to pay Contractor for the work for the sum listed above. All materials are custom ordered. Therefore, Owner also agrees to pay additional charges for any changes made by the homeowner not included in this contract. Interest at the rate of 1.5% per month will be charged for past due amounts. If Buyer defaults or otherwise breaches this agreement, Buyer agrees to pay all court costs and reasonable attorney fees incurred by Contractor in the collection under or enforcement of this agreement.",
-  "Construction will commence and substantial work will be completed on or about the install dates listed below. However, this time period may, at the Contractors option, be extended one day for each day of delay, if construction is delayed due to weather, material shortages, delay of material shipment, Owner delays, or acts of God. Failure of Contractor to timely complete shall not be considered default. Note: Any time Owner has taken time off work to supervise install will be made at their own discretion and WILL NOT be reimbursed for time missed under any circumstances.",
-  "Owner agrees and obligates himself to obtain all necessary and/or required approvals and/or acknowledgments from any Committee whose jurisdiction is relevant to work. Owners shall allow Contractor and employees access to the area being worked on during construction period of 7 oclock a.m. to 5 oclock p.m.",
-  "If the property owner chooses to take out the permit, they are liable for the work being done to code and not the contractor. This means that if there are corrections to be done it will be at the cost of the owner and not the contractor.",
-];
+import { TERMS } from "@/lib/contractTerms";
 
 const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
@@ -108,6 +101,14 @@ export default function ProposalPage() {
       signature_data: sigData,
       status: "signed",
     }).eq("token", token);
+
+    // Alert the salesman + office that a customer just signed - fire and
+    // forget so a slow email send never holds up the customer's flow.
+    fetch("/api/proposal/signed-notification", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ proposalToken: token }),
+    }).catch(console.error);
 
     setStep("payment");
     setSigning(false);

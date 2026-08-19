@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import TopBar from "@/components/TopBar";
-import { Send, ExternalLink, CheckCircle, Clock, Eye, X } from "lucide-react";
+import { Send, ExternalLink, CheckCircle, Clock, Eye, X, FileDown } from "lucide-react";
 import { getFollowUpStatus } from "@/lib/followups/engine";
 import type { ProposalFollowUpTimestamps } from "@/lib/followups/types";
 import FollowUpBadge from "@/components/FollowUpBadge";
@@ -239,6 +239,10 @@ export default function ProposalPreviewPage() {
             <a href={"/p/" + token} target="_blank" rel="noopener noreferrer" className="btn-secondary w-full justify-center">
               <ExternalLink size={15} />
               Preview Customer View
+            </a>
+            <a href={"/api/contract?token=" + token} target="_blank" rel="noopener noreferrer" className="btn-secondary w-full justify-center">
+              <FileDown size={15} />
+              Download Contract PDF
             </a>
             <button onClick={handleSend} disabled={sending} className={sent ? "btn-secondary w-full disabled:opacity-50" : "btn-primary w-full disabled:opacity-50"}>
               <Send size={15} />
