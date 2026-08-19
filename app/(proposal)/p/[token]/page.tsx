@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import CoverDiagram from "@/components/quote/CoverDiagram";
+import SideProfileDiagram from "@/components/quote/SideProfileDiagram";
 import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { CheckCircle, Check, PenLine, CreditCard, Banknote, Phone } from "lucide-react";
@@ -287,6 +288,18 @@ export default function ProposalPage() {
                 beamType1={String(inp.beamType1 || "3x8")}
                 beamType2={String(inp.beamType2 || "3x8")}
               />
+              <div className="mt-4">
+                <SideProfileDiagram
+                  projection={Number(inp.projection1) || 0}
+                  postHeight={Number(inp.postHeight1) || 0}
+                  deckHeight={Number(inp.deckHeight) || 0}
+                  houseAttachment={String(inp.houseAttachment || "stucco")}
+                  groundAttachment={String(inp.groundAttachment || "concrete")}
+                  beamType={String(inp.beamType1 || "3x8")}
+                  endCut={String(inp.beamEndCut1 || "beveled")}
+                  showRafterTail={showRafterTails}
+                />
+              </div>
             </div>
           );
         })()}

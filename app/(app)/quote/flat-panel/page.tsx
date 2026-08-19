@@ -21,6 +21,7 @@ import { useProfile } from "@/lib/hooks/useProfile";
 import { useRouter } from "next/navigation";
 import SaveQuoteModal from "@/components/quote/SaveQuoteModal";
 import CoverDiagram from "@/components/quote/CoverDiagram";
+import SideProfileDiagram from "@/components/quote/SideProfileDiagram";
 import ProductSwitcher from "@/components/quote/ProductSwitcher";
 
 const Viewer3DPanel = dynamicImport(() => import("@/components/viewer3d/Viewer3DPanel"), {
@@ -723,6 +724,18 @@ export default function FlatPanelQuotePage() {
                   <Viewer3DPanel scene={sceneConfig} onRenderCaptured={setCapturedRenderUrl} />
                   <CosmeticControls value={cosmetic} onChange={setCosmetic} />
                 </>
+              )}
+              {(!SHOW_3D_VIEWER || viewMode === "2d") && (
+                <SideProfileDiagram
+                  projection={inp.projection1}
+                  postHeight={inp.postHeight1}
+                  deckHeight={inp.deckHeight}
+                  houseAttachment={inp.houseAttachment}
+                  groundAttachment={inp.groundAttachment}
+                  beamType={inp.beamType1}
+                  endCut={inp.beamEndCut1}
+                  showRafterTail={inp.wrapType !== "none" && inp.rafterTails}
+                />
               )}
               <PriceSummaryPanel result={result} />
             </div>

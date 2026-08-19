@@ -1,6 +1,7 @@
 import { Document, Page, View, Text, Image, StyleSheet } from "@react-pdf/renderer";
 import type { ContractData } from "./contract";
 import CoverDiagramPdf from "./coverDiagram.pdf";
+import SideProfilePdf from "./sideProfile.pdf";
 
 const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
@@ -33,6 +34,8 @@ const styles = StyleSheet.create({
   signatureImg: { height: 44, maxWidth: 200, objectFit: "contain" },
   unsignedBox: { marginTop: 8, borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 4, padding: 8 },
   unsignedText: { fontSize: 9, color: "#999999", fontStyle: "italic" },
+  diagramRow: { flexDirection: "row", gap: 6 },
+  diagramCol: { flex: 1 },
 });
 
 export default function ContractPdf({ data }: { data: ContractData }) {
@@ -112,7 +115,20 @@ export default function ContractPdf({ data }: { data: ContractData }) {
           ) : null}
         </View>
 
-        {data.diagramInput ? <CoverDiagramPdf input={data.diagramInput} /> : null}
+        {(data.diagramInput || data.sideProfileInput) && (
+          <View style={styles.diagramRow}>
+            {data.diagramInput && (
+              <View style={styles.diagramCol}>
+                <CoverDiagramPdf input={data.diagramInput} maxWidth={170} maxHeight={150} />
+              </View>
+            )}
+            {data.sideProfileInput && (
+              <View style={styles.diagramCol}>
+                <SideProfilePdf input={data.sideProfileInput} maxWidth={170} maxHeight={150} />
+              </View>
+            )}
+          </View>
+        )}
 
         <Text style={styles.sectionLabel}>Contract Summary</Text>
         <View style={styles.totalsBox}>

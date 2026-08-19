@@ -13,6 +13,7 @@ import Field from "@/components/quote/Field";
 import MaterialList from "@/components/quote/MaterialList";
 import ProductSwitcher from "@/components/quote/ProductSwitcher";
 import CoverDiagram from "@/components/quote/CoverDiagram";
+import SideProfileDiagram from "@/components/quote/SideProfileDiagram";
 import { ChevronDown, ChevronUp, RefreshCw, DollarSign, Send } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useProfile";
 import { useRouter } from "next/navigation";
@@ -450,6 +451,15 @@ export default function IRPQuotePage() {
                 downspouts={inp.downspouts}
                 downspoutSide={inp.downspoutSide}
                 showRafterTails={false}
+              />
+              <SideProfileDiagram
+                projection={inp.projection1}
+                postHeight={inp.postHeight1}
+                deckHeight={inp.deckHeight}
+                houseAttachment={inp.houseAttachment}
+                groundAttachment={inp.groundAttachment}
+                beamType={inp.beamType1}
+                showRafterTail={false}
               />
               <PriceSummaryPanel result={effectiveResult} />
             </div>

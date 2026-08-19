@@ -1,6 +1,7 @@
 import { beamTypeLabel } from "./pricing/shared";
 import { TERMS } from "./contractTerms";
 import type { CoverDiagramGeometryInput } from "./coverDiagramGeometry";
+import type { SideProfileGeometryInput } from "./sideProfileGeometry";
 import type { BeamConfig } from "./pricing/types";
 
 export interface ContractData {
@@ -38,6 +39,7 @@ export interface ContractData {
   signatureData: string | null;
   terms: string[];
   diagramInput: CoverDiagramGeometryInput | null;
+  sideProfileInput: SideProfileGeometryInput | null;
 }
 
 // Shared by the printable contract route so the PDF a rep downloads for
@@ -80,6 +82,20 @@ export function buildContractData(proposal: Record<string, unknown>): ContractDa
         }
       : null;
 
+  const sideProfileInput: SideProfileGeometryInput | null =
+    inputs.projection1 && inputs.postHeight1
+      ? {
+          projection: Number(inputs.projection1) || 0,
+          postHeight: Number(inputs.postHeight1) || 0,
+          deckHeight: Number(inputs.deckHeight) || 0,
+          houseAttachment: String(inputs.houseAttachment || "stucco"),
+          groundAttachment: String(inputs.groundAttachment || "concrete"),
+          beamType: String(inputs.beamType1 || "3x8"),
+          endCut: String(inputs.beamEndCut1 || "beveled"),
+          showRafterTail: showRafterTails,
+        }
+      : null;
+
   return {
     companyName: (company.name as string) || "Utah Awnings",
     companyAddress1: (company.address as string) || "",
@@ -117,5 +133,6 @@ export function buildContractData(proposal: Record<string, unknown>): ContractDa
     signatureData: (proposal.signature_data as string) || null,
     terms: TERMS,
     diagramInput,
+    sideProfileInput,
   };
 }

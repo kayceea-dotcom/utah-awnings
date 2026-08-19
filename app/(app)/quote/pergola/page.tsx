@@ -14,6 +14,7 @@ import MaterialList from "@/components/quote/MaterialList";
 import { ChevronDown, ChevronUp, RefreshCw, DollarSign, Send } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useProfile";
 import CoverDiagram from "@/components/quote/CoverDiagram";
+import SideProfileDiagram from "@/components/quote/SideProfileDiagram";
 import ProductSwitcher from "@/components/quote/ProductSwitcher";
 import { useRouter } from "next/navigation";
 import SaveQuoteModal from "@/components/quote/SaveQuoteModal";
@@ -406,6 +407,16 @@ export default function PergolaQuotePage() {
                   posts1={inp.posts}
                   downspouts={0}
                 />
+                <SideProfileDiagram
+                  projection={inp.projection}
+                  postHeight={inp.postHeight}
+                  deckHeight={inp.deckHeight}
+                  houseAttachment={inp.houseAttachment}
+                  groundAttachment={inp.groundAttachment}
+                  beamType={inp.beamType}
+                  endCut={inp.endCut}
+                  showRafterTail
+                />
               </div>
 
               <button onClick={() => setShowMaterials((v) => !v)} className="btn-secondary w-full">
@@ -440,6 +451,16 @@ export default function PergolaQuotePage() {
                 width1={inp.width}
                 posts1={inp.posts}
                 downspouts={0}
+              />
+              <SideProfileDiagram
+                projection={inp.projection}
+                postHeight={inp.postHeight}
+                deckHeight={inp.deckHeight}
+                houseAttachment={inp.houseAttachment}
+                groundAttachment={inp.groundAttachment}
+                beamType={inp.beamType}
+                endCut={inp.endCut}
+                showRafterTail
               />
               <PriceSummaryPanel result={effectiveResult} />
             </div>

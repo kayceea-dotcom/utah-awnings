@@ -15,7 +15,7 @@ const bold = { fontFamily: "Helvetica-Bold" };
 // customer actually saw. @react-pdf's SVG support has no <pattern> fill, so
 // the hatched house wall becomes a flat gray fill here - everything else
 // (lines, rects, text, rotated labels) maps directly to real SVG primitives.
-export default function CoverDiagramPdf({ input }: { input: CoverDiagramGeometryInput }) {
+export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170 }: { input: CoverDiagramGeometryInput; maxWidth?: number; maxHeight?: number }) {
   const geo = computeCoverDiagramGeometry(input);
 
   if (!geo) return null;
@@ -36,9 +36,7 @@ export default function CoverDiagramPdf({ input }: { input: CoverDiagramGeometry
   // page - the on-screen version can run wide/tall for big covers, but the
   // contract needs everything through the signature to fit on one page, so
   // both dimensions are capped (whichever is more restrictive wins).
-  const MAX_PDF_W = 220;
-  const MAX_PDF_H = 170;
-  const pdfScale = Math.min(MAX_PDF_W / svgW, MAX_PDF_H / svgH, 1);
+  const pdfScale = Math.min(maxWidth / svgW, maxHeight / svgH, 1);
   const displayW = svgW * pdfScale;
   const displayH = svgH * pdfScale;
 
