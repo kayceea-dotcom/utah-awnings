@@ -109,15 +109,20 @@ export default function SideProfileDiagram({
           {/* Deck platform - a 12in skirt/rim board at the surface (what you'd
               actually see looking at the deck's edge), with a support post
               coming down from its front end to the ground, rather than
-              drawing the whole deck height as one solid block */}
+              drawing the whole deck height as one solid block. The deck's
+              edge/post line up with the patio cover's own post - that's
+              normally where the cover actually attaches - with the deck
+              framing running just a couple inches past it. */}
           {isDeck && deckY !== null && (() => {
             const deckSkirtPx = Math.min(scale, deckHpx);
             const skirtBottomY = deckY + deckSkirtPx;
-            const deckPostX = svgW - 26;
+            const deckInset = (2 / 12) * scale;
+            const deckEdgeX = postX + deckInset;
+            const deckPostX = postX;
             const deckPostW = 6;
             return (
               <>
-                <rect x={houseX - 20} y={deckY} width={svgW - 10 - (houseX - 20)} height={Math.max(deckSkirtPx, 4)}
+                <rect x={houseX - 20} y={deckY} width={deckEdgeX - (houseX - 20)} height={Math.max(deckSkirtPx, 4)}
                   fill="#fef3c7" stroke="#d97706" strokeWidth="1" />
                 {skirtBottomY < groundY && (
                   <rect x={deckPostX - deckPostW / 2} y={skirtBottomY} width={deckPostW} height={groundY - skirtBottomY}
