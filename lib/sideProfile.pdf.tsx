@@ -1,4 +1,4 @@
-import { Svg, Rect, Line, Text, Path, G, View, StyleSheet } from "@react-pdf/renderer";
+import { Svg, Rect, Line, Text, Path, Polygon, G, View, StyleSheet } from "@react-pdf/renderer";
 import { computeSideProfileGeometry, type SideProfileGeometryInput } from "./sideProfileGeometry";
 import { endCutProfilePath } from "./endCutProfiles";
 
@@ -34,7 +34,7 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
     svgW, svgH, groundY, deckY, deckHpx,
     postX, postWidth, postTopY, postBottomY, embeddedBottomY,
     beamTopY, beamHeight, beamWidth,
-    panelTopY, panelHeight,
+    panelTopY, panelHeight, panelFrontX,
     houseX, roofY, tailStartX, tailW,
     footingX, footingWidth,
     isDeck, isGroundMount, houseAttachment, groundAttachment, deckHeight, postHeight, showRafterTail,
@@ -49,14 +49,26 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
   const tailPath = endCutProfilePath(geo.endCut);
   const tailScaleX = tailW / 44;
   const tailScaleY = (panelHeight + beamHeight) / 24;
+  const isEaveMount = houseAttachment === "eave" || houseAttachment === "angled_eave";
+  const roofBackX = houseAttachment === "angled_eave" ? houseX - 16 : houseX - 30;
+  const wallStubTopY = roofY - 4;
 
   return (
     <View style={styles.wrap}>
       <Text style={styles.label}>Side Profile</Text>
       <View style={styles.svgBox}>
         <Svg viewBox={"0 0 " + svgW + " " + svgH} width={displayW} height={displayH}>
-          {/* House wall */}
-          <Rect x={houseX - 10} y={10} width={10} height={roofY - 10 + 20} fill="#cbd5e1" stroke="#64748b" strokeWidth={1.5} />
+          {/* House attachment - a flat wall for stucco/siding, or a sloped
+              roofline over a short wall stub for an eave/angled-eave mount */}
+          {isEaveMount ? (
+            <G>
+              <Polygon points={roofBackX + ",6 " + (houseX - 4) + "," + wallStubTopY + " " + roofBackX + "," + wallStubTopY}
+                fill="#a8a29e" stroke="#57534e" strokeWidth={1.5} />
+              <Rect x={houseX - 10} y={wallStubTopY} width={10} height={(roofY + 20) - wallStubTopY} fill="#cbd5e1" stroke="#64748b" strokeWidth={1.5} />
+            </G>
+          ) : (
+            <Rect x={houseX - 10} y={10} width={10} height={roofY - 10 + 20} fill="#cbd5e1" stroke="#64748b" strokeWidth={1.5} />
+          )}
           <Text x={houseX - 5} y={roofY + 42} textAnchor="middle" fill="#475569" style={{ ...bold, fontSize: 7 }}>
             {HOUSE_ATTACHMENT_LABELS[houseAttachment] || houseAttachment.toUpperCase()}
           </Text>
@@ -103,8 +115,8 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
           {/* Beam - drawn end-on (real cross-section), not as a flat slab along the projection */}
           <Rect x={postX - beamWidth / 2} y={beamTopY} width={beamWidth} height={beamHeight} fill="#1e40af" stroke="#1e3a8a" strokeWidth={1} />
 
-          {/* Panel / wrap edge - sits on top of the beam, thickness reflects wrap kit */}
-          <Rect x={houseX} y={panelTopY} width={postX - beamWidth / 2 - houseX} height={panelHeight} fill="#93c5fd" stroke="#3b82f6" strokeWidth={1.5} />
+          {/* Panel / wrap edge - sits on top of the beam and overhangs past its front face (18in default) */}
+          <Rect x={houseX} y={panelTopY} width={panelFrontX - houseX} height={panelHeight} fill="#93c5fd" stroke="#3b82f6" strokeWidth={1.5} />
 
           {/* Rafter tail profile - spans the full panel + beam front face */}
           {showRafterTail && (

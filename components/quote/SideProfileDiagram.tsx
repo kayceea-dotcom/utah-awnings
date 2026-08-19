@@ -59,13 +59,16 @@ export default function SideProfileDiagram({
     svgW, svgH, groundY, deckY, deckHpx,
     postX, postWidth, postTopY, postBottomY, embeddedBottomY,
     beamTopY, beamHeight, beamWidth,
-    panelTopY, panelHeight,
+    panelTopY, panelHeight, panelFrontX,
     houseX, roofY, tailStartX, tailW,
     footingX, footingWidth,
     isDeck, isGroundMount,
   } = geo;
 
   const tailPath = endCutProfilePath(endCut);
+  const isEaveMount = houseAttachment === "eave" || houseAttachment === "angled_eave";
+  const roofBackX = houseAttachment === "angled_eave" ? houseX - 16 : houseX - 30;
+  const wallStubTopY = roofY - 4;
 
   return (
     <div className={"bg-white rounded-xl border border-gray-200 overflow-hidden " + className}>
@@ -81,8 +84,17 @@ export default function SideProfileDiagram({
             </pattern>
           </defs>
 
-          {/* House wall */}
-          <rect x={houseX - 10} y={10} width={10} height={roofY - 10 + 20} fill="url(#sp-hatch)" stroke="#64748b" strokeWidth="1.5" />
+          {/* House attachment - a flat wall for stucco/siding, or a sloped
+              roofline over a short wall stub for an eave/angled-eave mount */}
+          {isEaveMount ? (
+            <>
+              <polygon points={roofBackX + ",6 " + (houseX - 4) + "," + wallStubTopY + " " + roofBackX + "," + wallStubTopY}
+                fill="#a8a29e" stroke="#57534e" strokeWidth="1.5" />
+              <rect x={houseX - 10} y={wallStubTopY} width={10} height={(roofY + 20) - wallStubTopY} fill="url(#sp-hatch)" stroke="#64748b" strokeWidth="1.5" />
+            </>
+          ) : (
+            <rect x={houseX - 10} y={10} width={10} height={roofY - 10 + 20} fill="url(#sp-hatch)" stroke="#64748b" strokeWidth="1.5" />
+          )}
           <text x={houseX - 5} y={roofY + 42} textAnchor="middle" fontSize="7" fill="#475569" fontWeight="600">
             {HOUSE_ATTACHMENT_LABELS[houseAttachment] || houseAttachment.toUpperCase()}
           </text>
@@ -133,8 +145,8 @@ export default function SideProfileDiagram({
           {/* Beam - drawn end-on (real cross-section), not as a flat slab along the projection */}
           <rect x={postX - beamWidth / 2} y={beamTopY} width={beamWidth} height={beamHeight} fill="#1e40af" stroke="#1e3a8a" strokeWidth="1" />
 
-          {/* Panel / wrap edge - sits on top of the beam, thickness reflects wrap kit */}
-          <rect x={houseX} y={panelTopY} width={postX - beamWidth / 2 - houseX} height={panelHeight} fill="#93c5fd" stroke="#3b82f6" strokeWidth="1.5" />
+          {/* Panel / wrap edge - sits on top of the beam and overhangs past its front face (18in default) */}
+          <rect x={houseX} y={panelTopY} width={panelFrontX - houseX} height={panelHeight} fill="#93c5fd" stroke="#3b82f6" strokeWidth="1.5" />
 
           {/* Rafter tail profile - spans the full panel + beam front face */}
           {showRafterTail && (

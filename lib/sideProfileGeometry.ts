@@ -7,6 +7,7 @@ export interface SideProfileGeometryInput {
   beamType?: string;
   wrapType?: string;
   hasPanel?: boolean;
+  panelOverhangInches?: number;
   endCut?: string;
   showRafterTail?: boolean;
 }
@@ -29,6 +30,7 @@ export interface SideProfileGeometry {
   panelTopY: number;
   panelBottomY: number;
   panelHeight: number;
+  panelFrontX: number;
   houseX: number;
   roofY: number;
   tailStartX: number;
@@ -84,6 +86,7 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
     beamType = "3x8",
     wrapType = "none",
     hasPanel = true,
+    panelOverhangInches = 18,
     endCut = "beveled",
     showRafterTail = true,
   } = input;
@@ -113,18 +116,23 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
 
   // Panel/wrap edge sits directly on top of the beam.
   const panelHeight = hasPanel ? (panelHeightInches(wrapType) / 12) * scale : 3;
+  // Panel overhangs past the beam's front face - 18in is the normal default,
+  // matching how the cover material actually extends past its support beam.
+  const overhangPx = hasPanel ? (panelOverhangInches / 12) * scale : 0;
+
+  const houseX = PAD;
+  const postX = PAD + projPx;
+  const panelFrontX = postX + beamWidth / 2 + overhangPx;
+  const tailStartX = panelFrontX + 4;
 
   const topMargin = 40;
   const embedPx = isGroundMount ? 2 * scale : 0;
   const svgH = topMargin + postHpx + beamHeight + panelHeight + deckHpx + GROUND_MARGIN + embedPx + 24;
-  const svgW = PAD * 2 + projPx + TAIL_W + 20;
+  const svgW = tailStartX + TAIL_W + 16;
 
   const groundY = svgH - GROUND_MARGIN - 20 - embedPx;
   const deckY = isDeck ? groundY - deckHpx : null;
   const surfaceY = isDeck ? (deckY as number) : groundY;
-
-  const houseX = PAD;
-  const postX = PAD + projPx;
 
   const postTopY = surfaceY - postHpx;
   const postBottomY = surfaceY;
@@ -135,7 +143,6 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
   const panelTopY = panelBottomY - panelHeight;
 
   const roofY = panelTopY;
-  const tailStartX = postX + 6;
 
   const footingWidth = isGroundMount ? 14 : 26;
   const footingX = postX - footingWidth / 2;
@@ -144,7 +151,7 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
     svgW, svgH, groundY, surfaceY, deckY, deckHpx,
     postX, postWidth: 10, postTopY, postBottomY, embeddedBottomY,
     beamTopY, beamHeight, beamWidth,
-    panelTopY, panelBottomY, panelHeight,
+    panelTopY, panelBottomY, panelHeight, panelFrontX,
     houseX, roofY, tailStartX, tailW: TAIL_W,
     footingX, footingWidth,
     scale, isDeck, isGroundMount,
