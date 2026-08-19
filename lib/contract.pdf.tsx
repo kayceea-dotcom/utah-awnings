@@ -1,5 +1,6 @@
 import { Document, Page, View, Text, Image, StyleSheet } from "@react-pdf/renderer";
 import type { ContractData } from "./contract";
+import CoverDiagramPdf from "./coverDiagram.pdf";
 
 const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
@@ -110,6 +111,8 @@ export default function ContractPdf({ data }: { data: ContractData }) {
             </View>
           ) : null}
         </View>
+
+        {data.diagramInput ? <CoverDiagramPdf input={data.diagramInput} /> : null}
 
         <Text style={styles.sectionLabel}>Contract Summary</Text>
         <View style={styles.totalsBox}>

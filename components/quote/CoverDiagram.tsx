@@ -1,6 +1,7 @@
 "use client";
 
 import type { BeamConfig } from "@/lib/pricing/types";
+import { computeCoverDiagramGeometry } from "@/lib/coverDiagramGeometry";
 
 interface CoverDiagramProps {
   projection1: number;
@@ -19,22 +20,6 @@ interface CoverDiagramProps {
   className?: string;
 }
 
-// Post X positions evenly spaced across a run's width - 1.5ft inset from each
-// end, matching the beam's own real support spacing. Shared by the two
-// primary runs and any additional/multi-span beam (they all use the same rule).
-function spacedPostXs(count: number, widthFt: number, xOffsetPx: number, coverWidthPx: number): number[] {
-  if (count <= 0) return [];
-  if (count === 1) return [xOffsetPx + coverWidthPx / 2];
-  const xs: number[] = [];
-  for (let i = 0; i < count; i++) {
-    const pct = i === 0 ? 1.5 / widthFt
-      : i === count - 1 ? (widthFt - 1.5) / widthFt
-      : (1.5 + (widthFt - 3) * i / (count - 1)) / widthFt;
-    xs.push(xOffsetPx + pct * coverWidthPx);
-  }
-  return xs;
-}
-
 export default function CoverDiagram({
   projection1, width1,
   projection2 = 0, width2 = 0,
@@ -49,7 +34,12 @@ export default function CoverDiagram({
   beamType2 = "3x8",
   className = "",
 }: CoverDiagramProps) {
-  if (!projection1 || !width1) {
+  const geo = computeCoverDiagramGeometry({
+    projection1, width1, projection2, width2, posts1, posts2,
+    downspouts, downspoutSide, showRafterTails, jogType, beams, beamType1, beamType2,
+  });
+
+  if (!geo) {
     return (
       <div className={"flex items-center justify-center bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 " + className}
            style={{ minHeight: 180 }}>
@@ -58,76 +48,16 @@ export default function CoverDiagram({
     );
   }
 
-  // Orientation: house wall at TOP, cover extends DOWNWARD
-  // X = width (left to right), Y = projection (top to bottom)
-
-  const PAD = 40;
-  const HOUSE_H = 20;
-  const TAIL_LEN = 12;
-
-  const hasRun2 = projection2 > 0 && width2 > 0;
-  const isHouseJog = hasRun2 && jogType === "house";
-  const totalWidth = hasRun2 ? width1 + width2 : width1;
-
-  const availW = 300;
-  const availH = 240;
-  const scaleX = availW / totalWidth;
-  const scaleY = availH / Math.max(projection1, projection2 || 0);
-  const scale = Math.min(scaleX, scaleY, 14);
-
-  const coverW1 = width1 * scale;
-  const coverH1 = projection1 * scale;
-  const coverW2 = hasRun2 ? width2 * scale : 0;
-  const coverH2 = hasRun2 ? projection2 * scale : 0;
-  const totalW = totalWidth * scale;
-
-  const svgW = totalW + PAD * 2 + 30;
-  const svgH = Math.max(coverH1, coverH2) + PAD * 2 + HOUSE_H + TAIL_LEN + 30;
-
-  // Origin = top-left corner of cover, below house wall
-  const ox = PAD;
-  const oy = PAD + HOUSE_H;
-
-  // A house jog keeps the front edge (beam/gutter) as one continuous, flush line and
-  // steps the house wall/hanger instead to follow the wall's jog. A ground/deck jog
-  // (the default) is the opposite: house wall stays flush, front edge steps.
-  const commonFrontY = oy + Math.max(coverH1, coverH2 || 0);
-  const run1TopY   = isHouseJog ? commonFrontY - coverH1 : oy;
-  const run2TopY   = isHouseJog ? commonFrontY - coverH2 : oy;
-  const run1FrontY = isHouseJog ? commonFrontY : oy + coverH1;
-  const run2FrontY = isHouseJog ? commonFrontY : oy + coverH2;
-
-  // Beam Y = 1.5ft from BOTTOM (front) of cover
-  const beamY1 = run1FrontY - 1.5 * scale;
-  const beamY2 = run2FrontY - 1.5 * scale;
-
-  // Post X positions along beam - 1.5ft from each end, evenly spaced
-  const postPositions = spacedPostXs(posts1, width1, ox, coverW1);
-
-  // Post X positions for run 2, same spacing rule within run 2's own width
-  const postPositions2 = hasRun2 ? spacedPostXs(posts2, width2, ox + coverW1, coverW2) : [];
-
-  // Multi-span beams (Additional / Multi-Span Beams) - run 1 only. Y position is
-  // measured from the house wall (0 = at the house), clamped inside the cover so
-  // an out-of-range value doesn't draw off the diagram. Posts space across the
-  // same width1 run using the same 1.5ft-inset rule as the primary beam.
-  const multiSpanBeams = beams.map((b) => {
-    const y = run1TopY + Math.max(0, Math.min(b.positionFromHouse, projection1)) * scale;
-    return { y, postXs: spacedPostXs(b.posts, width1, ox, coverW1) };
-  });
-
-  // Rafter tail count (run 1)
-  const tailCount = Math.round(width1 / 2);
-  // Front edge Y (run 1)
-  const frontEdgeY = run1FrontY;
-  // Tail tip Y (1ft below front edge) — only extends past the front edge when
-  // rafter tails are actually present; otherwise the cover is a clean rectangle.
-  const tailTipY = showRafterTails ? frontEdgeY + TAIL_LEN : frontEdgeY;
-
-  // Rafter tail count (run 2)
-  const tailCount2 = hasRun2 ? Math.round(width2 / 2) : 0;
-  const frontEdgeY2 = run2FrontY;
-  const tailTipY2 = showRafterTails ? frontEdgeY2 + TAIL_LEN : frontEdgeY2;
+  const {
+    svgW, svgH, ox, oy, HOUSE_H,
+    hasRun2, isHouseJog, totalW,
+    coverW1, coverH1, coverW2, coverH2,
+    run1TopY, run2TopY, run1FrontY,
+    beamY1, beamY2,
+    postPositions, postPositions2, multiSpanBeams,
+    tailCount, tailCount2, frontEdgeY, frontEdgeY2, tailTipY, tailTipY2,
+    downspoutPositions,
+  } = geo;
 
   return (
     <div className={"bg-white rounded-xl border border-gray-200 overflow-hidden " + className}>
@@ -186,7 +116,7 @@ export default function CoverDiagram({
           {/* Beam line run 1 - horizontal, 1.5ft from front edge; flush with run 2 on a house jog.
               A double beam mounts front + back of the posts (for extra span), shown as 2 lines
               straddling the post instead of the single beam sitting on top of it. */}
-          {beamType1 === "double_3x8" ? (
+          {geo.beamType1 === "double_3x8" ? (
             <>
               <line x1={ox} y1={beamY1 - 3} x2={ox + coverW1} y2={beamY1 - 3} stroke="#1e40af" strokeWidth="2" />
               <line x1={ox} y1={beamY1 + 3} x2={ox + coverW1} y2={beamY1 + 3} stroke="#1e40af" strokeWidth="2" />
@@ -198,7 +128,7 @@ export default function CoverDiagram({
 
           {/* Beam line run 2 */}
           {hasRun2 && (
-            beamType2 === "double_3x8" ? (
+            geo.beamType2 === "double_3x8" ? (
               <>
                 <line x1={ox + coverW1} y1={beamY2 - 3} x2={ox + coverW1 + coverW2} y2={beamY2 - 3} stroke="#15803d" strokeWidth="2" />
                 <line x1={ox + coverW1} y1={beamY2 + 3} x2={ox + coverW1 + coverW2} y2={beamY2 + 3} stroke="#15803d" strokeWidth="2" />
@@ -224,7 +154,7 @@ export default function CoverDiagram({
 
           {/* Rafter tails - short stubs below front edge (run 1) */}
           {showRafterTails && Array.from({ length: tailCount }).map((_, i) => {
-            const rx = ox + (width1 / (tailCount + 1)) * (i + 1) * scale;
+            const rx = ox + (width1 / (tailCount + 1)) * (i + 1) * geo.scale;
             return (
               <line key={i} x1={rx} y1={frontEdgeY} x2={rx} y2={tailTipY}
                 stroke="#1e40af" strokeWidth="2" />
@@ -239,7 +169,7 @@ export default function CoverDiagram({
 
           {/* Rafter tails - short stubs below front edge (run 2) */}
           {hasRun2 && showRafterTails && Array.from({ length: tailCount2 }).map((_, i) => {
-            const rx = ox + coverW1 + (width2 / (tailCount2 + 1)) * (i + 1) * scale;
+            const rx = ox + coverW1 + (width2 / (tailCount2 + 1)) * (i + 1) * geo.scale;
             return (
               <line key={"r2-" + i} x1={rx} y1={frontEdgeY2} x2={rx} y2={tailTipY2}
                 stroke="#15803d" strokeWidth="2" />
@@ -284,23 +214,11 @@ export default function CoverDiagram({
             );
           })()}
 
-          {/* Downspouts — hang just in front of (past) the corner post, at the true
-              front edge rather than the post's own beam-line position. 1 downspout
-              sits on whichever side is picked; 2 or more sit on both far left and
-              far right (extras beyond 2 aren't placed - rare in practice). */}
-          {(() => {
-            const leftPos = { x: postPositions.length > 0 ? postPositions[0] : ox, y: frontEdgeY };
-            const rightPos = hasRun2
-              ? { x: postPositions2.length > 0 ? postPositions2[postPositions2.length - 1] : ox + coverW1 + coverW2, y: frontEdgeY2 }
-              : { x: postPositions.length > 0 ? postPositions[postPositions.length - 1] : ox + coverW1, y: frontEdgeY };
-            const positions =
-              downspouts === 1 ? [downspoutSide === "left" ? leftPos : rightPos] :
-              downspouts >= 2  ? [leftPos, rightPos] : [];
-            return positions.map((p, i) => (
-              <rect key={i} x={p.x - 4} y={p.y - 4} width={8} height={8}
-                fill="#0ea5e9" rx="1" />
-            ));
-          })()}
+          {/* Downspouts */}
+          {downspoutPositions.map((p, i) => (
+            <rect key={i} x={p.x - 4} y={p.y - 4} width={8} height={8}
+              fill="#0ea5e9" rx="1" />
+          ))}
 
           {/* Width dimension (top) */}
           <line x1={ox} y1={oy - HOUSE_H - 8} x2={ox + coverW1} y2={oy - HOUSE_H - 8}

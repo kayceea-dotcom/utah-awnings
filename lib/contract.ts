@@ -1,5 +1,7 @@
 import { beamTypeLabel } from "./pricing/shared";
 import { TERMS } from "./contractTerms";
+import type { CoverDiagramGeometryInput } from "./coverDiagramGeometry";
+import type { BeamConfig } from "./pricing/types";
 
 export interface ContractData {
   companyName: string;
@@ -35,6 +37,7 @@ export interface ContractData {
   paymentMethod: string | null;
   signatureData: string | null;
   terms: string[];
+  diagramInput: CoverDiagramGeometryInput | null;
 }
 
 // Shared by the printable contract route so the PDF a rep downloads for
@@ -46,6 +49,36 @@ export function buildContractData(proposal: Record<string, unknown>): ContractDa
   const customer = (quote.customers as Record<string, unknown>) || {};
   const company = (quote.companies as Record<string, unknown>) || {};
   const inputs = (quote.inputs as Record<string, unknown>) || {};
+
+  // Mirror the customer-facing /p/[token] page's own rule for whether rafter
+  // tails show: Pergola's rafters are always structural, IRP's wrap kit never
+  // includes rafter tails, and Flat Panel/W-Pan only show them when a wrap
+  // kit is selected and Rafter Tails is toggled on.
+  const productType = String(quote.style || quote.product_type || "");
+  const showRafterTails = productType === "pergola"
+    ? true
+    : productType === "irp"
+      ? false
+      : inputs.wrapType !== "none" && !!inputs.rafterTails;
+
+  const diagramInput: CoverDiagramGeometryInput | null =
+    inputs.projection1 && inputs.width1
+      ? {
+          projection1: Number(inputs.projection1) || 0,
+          width1: Number(inputs.width1) || 0,
+          projection2: Number(inputs.projection2) || 0,
+          width2: Number(inputs.width2) || 0,
+          jogType: String(inputs.jogType || "ground"),
+          posts1: Number(inputs.posts1) || 0,
+          posts2: Number(inputs.posts2) || 0,
+          downspouts: Number(inputs.downspouts) || 1,
+          downspoutSide: String(inputs.downspoutSide || "right"),
+          showRafterTails,
+          beams: (inputs.beams as BeamConfig[]) || [],
+          beamType1: String(inputs.beamType1 || "3x8"),
+          beamType2: String(inputs.beamType2 || "3x8"),
+        }
+      : null;
 
   return {
     companyName: (company.name as string) || "Utah Awnings",
@@ -83,5 +116,6 @@ export function buildContractData(proposal: Record<string, unknown>): ContractDa
     paymentMethod: (proposal.payment_method as string) || null,
     signatureData: (proposal.signature_data as string) || null,
     terms: TERMS,
+    diagramInput,
   };
 }
