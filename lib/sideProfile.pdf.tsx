@@ -33,7 +33,8 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
   const {
     svgW, svgH, groundY, deckY, deckHpx,
     postX, postWidth, postTopY, postBottomY, embeddedBottomY,
-    beamTopY, beamHeight,
+    beamTopY, beamHeight, beamWidth,
+    panelTopY, panelHeight,
     houseX, roofY, tailStartX, tailW,
     footingX, footingWidth,
     isDeck, isGroundMount, houseAttachment, groundAttachment, deckHeight, postHeight, showRafterTail,
@@ -47,7 +48,7 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
 
   const tailPath = endCutProfilePath(geo.endCut);
   const tailScaleX = tailW / 44;
-  const tailScaleY = (beamHeight * 2.2) / 24;
+  const tailScaleY = (panelHeight + beamHeight) / 24;
 
   return (
     <View style={styles.wrap}>
@@ -99,15 +100,15 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
             {postHeight}&apos;
           </Text>
 
-          {/* Beam */}
-          <Rect x={postX - postWidth} y={beamTopY} width={postWidth * 2 + 6} height={beamHeight} fill="#1e40af" stroke="#1e3a8a" strokeWidth={1} />
+          {/* Beam - drawn end-on (real cross-section), not as a flat slab along the projection */}
+          <Rect x={postX - beamWidth / 2} y={beamTopY} width={beamWidth} height={beamHeight} fill="#1e40af" stroke="#1e3a8a" strokeWidth={1} />
 
-          {/* Roofline */}
-          <Line x1={houseX} y1={roofY} x2={postX - postWidth} y2={roofY} stroke="#3b82f6" strokeWidth={2.5} />
+          {/* Panel / wrap edge - sits on top of the beam, thickness reflects wrap kit */}
+          <Rect x={houseX} y={panelTopY} width={postX - beamWidth / 2 - houseX} height={panelHeight} fill="#93c5fd" stroke="#3b82f6" strokeWidth={1.5} />
 
-          {/* Rafter tail profile */}
+          {/* Rafter tail profile - spans the full panel + beam front face */}
           {showRafterTail && (
-            <G transform={"translate(" + tailStartX + "," + beamTopY + ") scale(" + tailScaleX + "," + tailScaleY + ")"}>
+            <G transform={"translate(" + tailStartX + "," + panelTopY + ") scale(" + tailScaleX + "," + tailScaleY + ")"}>
               <Path d={tailPath} fill="#3b82f6" stroke="#1e3a8a" strokeWidth={1} />
             </G>
           )}

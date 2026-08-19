@@ -10,6 +10,8 @@ interface SideProfileDiagramProps {
   houseAttachment?: string;
   groundAttachment?: string;
   beamType?: string;
+  wrapType?: string;
+  hasPanel?: boolean;
   endCut?: string;
   showRafterTail?: boolean;
   className?: string;
@@ -34,12 +36,14 @@ export default function SideProfileDiagram({
   houseAttachment = "stucco",
   groundAttachment = "concrete",
   beamType = "3x8",
+  wrapType = "none",
+  hasPanel = true,
   endCut = "beveled",
   showRafterTail = true,
   className = "",
 }: SideProfileDiagramProps) {
   const geo = computeSideProfileGeometry({
-    projection, postHeight, deckHeight, houseAttachment, groundAttachment, beamType, endCut, showRafterTail,
+    projection, postHeight, deckHeight, houseAttachment, groundAttachment, beamType, wrapType, hasPanel, endCut, showRafterTail,
   });
 
   if (!geo) {
@@ -54,7 +58,8 @@ export default function SideProfileDiagram({
   const {
     svgW, svgH, groundY, deckY, deckHpx,
     postX, postWidth, postTopY, postBottomY, embeddedBottomY,
-    beamTopY, beamHeight,
+    beamTopY, beamHeight, beamWidth,
+    panelTopY, panelHeight,
     houseX, roofY, tailStartX, tailW,
     footingX, footingWidth,
     isDeck, isGroundMount,
@@ -125,15 +130,15 @@ export default function SideProfileDiagram({
             {postHeight}&apos;
           </text>
 
-          {/* Beam */}
-          <rect x={postX - postWidth} y={beamTopY} width={postWidth * 2 + 6} height={beamHeight} fill="#1e40af" stroke="#1e3a8a" strokeWidth="1" />
+          {/* Beam - drawn end-on (real cross-section), not as a flat slab along the projection */}
+          <rect x={postX - beamWidth / 2} y={beamTopY} width={beamWidth} height={beamHeight} fill="#1e40af" stroke="#1e3a8a" strokeWidth="1" />
 
-          {/* Roofline / hanger from house to beam */}
-          <line x1={houseX} y1={roofY} x2={postX - postWidth} y2={roofY} stroke="#3b82f6" strokeWidth="2.5" />
+          {/* Panel / wrap edge - sits on top of the beam, thickness reflects wrap kit */}
+          <rect x={houseX} y={panelTopY} width={postX - beamWidth / 2 - houseX} height={panelHeight} fill="#93c5fd" stroke="#3b82f6" strokeWidth="1.5" />
 
-          {/* Rafter tail profile */}
+          {/* Rafter tail profile - spans the full panel + beam front face */}
           {showRafterTail && (
-            <g transform={"translate(" + tailStartX + "," + beamTopY + ") scale(" + (tailW / 44) + "," + (beamHeight * 2.2 / 24) + ")"}>
+            <g transform={"translate(" + tailStartX + "," + panelTopY + ") scale(" + (tailW / 44) + "," + ((panelHeight + beamHeight) / 24) + ")"}>
               <path d={tailPath} fill="#3b82f6" stroke="#1e3a8a" strokeWidth="1" />
             </g>
           )}

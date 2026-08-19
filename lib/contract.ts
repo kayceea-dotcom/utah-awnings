@@ -91,6 +91,8 @@ export function buildContractData(proposal: Record<string, unknown>): ContractDa
           houseAttachment: String(inputs.houseAttachment || "stucco"),
           groundAttachment: String(inputs.groundAttachment || "concrete"),
           beamType: String(inputs.beamType1 || "3x8"),
+          wrapType: String(inputs.wrapType || "none"),
+          hasPanel: productType !== "pergola",
           endCut: String(inputs.beamEndCut1 || "beveled"),
           showRafterTail: showRafterTails,
         }

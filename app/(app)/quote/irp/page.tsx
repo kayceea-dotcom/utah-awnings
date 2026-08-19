@@ -459,6 +459,7 @@ export default function IRPQuotePage() {
                 houseAttachment={inp.houseAttachment}
                 groundAttachment={inp.groundAttachment}
                 beamType={inp.beamType1}
+                wrapType={inp.wrapType}
                 showRafterTail={false}
               />
               <PriceSummaryPanel result={effectiveResult} />

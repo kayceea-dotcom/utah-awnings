@@ -733,6 +733,7 @@ export default function FlatPanelQuotePage() {
                   houseAttachment={inp.houseAttachment}
                   groundAttachment={inp.groundAttachment}
                   beamType={inp.beamType1}
+                  wrapType={inp.wrapType}
                   endCut={inp.beamEndCut1}
                   showRafterTail={inp.wrapType !== "none" && inp.rafterTails}
                 />

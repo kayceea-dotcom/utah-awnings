@@ -414,6 +414,7 @@ export default function PergolaQuotePage() {
                   houseAttachment={inp.houseAttachment}
                   groundAttachment={inp.groundAttachment}
                   beamType={inp.beamType}
+                  hasPanel={false}
                   endCut={inp.endCut}
                   showRafterTail
                 />
@@ -459,6 +460,7 @@ export default function PergolaQuotePage() {
                 houseAttachment={inp.houseAttachment}
                 groundAttachment={inp.groundAttachment}
                 beamType={inp.beamType}
+                hasPanel={false}
                 endCut={inp.endCut}
                 showRafterTail
               />

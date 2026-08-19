@@ -498,6 +498,7 @@ export default function WPanQuotePage() {
                 houseAttachment={inp.houseAttachment}
                 groundAttachment={inp.groundAttachment}
                 beamType={inp.beamType1}
+                wrapType={inp.wrapType}
                 showRafterTail={inp.wrapType !== "none" && inp.rafterTails}
               />
               <PriceSummaryPanel result={effectiveResult} />

@@ -296,6 +296,8 @@ export default function ProposalPage() {
                   houseAttachment={String(inp.houseAttachment || "stucco")}
                   groundAttachment={String(inp.groundAttachment || "concrete")}
                   beamType={String(inp.beamType1 || "3x8")}
+                  wrapType={String(inp.wrapType || "none")}
+                  hasPanel={productType !== "pergola"}
                   endCut={String(inp.beamEndCut1 || "beveled")}
                   showRafterTail={showRafterTails}
                 />
