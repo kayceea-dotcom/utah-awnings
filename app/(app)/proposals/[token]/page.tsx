@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import TopBar from "@/components/TopBar";
-import { Send, ExternalLink, CheckCircle, Clock, Eye, X, FileDown } from "lucide-react";
+import { Send, ExternalLink, CheckCircle, Clock, Eye, X, FileDown, Pencil, Save } from "lucide-react";
 import { getFollowUpStatus } from "@/lib/followups/engine";
 import type { ProposalFollowUpTimestamps } from "@/lib/followups/types";
 import FollowUpBadge from "@/components/FollowUpBadge";
@@ -31,6 +31,17 @@ export default function ProposalPreviewPage() {
   const [previewError, setPreviewError] = useState("");
   const [sendingFollowUp, setSendingFollowUp] = useState(false);
   const [followUpError, setFollowUpError] = useState("");
+  const [editingInfo, setEditingInfo] = useState(false);
+  const [savingInfo, setSavingInfo] = useState(false);
+  const [infoError, setInfoError] = useState("");
+  const [draftName, setDraftName] = useState("");
+  const [draftPhone, setDraftPhone] = useState("");
+  const [draftEmail, setDraftEmail] = useState("");
+  const [draftAddress, setDraftAddress] = useState("");
+  const [draftCity, setDraftCity] = useState("");
+  const [draftZip, setDraftZip] = useState("");
+  const [draftJobName, setDraftJobName] = useState("");
+  const [draftInstallDate, setDraftInstallDate] = useState("");
   const supabase = createClient();
 
   const load = useCallback(async () => {
@@ -136,6 +147,70 @@ export default function ProposalPreviewPage() {
     setSendingFollowUp(false);
   }
 
+  function toDateInputValue(d: Date): string {
+    // Local-timezone date components, not UTC - matches how the read-only
+    // "Est. Install Date" display elsewhere already renders this value via
+    // toLocaleDateString(). Using toISOString() here would pull the UTC date
+    // instead, which is a day behind local for anyone west of UTC and would
+    // silently shift the install date forward a day on save.
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return y + "-" + m + "-" + day;
+  }
+
+  function startEditingInfo() {
+    if (!customer || !quote) return;
+    setDraftName((customer.name as string) || "");
+    setDraftPhone((customer.phone as string) || "");
+    setDraftEmail((customer.email as string) || "");
+    setDraftAddress((customer.address as string) || "");
+    setDraftCity((customer.city as string) || "");
+    setDraftZip((customer.zip as string) || "");
+    const inputs = (quote.inputs as Record<string, unknown>) || {};
+    setDraftJobName((inputs.jobName as string) || "");
+    setDraftInstallDate(quote.estimated_install_date ? toDateInputValue(new Date(quote.estimated_install_date as string)) : "");
+    setInfoError("");
+    setEditingInfo(true);
+  }
+
+  async function handleSaveInfo() {
+    if (!customer || !quote) return;
+    setSavingInfo(true);
+    setInfoError("");
+
+    const { error: customerErr } = await supabase
+      .from("customers")
+      .update({
+        name: draftName,
+        phone: draftPhone,
+        email: draftEmail,
+        address: draftAddress,
+        city: draftCity,
+        zip: draftZip,
+      })
+      .eq("id", customer.id as string);
+
+    const existingInputs = (quote.inputs as Record<string, unknown>) || {};
+    const { error: quoteErr } = await supabase
+      .from("quotes")
+      .update({
+        estimated_install_date: draftInstallDate || null,
+        inputs: { ...existingInputs, jobName: draftJobName },
+      })
+      .eq("id", quote.id as string);
+
+    if (customerErr || quoteErr) {
+      setInfoError(customerErr?.message || quoteErr?.message || "Failed to save changes");
+      setSavingInfo(false);
+      return;
+    }
+
+    await load();
+    setEditingInfo(false);
+    setSavingInfo(false);
+  }
+
   if (loading) {
     return (
       <>
@@ -185,13 +260,74 @@ export default function ProposalPreviewPage() {
         <div className="max-w-xl mx-auto space-y-4">
 
           <div className="card p-5">
-            <p className="section-heading">Customer</p>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div><span className="text-gray-500">Name:</span> <span className="font-medium">{c.name as string}</span></div>
-              <div><span className="text-gray-500">Phone:</span> <span className="font-medium">{c.phone as string}</span></div>
-              <div><span className="text-gray-500">Email:</span> <span className="font-medium">{c.email as string}</span></div>
-              <div><span className="text-gray-500">City:</span> <span className="font-medium">{c.city as string}</span></div>
+            <div className="flex items-center justify-between mb-1">
+              <p className="section-heading mb-0">Customer &amp; Job Info</p>
+              {!editingInfo && (
+                <button onClick={startEditingInfo} className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                  <Pencil size={12} /> Edit
+                </button>
+              )}
             </div>
+            {editingInfo ? (
+              <div className="space-y-3 mt-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-gray-500">Name</label>
+                    <input className="input text-sm py-1.5" value={draftName} onChange={(e) => setDraftName(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500">Phone</label>
+                    <input className="input text-sm py-1.5" value={draftPhone} onChange={(e) => setDraftPhone(e.target.value)} />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs text-gray-500">Email</label>
+                    <input type="email" className="input text-sm py-1.5" value={draftEmail} onChange={(e) => setDraftEmail(e.target.value)} />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs text-gray-500">Address</label>
+                    <input className="input text-sm py-1.5" value={draftAddress} onChange={(e) => setDraftAddress(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500">City</label>
+                    <input className="input text-sm py-1.5" value={draftCity} onChange={(e) => setDraftCity(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500">Zip</label>
+                    <input className="input text-sm py-1.5" value={draftZip} onChange={(e) => setDraftZip(e.target.value)} />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs text-gray-500">Job Name</label>
+                    <input className="input text-sm py-1.5" value={draftJobName} onChange={(e) => setDraftJobName(e.target.value)} />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs text-gray-500">Est. Install Date</label>
+                    <input type="date" className="input text-sm py-1.5" value={draftInstallDate} onChange={(e) => setDraftInstallDate(e.target.value)} />
+                  </div>
+                </div>
+                {infoError && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                    <p className="text-red-600 text-sm">{infoError}</p>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <button onClick={() => setEditingInfo(false)} disabled={savingInfo} className="btn-secondary flex-1 justify-center text-sm disabled:opacity-50">
+                    Cancel
+                  </button>
+                  <button onClick={handleSaveInfo} disabled={savingInfo} className="btn-primary flex-1 justify-center text-sm disabled:opacity-50">
+                    <Save size={14} /> {savingInfo ? "Saving..." : "Save Changes"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 text-sm mt-2">
+                <div><span className="text-gray-500">Name:</span> <span className="font-medium">{c.name as string}</span></div>
+                <div><span className="text-gray-500">Phone:</span> <span className="font-medium">{c.phone as string}</span></div>
+                <div><span className="text-gray-500">Email:</span> <span className="font-medium">{c.email as string}</span></div>
+                <div><span className="text-gray-500">City:</span> <span className="font-medium">{c.city as string}</span></div>
+                <div className="col-span-2"><span className="text-gray-500">Address:</span> <span className="font-medium">{(c.address as string) || "-"}{c.zip ? ", " + c.zip : ""}</span></div>
+                <div className="col-span-2"><span className="text-gray-500">Job Name:</span> <span className="font-medium">{((q.inputs as Record<string, unknown>)?.jobName as string) || "-"}</span></div>
+              </div>
+            )}
           </div>
 
           <div className="card p-5">
