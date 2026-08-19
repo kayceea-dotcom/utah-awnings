@@ -85,18 +85,19 @@ export default function SideProfileDiagram({
           </defs>
 
           {/* House attachment - a flat wall for stucco/siding, or a sloped
-              roofline over a short wall stub for an eave/angled-eave mount */}
+              roofline over a short wall stub for an eave/angled-eave mount.
+              Either way the wall itself runs all the way down to the ground. */}
           {isEaveMount ? (
             <>
               <polygon points={roofBackX + ",6 " + (houseX - 4) + "," + wallStubTopY + " " + roofBackX + "," + wallStubTopY}
                 fill="#a8a29e" stroke="#57534e" strokeWidth="1.5" />
-              <rect x={houseX - 10} y={wallStubTopY} width={10} height={(roofY + 20) - wallStubTopY} fill="url(#sp-hatch)" stroke="#64748b" strokeWidth="1.5" />
+              <rect x={houseX - 10} y={wallStubTopY} width={10} height={groundY - wallStubTopY} fill="url(#sp-hatch)" stroke="#64748b" strokeWidth="1.5" />
               {/* Eave header/fascia board - caps the roofline where it meets
                   the wall, right where the awning's hanger actually attaches */}
               <rect x={houseX - 12} y={wallStubTopY - 7} width={14} height={9} fill="#92400e" stroke="#78350f" strokeWidth="1" />
             </>
           ) : (
-            <rect x={houseX - 10} y={10} width={10} height={roofY - 10 + 20} fill="url(#sp-hatch)" stroke="#64748b" strokeWidth="1.5" />
+            <rect x={houseX - 10} y={10} width={10} height={groundY - 10} fill="url(#sp-hatch)" stroke="#64748b" strokeWidth="1.5" />
           )}
           <text x={houseX - 5} y={roofY + 42} textAnchor="middle" fontSize="7" fill="#475569" fontWeight="600">
             {HOUSE_ATTACHMENT_LABELS[houseAttachment] || houseAttachment.toUpperCase()}
@@ -120,9 +121,10 @@ export default function SideProfileDiagram({
             const deckEdgeX = postX + deckInset;
             const deckPostX = postX;
             const deckPostW = 6;
+            const deckStartX = houseX;
             return (
               <>
-                <rect x={houseX - 20} y={deckY} width={deckEdgeX - (houseX - 20)} height={Math.max(deckSkirtPx, 4)}
+                <rect x={deckStartX} y={deckY} width={deckEdgeX - deckStartX} height={Math.max(deckSkirtPx, 4)}
                   fill="#fef3c7" stroke="#d97706" strokeWidth="1" />
                 {skirtBottomY < groundY && (
                   <rect x={deckPostX - deckPostW / 2} y={skirtBottomY} width={deckPostW} height={groundY - skirtBottomY}

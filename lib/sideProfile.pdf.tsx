@@ -64,13 +64,13 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
             <G>
               <Polygon points={roofBackX + ",6 " + (houseX - 4) + "," + wallStubTopY + " " + roofBackX + "," + wallStubTopY}
                 fill="#a8a29e" stroke="#57534e" strokeWidth={1.5} />
-              <Rect x={houseX - 10} y={wallStubTopY} width={10} height={(roofY + 20) - wallStubTopY} fill="#cbd5e1" stroke="#64748b" strokeWidth={1.5} />
+              <Rect x={houseX - 10} y={wallStubTopY} width={10} height={groundY - wallStubTopY} fill="#cbd5e1" stroke="#64748b" strokeWidth={1.5} />
               {/* Eave header/fascia board - caps the roofline where it meets
                   the wall, right where the awning's hanger actually attaches */}
               <Rect x={houseX - 12} y={wallStubTopY - 7} width={14} height={9} fill="#92400e" stroke="#78350f" strokeWidth={1} />
             </G>
           ) : (
-            <Rect x={houseX - 10} y={10} width={10} height={roofY - 10 + 20} fill="#cbd5e1" stroke="#64748b" strokeWidth={1.5} />
+            <Rect x={houseX - 10} y={10} width={10} height={groundY - 10} fill="#cbd5e1" stroke="#64748b" strokeWidth={1.5} />
           )}
           <Text x={houseX - 5} y={roofY + 42} textAnchor="middle" fill="#475569" style={{ ...bold, fontSize: 7 }}>
             {HOUSE_ATTACHMENT_LABELS[houseAttachment] || houseAttachment.toUpperCase()}
@@ -94,9 +94,10 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
             const deckEdgeX = postX + deckInset;
             const deckPostX = postX;
             const deckPostW = 6;
+            const deckStartX = houseX;
             return (
               <G>
-                <Rect x={houseX - 20} y={deckY} width={deckEdgeX - (houseX - 20)} height={Math.max(deckSkirtPx, 4)} fill="#fef3c7" stroke="#d97706" strokeWidth={1} />
+                <Rect x={deckStartX} y={deckY} width={deckEdgeX - deckStartX} height={Math.max(deckSkirtPx, 4)} fill="#fef3c7" stroke="#d97706" strokeWidth={1} />
                 {skirtBottomY < groundY && (
                   <Rect x={deckPostX - deckPostW / 2} y={skirtBottomY} width={deckPostW} height={groundY - skirtBottomY}
                     fill="#92400e" stroke="#78350f" strokeWidth={1} />
