@@ -8,10 +8,12 @@ import type { IndividualInputs, IndividualLineInput } from "@/lib/pricing/indivi
 import { CATALOG, CATALOG_BY_KEY, CATEGORIES } from "@/lib/pricing/catalog";
 import { RATES } from "@/lib/pricing/rates";
 import { useMarkupTier } from "@/lib/hooks/useMarkupTier";
+import { useDiscountOption } from "@/lib/hooks/useDiscountOption";
 import TopBar from "@/components/TopBar";
 import Field from "@/components/quote/Field";
 import CommissionPanel from "@/components/quote/CommissionPanel";
 import MarkupTierSelect from "@/components/quote/MarkupTierSelect";
+import DiscountOptionSelect from "@/components/quote/DiscountOptionSelect";
 import { ChevronDown, ChevronUp, RefreshCw, Plus, Trash2, Send } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useProfile";
 import { useRouter } from "next/navigation";
@@ -204,6 +206,11 @@ export default function IndividualQuotePage() {
     markup: inp.markup,
     setMarkup: (m) => setField("markup", m),
   });
+  const discountOption = useDiscountOption({
+    ccFee: result.ccFee,
+    discount: inp.discount,
+    setDiscount: (d) => setField("discount", d),
+  });
   const draftEntry = CATALOG_BY_KEY[draftKey];
   const categoryItems = CATALOG.filter((c) => c.category === draftCategory);
 
@@ -263,7 +270,7 @@ export default function IndividualQuotePage() {
   return (
     <>
       <TopBar title="Individual Items" subtitle="Custom line-item / mixed job - live pricing" titleNode={<ProductSwitcher current="individual" />}>
-        <button onClick={() => { setInp(DEFAULT); markupTier.reset(); }} className="btn-secondary text-xs px-3 py-2">
+        <button onClick={() => { setInp(DEFAULT); markupTier.reset(); discountOption.reset(); }} className="btn-secondary text-xs px-3 py-2">
           <RefreshCw size={13} /> Reset
         </button>
         <button onClick={() => setShowSaveModal(true)} className="btn-primary text-xs px-3 py-2">
@@ -376,7 +383,8 @@ export default function IndividualQuotePage() {
                   <MarkupTierSelect tier={markupTier.tier} onTierChange={markupTier.setTier}
                     markup={inp.markup} onMarkupChange={(v) => setField("markup", v)} />
                   <NumInput label="Tax Rate" value={inp.taxRate} onChange={(v) => setField("taxRate", v)} hint="e.g. 0.0745" />
-                  <NumInput label="Discount ($)" value={inp.discount} onChange={(v) => setField("discount", v)} hint="Flat $ off the final Total Job Sale" />
+                  <DiscountOptionSelect option={discountOption.option} onOptionChange={discountOption.setOption}
+                    discount={inp.discount} onDiscountChange={(v) => setField("discount", v)} />
                   <NumInput label="Footings ($)" value={inp.footings} onChange={(v) => setField("footings", v)} />
                   <NumInput label="Roof Mounts ($)" value={inp.roofMounts} onChange={(v) => setField("roofMounts", v)} />
                   <NumInput label="Misc ($)" value={inp.misc} onChange={(v) => setField("misc", v)} />
