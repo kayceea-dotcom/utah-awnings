@@ -31,6 +31,9 @@ export default function ProposalPreviewPage() {
   const [previewError, setPreviewError] = useState("");
   const [sendingFollowUp, setSendingFollowUp] = useState(false);
   const [followUpError, setFollowUpError] = useState("");
+  const [resendingContract, setResendingContract] = useState(false);
+  const [contractResent, setContractResent] = useState(false);
+  const [resendContractError, setResendContractError] = useState("");
   const [editingInfo, setEditingInfo] = useState(false);
   const [savingInfo, setSavingInfo] = useState(false);
   const [infoError, setInfoError] = useState("");
@@ -128,6 +131,23 @@ export default function ProposalPreviewPage() {
       await load();
     }
     setSending(false);
+  }
+
+  async function handleResendContract() {
+    setResendingContract(true);
+    setResendContractError("");
+    const res = await fetch("/api/contract/resend", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ proposalToken: token }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setResendContractError(data.error || "Failed to resend contract");
+    } else {
+      setContractResent(true);
+    }
+    setResendingContract(false);
   }
 
   async function handleSendFollowUp(stepKey: string) {
@@ -367,6 +387,17 @@ export default function ProposalPreviewPage() {
                 <img src={String(proposal.signature_data)} alt="Signature"
                   className="mt-3 border border-green-200 rounded-lg bg-white p-2 max-h-20" />
               ) : null}
+              <button onClick={handleResendContract} disabled={resendingContract}
+                className="btn-secondary w-full justify-center mt-3 text-sm disabled:opacity-50">
+                <Send size={14} />
+                {resendingContract ? "Sending..." : "Resend Signed Contract to Office"}
+              </button>
+              {contractResent && (
+                <p className="text-xs text-green-600 text-center mt-2">Sent to utahawnings@gmail.com</p>
+              )}
+              {resendContractError && (
+                <p className="text-xs text-red-600 text-center mt-2">{resendContractError}</p>
+              )}
             </div>
           )}
 
