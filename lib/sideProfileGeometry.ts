@@ -114,8 +114,13 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
   const beamHeight = (beamHeightInches(beamType) / 12) * scale;
   const beamWidth = (3 / 12) * scale + 6; // real 3in depth, floored so it stays visible at small scale
 
-  // Panel/wrap edge sits directly on top of the beam.
-  const panelHeight = hasPanel ? (panelHeightInches(wrapType) / 12) * scale : 3;
+  // Panel/wrap edge sits directly on top of the beam. Products with no
+  // panel (pergola - open lattice, nothing to wrap) get 0, not a flat
+  // pixel placeholder - a raw px constant here would silently distort the
+  // rafter tail's height (which spans panel+beam) since it wouldn't scale
+  // with the diagram's actual px-per-foot factor like every other real
+  // dimension does.
+  const panelHeight = hasPanel ? (panelHeightInches(wrapType) / 12) * scale : 0;
   // Panel overhangs past the beam's front face - 18in is the normal default,
   // matching how the cover material actually extends past its support beam.
   const overhangPx = hasPanel ? (panelOverhangInches / 12) * scale : 0;
