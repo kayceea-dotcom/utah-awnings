@@ -13,8 +13,8 @@ function Row({ label, value, warn }: { label: string; value: string; warn?: bool
   );
 }
 
-export default function CommissionPanel({ materialCost, price, discount = 0 }: {
-  materialCost: number; price: number; discount?: number;
+export default function CommissionPanel({ materialCost, price, discount = 0, discountFullyExempt = false }: {
+  materialCost: number; price: number; discount?: number; discountFullyExempt?: boolean;
 }) {
   if (materialCost <= 0) {
     return (
@@ -25,8 +25,8 @@ export default function CommissionPanel({ materialCost, price, discount = 0 }: {
     );
   }
 
-  const c = computeCommission(materialCost, price, { discount });
-  const next = nextTierPrompt(materialCost, price, { discount });
+  const c = computeCommission(materialCost, price, { discount, discountFullyExempt });
+  const next = nextTierPrompt(materialCost, price, { discount, discountFullyExempt });
 
   return (
     <div className="card p-5 space-y-3">
@@ -78,8 +78,10 @@ export default function CommissionPanel({ materialCost, price, discount = 0 }: {
 
       {c.discount > 0 && (
         <p className="text-[11px] text-gray-400">
-          {fmt(c.discountForgiven)} of the {fmt(c.discount)} discount is exempt from commission
-          {c.discountCounted > 0 && <> — {fmt(c.discountCounted)} counts against it</>}
+          {discountFullyExempt
+            ? <>{fmt(c.discount)} check/cash discount — fully exempt from commission (not a price concession)</>
+            : <>{fmt(c.discountForgiven)} of the {fmt(c.discount)} discount is exempt from commission
+                {c.discountCounted > 0 && <> — {fmt(c.discountCounted)} counts against it</>}</>}
         </p>
       )}
 

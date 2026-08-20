@@ -117,6 +117,12 @@ export interface CommissionScheduleConfig {
    *  DISCOUNT_COMMISSION_EXEMPTION in schedule.ts). Omit/0 for no discount. */
   discount?: number;
   discountExemption?: number;
+  /** When true, ALL of `discount` is excluded from the commission tier -
+   *  no $600 cap. For a discount that isn't a real price concession (e.g.
+   *  waiving the credit-card fee for a check/cash payment) - the rep
+   *  shouldn't be penalized just because the customer didn't pay by card,
+   *  no matter how large that fee is on a bigger job. */
+  discountFullyExempt?: boolean;
 }
 
 export function computeCommission(
@@ -137,7 +143,7 @@ export function computeCommission(
 
   const discount = Math.max(0, Number(config.discount) || 0);
   const exemption = config.discountExemption ?? DISCOUNT_COMMISSION_EXEMPTION;
-  const discountForgiven = Math.min(discount, exemption);
+  const discountForgiven = config.discountFullyExempt ? discount : Math.min(discount, exemption);
   const discountCounted = discount - discountForgiven;
   // The rate/warning are driven by what the price would be if the exempt
   // portion of the discount hadn't been taken off - so a discount within

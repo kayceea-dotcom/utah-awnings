@@ -483,7 +483,7 @@ export default function PergolaQuotePage() {
                 showRafterTail
               />
               <PriceSummaryPanel result={effectiveResult} />
-              <CommissionPanel materialCost={effectiveResult.materialCost} price={effectiveResult.totalJobSale} discount={inp.discount} />
+              <CommissionPanel materialCost={effectiveResult.materialCost} price={effectiveResult.totalJobSale} discount={inp.discount} discountFullyExempt={discountOption.option === 'cash'} />
             </div>
           </div>
         </div>
@@ -496,7 +496,7 @@ export default function PergolaQuotePage() {
           <div className="bg-white w-full rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto">
             <PriceSummaryPanel result={effectiveResult} onClose={() => setShowPricePanel(false)} />
             <div className="mt-4">
-              <CommissionPanel materialCost={effectiveResult.materialCost} price={effectiveResult.totalJobSale} discount={inp.discount} />
+              <CommissionPanel materialCost={effectiveResult.materialCost} price={effectiveResult.totalJobSale} discount={inp.discount} discountFullyExempt={discountOption.option === 'cash'} />
             </div>
           </div>
         </div>

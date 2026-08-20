@@ -271,4 +271,26 @@ describe("discount commission exemption - first $600 doesn't count against the t
     expect(prompt!.nextRate).toBeCloseTo(0.17);
     expect(prompt!.targetPrice).toBe(12200);
   });
+
+  it("discountFullyExempt uncaps the exemption entirely (e.g. a CC-fee waiver on a big job)", () => {
+    // A $1,500 discount would normally leave $900 counting against the
+    // tier (well past the $600 cap) and land below floor - but a fully
+    // exempt discount (waiving the card fee isn't a real price cut) should
+    // never penalize commission, no matter the dollar amount.
+    const r = computeCommission(6000, 10500, { discount: 1500, discountFullyExempt: true });
+    expect(r.belowFloor).toBe(false);
+    expect(r.commissionRate).toBeCloseTo(0.14);
+    expect(r.discountForgiven).toBe(1500);
+    expect(r.discountCounted).toBe(0);
+    // Still real money - grossProfit reflects the actual discounted price.
+    expect(r.grossProfit).toBe(4500);
+  });
+
+  it("nextTierPrompt also uncaps the target when fully exempt", () => {
+    const prompt = nextTierPrompt(6000, 10500, { discount: 1500, discountFullyExempt: true });
+    expect(prompt).not.toBeNull();
+    expect(prompt!.nextRate).toBeCloseTo(0.17);
+    // 1.05 * 12000 - 1500 = 11100
+    expect(prompt!.targetPrice).toBe(11100);
+  });
 });
