@@ -757,7 +757,7 @@ export default function FlatPanelQuotePage() {
                 />
               )}
               <PriceSummaryPanel result={result} />
-              <CommissionPanel materialCost={effectiveResult.materialCost} price={effectiveResult.totalJobSale} />
+              <CommissionPanel materialCost={effectiveResult.materialCost} price={effectiveResult.totalJobSale} discount={inp.discount} />
             </div>
           </div>
         </div>
@@ -772,7 +772,7 @@ export default function FlatPanelQuotePage() {
           <div className="bg-white w-full rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto">
             <PriceSummaryPanel result={effectiveResult} onClose={() => setShowPricePanel(false)} />
             <div className="mt-4">
-              <CommissionPanel materialCost={effectiveResult.materialCost} price={effectiveResult.totalJobSale} />
+              <CommissionPanel materialCost={effectiveResult.materialCost} price={effectiveResult.totalJobSale} discount={inp.discount} />
             </div>
           </div>
         </div>

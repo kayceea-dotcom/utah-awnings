@@ -210,3 +210,65 @@ describe("nextTierPrompt", () => {
     expect(prompt!.extraDollars).toBeGreaterThan(0);
   });
 });
+
+describe("discount commission exemption - first $600 doesn't count against the tier", () => {
+  // material $6,000 -> floor $12,000 (2.00x band) throughout this block.
+
+  it("a discount under $600 doesn't trip the below-floor warning", () => {
+    // $400 off the floor - fully exempt.
+    const r = computeCommission(6000, 11600, { discount: 400 });
+    expect(r.belowFloor).toBe(false);
+    expect(r.commissionRate).toBeCloseTo(0.14);
+    expect(r.discountForgiven).toBe(400);
+    expect(r.discountCounted).toBe(0);
+    // Real money is still real - grossProfit/commission use the actual
+    // discounted price, not a hypothetical undiscounted one.
+    expect(r.grossProfit).toBe(5600);
+    expect(r.commissionDollars).toBe(784);
+  });
+
+  it("exactly $600 off is still fully exempt (not \"more than\" $600)", () => {
+    const r = computeCommission(6000, 11400, { discount: 600 });
+    expect(r.belowFloor).toBe(false);
+    expect(r.commissionRate).toBeCloseTo(0.14);
+    expect(r.discountForgiven).toBe(600);
+    expect(r.discountCounted).toBe(0);
+  });
+
+  it("only the amount over $600 counts against the tier", () => {
+    // $800 off - $600 exempt, $200 counts, which is enough to drop below floor.
+    const r = computeCommission(6000, 11200, { discount: 800 });
+    expect(r.belowFloor).toBe(true);
+    expect(r.commissionRate).toBeCloseTo(0.04);
+    expect(r.discountForgiven).toBe(600);
+    expect(r.discountCounted).toBe(200);
+    expect(r.grossProfit).toBe(5200);
+    expect(r.commissionDollars).toBe(208);
+  });
+
+  it("ratioVsFloor still reports the real (un-adjusted) ratio for display", () => {
+    // Same $800-off case - the raw ratio should still reflect reality even
+    // though the commission rate itself is based on the adjusted ratio.
+    const r = computeCommission(6000, 11200, { discount: 800 });
+    expect(r.ratioVsFloor).toBeCloseTo(11200 / 12000, 3);
+  });
+
+  it("respects a custom exemption amount", () => {
+    const r = computeCommission(6000, 11500, { discount: 500, discountExemption: 300 });
+    // $300 exempt, $200 counts -> effective price for tier purposes is
+    // 11500 + 300 = 11800, still below the 12000 floor.
+    expect(r.belowFloor).toBe(true);
+    expect(r.discountForgiven).toBe(300);
+    expect(r.discountCounted).toBe(200);
+  });
+
+  it("nextTierPrompt accounts for an exempted discount already in play", () => {
+    // At floor via a fully-exempt $400 discount (real price $11,600) -
+    // reaching the next tier only needs to close the remaining $400 gap
+    // to $12,600 (1.05x floor), not the full $600 above the real price.
+    const prompt = nextTierPrompt(6000, 11600, { discount: 400 });
+    expect(prompt).not.toBeNull();
+    expect(prompt!.nextRate).toBeCloseTo(0.17);
+    expect(prompt!.targetPrice).toBe(12200);
+  });
+});

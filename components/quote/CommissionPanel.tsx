@@ -13,7 +13,9 @@ function Row({ label, value, warn }: { label: string; value: string; warn?: bool
   );
 }
 
-export default function CommissionPanel({ materialCost, price }: { materialCost: number; price: number }) {
+export default function CommissionPanel({ materialCost, price, discount = 0 }: {
+  materialCost: number; price: number; discount?: number;
+}) {
   if (materialCost <= 0) {
     return (
       <div className="card p-5">
@@ -23,8 +25,8 @@ export default function CommissionPanel({ materialCost, price }: { materialCost:
     );
   }
 
-  const c = computeCommission(materialCost, price);
-  const next = nextTierPrompt(materialCost, price);
+  const c = computeCommission(materialCost, price, { discount });
+  const next = nextTierPrompt(materialCost, price, { discount });
 
   return (
     <div className="card p-5 space-y-3">
@@ -72,6 +74,13 @@ export default function CommissionPanel({ materialCost, price }: { materialCost:
             Price at {fmt(next.targetPrice)} to earn {(next.nextRate * 100).toFixed(0)}% (+{fmt(next.extraDollars)})
           </p>
         </div>
+      )}
+
+      {c.discount > 0 && (
+        <p className="text-[11px] text-gray-400">
+          {fmt(c.discountForgiven)} of the {fmt(c.discount)} discount is exempt from commission
+          {c.discountCounted > 0 && <> — {fmt(c.discountCounted)} counts against it</>}
+        </p>
       )}
 
       <p className="text-[11px] text-gray-400">

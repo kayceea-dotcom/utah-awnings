@@ -3,6 +3,7 @@ import {
   COMMISSION_SCHEDULE,
   BREAK_EVEN_BASE,
   BREAK_EVEN_MATERIAL_MULTIPLIER,
+  DISCOUNT_COMMISSION_EXEMPTION,
   type FloorBand,
   type CommissionBand,
 } from "./schedule";
@@ -13,20 +14,35 @@ export interface CommissionResult {
   floorPrice: number;
   /** price / materialCost (0 when materialCost is 0). */
   markup: number;
-  /** price / floorPrice. */
+  /** price / floorPrice - the real, un-adjusted ratio. Informational; the
+   *  commission rate/floor warning are driven by the discount-adjusted
+   *  ratio below, not this one, once a discount is involved. */
   ratioVsFloor: number;
   /** (ratioVsFloor - 1) * 100 - e.g. 10 means 10% above floor. */
   percentVsFloor: number;
+  /** Whether the DISCOUNT-ADJUSTED ratio is below floor - this drives the
+   *  warning/rate, so a real discount within the exempt amount won't trip
+   *  it even though `ratioVsFloor` itself may show a small negative %. */
   belowFloor: boolean;
+  /** Looked up from the discount-adjusted ratio. */
   commissionRate: number;
-  /** price - materialCost. Can be negative; never clamped, so a rep sees
-   *  the real number if they've quoted under cost. */
+  /** price - materialCost. Real money; can be negative, never clamped. */
   grossProfit: number;
   /** commissionRate * grossProfit, floored at 0 - a below-cost quote never
-   *  produces a negative commission. */
+   *  produces a negative commission. Uses the real grossProfit above - the
+   *  discount exemption only affects which rate tier applies, never the
+   *  actual dollars the math is based on. */
   commissionDollars: number;
   /** Reference-only informational number - see schedule.ts. Not a floor. */
   breakEven: number;
+  /** The discount fed in via config.discount (0 if none). */
+  discount: number;
+  /** Portion of `discount` exempted from counting against the commission
+   *  tier (up to DISCOUNT_COMMISSION_EXEMPTION). */
+  discountForgiven: number;
+  /** Portion of `discount` beyond the exemption - this part DOES count
+   *  against the commission tier, same as any other price cut. */
+  discountCounted: number;
 }
 
 export interface NextTierPrompt {
@@ -96,6 +112,11 @@ export function computeBreakEven(materialCost: number | null | undefined): numbe
 export interface CommissionScheduleConfig {
   floorSchedule?: FloorBand[];
   commissionSchedule?: CommissionBand[];
+  /** The discount applied to reach `price` - up to `discountExemption` of
+   *  it is excluded when determining the commission tier (see
+   *  DISCOUNT_COMMISSION_EXEMPTION in schedule.ts). Omit/0 for no discount. */
+  discount?: number;
+  discountExemption?: number;
 }
 
 export function computeCommission(
@@ -113,12 +134,21 @@ export function computeCommission(
   const markup = material > 0 ? round3(p / material) : 0;
   const ratioVsFloor = floorPrice > 0 ? p / floorPrice : 0;
   const percentVsFloor = (ratioVsFloor - 1) * 100;
-  const belowFloor = ratioVsFloor < 1 - RATIO_EPS;
+
+  const discount = Math.max(0, Number(config.discount) || 0);
+  const exemption = config.discountExemption ?? DISCOUNT_COMMISSION_EXEMPTION;
+  const discountForgiven = Math.min(discount, exemption);
+  const discountCounted = discount - discountForgiven;
+  // The rate/warning are driven by what the price would be if the exempt
+  // portion of the discount hadn't been taken off - so a discount within
+  // the exemption never trips the below-floor warning or a lower tier.
+  const commissionBasisRatio = floorPrice > 0 ? (p + discountForgiven) / floorPrice : 0;
+  const belowFloor = commissionBasisRatio < 1 - RATIO_EPS;
 
   // Use the unrounded ratio to pick the tier so a value like 1.0499996
   // (which should round-display as "1.05") doesn't get bumped into the
   // next commission band just because of display rounding.
-  const commissionRate = commissionRateForRatio(ratioVsFloor, commissionSchedule);
+  const commissionRate = commissionRateForRatio(commissionBasisRatio, commissionSchedule);
   const grossProfit = round2(p - material);
   const commissionDollars = Math.max(0, round2(commissionRate * grossProfit));
 
@@ -134,6 +164,9 @@ export function computeCommission(
     grossProfit,
     commissionDollars,
     breakEven: computeBreakEven(material),
+    discount,
+    discountForgiven,
+    discountCounted,
   };
 }
 
@@ -155,7 +188,11 @@ export function nextTierPrompt(
   const nextBand = currentIndex >= 0 ? sorted[currentIndex + 1] : undefined;
   if (!nextBand || current.floorPrice <= 0) return null;
 
-  const targetPrice = round2(nextBand.minRatio * current.floorPrice);
+  // The real price needed only has to cover the gap after accounting for
+  // whatever discount is already being forgiven - so a rep with an
+  // exempted discount doesn't get told to raise price further than they
+  // actually need to.
+  const targetPrice = round2(nextBand.minRatio * current.floorPrice - current.discountForgiven);
   const targetCommission = computeCommission(material, targetPrice, config);
 
   return {

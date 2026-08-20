@@ -397,7 +397,7 @@ export default function IndividualQuotePage() {
 
             <div className="hidden lg:block w-80 flex-shrink-0 sticky top-20 space-y-4">
               <PriceSummaryPanel result={result} />
-              <CommissionPanel materialCost={result.materialCost} price={result.totalJobSale} />
+              <CommissionPanel materialCost={result.materialCost} price={result.totalJobSale} discount={inp.discount} />
             </div>
           </div>
         </div>
@@ -410,7 +410,7 @@ export default function IndividualQuotePage() {
           <div className="bg-white w-full rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto">
             <PriceSummaryPanel result={result} onClose={() => setShowPricePanel(false)} />
             <div className="mt-4">
-              <CommissionPanel materialCost={result.materialCost} price={result.totalJobSale} />
+              <CommissionPanel materialCost={result.materialCost} price={result.totalJobSale} discount={inp.discount} />
             </div>
           </div>
         </div>
