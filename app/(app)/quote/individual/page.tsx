@@ -7,8 +7,10 @@ import { calcIndividual } from "@/lib/pricing/individual";
 import type { IndividualInputs, IndividualLineInput } from "@/lib/pricing/individual";
 import { CATALOG, CATALOG_BY_KEY, CATEGORIES } from "@/lib/pricing/catalog";
 import { RATES } from "@/lib/pricing/rates";
+import { useCommissionFloorDefault } from "@/lib/hooks/useCommissionFloorDefault";
 import TopBar from "@/components/TopBar";
 import Field from "@/components/quote/Field";
+import CommissionPanel from "@/components/quote/CommissionPanel";
 import { ChevronDown, ChevronUp, RefreshCw, Plus, Trash2, Send } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useProfile";
 import { useRouter } from "next/navigation";
@@ -194,6 +196,13 @@ export default function IndividualQuotePage() {
   const [draftColor, setDraftColor] = useState("");
 
   const result = useMemo(() => calcIndividual(inp), [inp]);
+  const commissionFloor = useCommissionFloorDefault({
+    materialCost: result.materialCost,
+    subtotal: result.subtotal,
+    discount: inp.discount,
+    markup: inp.markup,
+    setMarkup: (m) => setField("markup", m),
+  });
   const draftEntry = CATALOG_BY_KEY[draftKey];
   const categoryItems = CATALOG.filter((c) => c.category === draftCategory);
 
@@ -253,7 +262,7 @@ export default function IndividualQuotePage() {
   return (
     <>
       <TopBar title="Individual Items" subtitle="Custom line-item / mixed job - live pricing" titleNode={<ProductSwitcher current="individual" />}>
-        <button onClick={() => setInp(DEFAULT)} className="btn-secondary text-xs px-3 py-2">
+        <button onClick={() => { setInp(DEFAULT); commissionFloor.resetTouched(); }} className="btn-secondary text-xs px-3 py-2">
           <RefreshCw size={13} /> Reset
         </button>
         <button onClick={() => setShowSaveModal(true)} className="btn-primary text-xs px-3 py-2">
@@ -363,7 +372,7 @@ export default function IndividualQuotePage() {
 
               <SectionCard id="pricing" title="Pricing Adjustments" open={open.has("pricing")} onToggle={toggleSection}>
                 <div className="grid grid-cols-2 gap-3 lg:gap-4">
-                  <NumInput label="Markup" value={inp.markup} onChange={(v) => setField("markup", v)} hint="1.8 = 80% above cost" />
+                  <NumInput label="Markup" value={inp.markup} onChange={(v) => { commissionFloor.markMarkupTouched(); setField("markup", v); }} hint="1.8 = 80% above cost" />
                   <NumInput label="Tax Rate" value={inp.taxRate} onChange={(v) => setField("taxRate", v)} hint="e.g. 0.0745" />
                   <NumInput label="Discount ($)" value={inp.discount} onChange={(v) => setField("discount", v)} hint="Flat $ off the final Total Job Sale" />
                   <NumInput label="Footings ($)" value={inp.footings} onChange={(v) => setField("footings", v)} />
@@ -377,8 +386,9 @@ export default function IndividualQuotePage() {
               </div>
             </div>
 
-            <div className="hidden lg:block w-80 flex-shrink-0 sticky top-20">
+            <div className="hidden lg:block w-80 flex-shrink-0 sticky top-20 space-y-4">
               <PriceSummaryPanel result={result} />
+              <CommissionPanel materialCost={result.materialCost} price={result.totalJobSale} />
             </div>
           </div>
         </div>
@@ -390,6 +400,9 @@ export default function IndividualQuotePage() {
         <div className="lg:hidden fixed inset-0 z-50 bg-black/60 flex items-end">
           <div className="bg-white w-full rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto">
             <PriceSummaryPanel result={result} onClose={() => setShowPricePanel(false)} />
+            <div className="mt-4">
+              <CommissionPanel materialCost={result.materialCost} price={result.totalJobSale} />
+            </div>
           </div>
         </div>
       )}

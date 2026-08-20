@@ -66,6 +66,17 @@ export function finalizePricing(materialCost: number, opts: PricingSummaryOpts):
   };
 }
 
+// Exact inverse of finalizePricing's markup step: what markup multiplier
+// produces a given Total Job Sale, for a job whose subtotal/discount are
+// already known? Used to default a quote's price to the commission
+// engine's floor (lib/commission) without duplicating the CC-fee math here.
+export function markupForTargetPrice(targetTotalJobSale: number, subtotal: number, discount: number): number {
+  if (subtotal <= 0) return 0;
+  const k = RATES.CC_FEE_RATE / (1 - RATES.CC_FEE_RATE);
+  const preSaleTotal = (targetTotalJobSale + discount) / (1 + k);
+  return preSaleTotal / subtotal;
+}
+
 // Real supplier stock lengths (not a uniform step) — smallest one that fits. 4/8ft
 // pieces are cut-offs the supplier still stocks (e.g. the 8ft left over cutting a
 // 16ft piece off a 24ft steel beam), not a separate short product line. Does NOT

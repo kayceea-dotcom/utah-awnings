@@ -7,6 +7,7 @@ import { calcIRP } from "@/lib/pricing/irp";
 import { groundMountSurcharge } from "@/lib/pricing/shared";
 import { estimateMonthlyPayment, BID_FINANCING_OPTIONS } from "@/lib/financing";
 import { useEditableMaterialList } from "@/lib/hooks/useEditableMaterialList";
+import { useCommissionFloorDefault } from "@/lib/hooks/useCommissionFloorDefault";
 import type { IRPInputs, IRPType } from "@/lib/pricing/irp";
 import TopBar from "@/components/TopBar";
 import Field from "@/components/quote/Field";
@@ -14,6 +15,7 @@ import MaterialList from "@/components/quote/MaterialList";
 import ProductSwitcher from "@/components/quote/ProductSwitcher";
 import CoverDiagram from "@/components/quote/CoverDiagram";
 import SideProfileDiagram from "@/components/quote/SideProfileDiagram";
+import CommissionPanel from "@/components/quote/CommissionPanel";
 import { ChevronDown, ChevronUp, RefreshCw, DollarSign, Send } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useProfile";
 import { useRouter } from "next/navigation";
@@ -293,6 +295,13 @@ export default function IRPQuotePage() {
   const groundMountAddOn = groundMountSurcharge(inp.groundAttachment, groundMountHoles);
   const editableList = useEditableMaterialList(result, inp);
   const effectiveResult = editableList.displayResult;
+  const commissionFloor = useCommissionFloorDefault({
+    materialCost: effectiveResult.materialCost,
+    subtotal: effectiveResult.subtotal,
+    discount: inp.discount,
+    markup: inp.markup,
+    setMarkup: (m) => setField("markup", m),
+  });
 
   useEffect(() => {
     if (profile?.full_name) {
@@ -329,7 +338,7 @@ export default function IRPQuotePage() {
   return (
     <>
       <TopBar title="IRP / LRP" subtitle="Insulated roof panel system - live pricing" titleNode={<ProductSwitcher current="irp" />}>
-        <button onClick={() => setInp(DEFAULT)} className="btn-secondary text-xs px-3 py-2">
+        <button onClick={() => { setInp(DEFAULT); commissionFloor.resetTouched(); }} className="btn-secondary text-xs px-3 py-2">
           <RefreshCw size={13} /> Reset
         </button>
         <button onClick={() => setShowSaveModal(true)} className="btn-primary text-xs px-3 py-2">
@@ -400,7 +409,7 @@ export default function IRPQuotePage() {
               </SectionCard>
 
               <SectionCard id="pricing" title="Pricing Adjustments" open={open.has("pricing")} onToggle={toggleSection}>
-                <NumInput label="Markup" value={inp.markup} onChange={(v) => setField("markup", v)} hint="2.0 = 100% above cost" />
+                <NumInput label="Markup" value={inp.markup} onChange={(v) => { commissionFloor.markMarkupTouched(); setField("markup", v); }} hint="2.0 = 100% above cost" />
                 <NumInput label="Tax Rate" value={inp.taxRate} onChange={(v) => setField("taxRate", v)} hint="e.g. 0.0745" />
                 <NumInput label="Discount ($)" value={inp.discount} onChange={(v) => setField("discount", v)} hint="Flat $ off the final Total Job Sale" />
                 <NumInput label="Footings ($)" value={inp.footings} onChange={(v) => setField("footings", v)} />
@@ -463,6 +472,7 @@ export default function IRPQuotePage() {
                 showRafterTail={false}
               />
               <PriceSummaryPanel result={effectiveResult} />
+              <CommissionPanel materialCost={effectiveResult.materialCost} price={effectiveResult.totalJobSale} />
             </div>
           </div>
         </div>
@@ -474,6 +484,9 @@ export default function IRPQuotePage() {
         <div className="lg:hidden fixed inset-0 z-50 bg-black/60 flex items-end">
           <div className="bg-white w-full rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto">
             <PriceSummaryPanel result={effectiveResult} onClose={() => setShowPricePanel(false)} />
+            <div className="mt-4">
+              <CommissionPanel materialCost={effectiveResult.materialCost} price={effectiveResult.totalJobSale} />
+            </div>
           </div>
         </div>
       )}
