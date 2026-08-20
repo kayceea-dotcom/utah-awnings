@@ -69,13 +69,21 @@ export function computeFloorPrice(
   return round2(floor);
 }
 
+// Absorbs floating-point noise from the UI's tax/CC-fee/markup pipeline
+// (which doesn't perfectly bit-for-bit invert against markupForTargetPrice)
+// so a price that's a fraction of a cent off a tier boundary - purely from
+// float arithmetic, not a real pricing difference - doesn't get classified
+// into the wrong band. Real prices are never this close to a boundary by
+// accident; a genuinely below-floor quote is off by dollars, not by 1e-6.
+const RATIO_EPS = 1e-6;
+
 function commissionRateForRatio(
   ratio: number,
   schedule: CommissionBand[] = COMMISSION_SCHEDULE
 ): number {
   let band = schedule[0];
   for (const b of schedule) {
-    if (ratio >= b.minRatio) band = b;
+    if (ratio >= b.minRatio - RATIO_EPS) band = b;
   }
   return band.rate;
 }
@@ -105,7 +113,7 @@ export function computeCommission(
   const markup = material > 0 ? round3(p / material) : 0;
   const ratioVsFloor = floorPrice > 0 ? p / floorPrice : 0;
   const percentVsFloor = (ratioVsFloor - 1) * 100;
-  const belowFloor = ratioVsFloor < 1;
+  const belowFloor = ratioVsFloor < 1 - RATIO_EPS;
 
   // Use the unrounded ratio to pick the tier so a value like 1.0499996
   // (which should round-display as "1.05") doesn't get bumped into the

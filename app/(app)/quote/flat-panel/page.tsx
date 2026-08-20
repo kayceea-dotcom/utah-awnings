@@ -8,7 +8,7 @@ import { calcNewport } from "@/lib/pricing/newport";
 import { groundMountSurcharge } from "@/lib/pricing/shared";
 import { estimateMonthlyPayment, BID_FINANCING_OPTIONS } from "@/lib/financing";
 import { useEditableMaterialList } from "@/lib/hooks/useEditableMaterialList";
-import { useCommissionFloorDefault } from "@/lib/hooks/useCommissionFloorDefault";
+import { useMarkupTier } from "@/lib/hooks/useMarkupTier";
 import { newportToScene } from "@/lib/scene/adapters/newport";
 import type { CosmeticOverrides } from "@/lib/scene/types";
 import { SHOW_3D_VIEWER } from "@/lib/scene/featureFlags";
@@ -24,6 +24,7 @@ import SaveQuoteModal from "@/components/quote/SaveQuoteModal";
 import CoverDiagram from "@/components/quote/CoverDiagram";
 import SideProfileDiagram from "@/components/quote/SideProfileDiagram";
 import CommissionPanel from "@/components/quote/CommissionPanel";
+import MarkupTierSelect from "@/components/quote/MarkupTierSelect";
 import ProductSwitcher from "@/components/quote/ProductSwitcher";
 
 const Viewer3DPanel = dynamicImport(() => import("@/components/viewer3d/Viewer3DPanel"), {
@@ -400,7 +401,7 @@ export default function FlatPanelQuotePage() {
   const groundMountAddOn = groundMountSurcharge(inp.groundAttachment, groundMountHoles);
   const editableList = useEditableMaterialList(result, inp);
   const effectiveResult = editableList.displayResult;
-  const commissionFloor = useCommissionFloorDefault({
+  const markupTier = useMarkupTier({
     materialCost: effectiveResult.materialCost,
     subtotal: effectiveResult.subtotal,
     discount: inp.discount,
@@ -443,7 +444,7 @@ export default function FlatPanelQuotePage() {
   return (
     <>
       <TopBar title="Flat Panel" subtitle="T6 flat pan roof system - live pricing" titleNode={<ProductSwitcher current="flat-panel" />}>
-        <button onClick={() => { setInp(DEFAULT); commissionFloor.resetTouched(); }} className="btn-secondary text-xs px-3 py-2">
+        <button onClick={() => { setInp(DEFAULT); markupTier.reset(); }} className="btn-secondary text-xs px-3 py-2">
           <RefreshCw size={13} /> Reset
         </button>
         <button onClick={() => setShowSaveModal(true)} className="btn-primary text-xs px-3 py-2">
@@ -645,7 +646,8 @@ export default function FlatPanelQuotePage() {
               </SectionCard>
 
               <SectionCard id="pricing" title="Pricing Adjustments" open={open.has("pricing")} onToggle={toggleSection}>
-                <NumInput label="Markup" value={inp.markup} onChange={(v) => { commissionFloor.markMarkupTouched(); setField("markup", v); }} hint="1.8 = 80% above cost" />
+                <MarkupTierSelect tier={markupTier.tier} onTierChange={markupTier.setTier}
+                  markup={inp.markup} onMarkupChange={(v) => setField("markup", v)} />
                 <NumInput label="Tax Rate" value={inp.taxRate} onChange={(v) => setField("taxRate", v)} hint="e.g. 0.0745" />
                 <NumInput label="Discount ($)" value={inp.discount} onChange={(v) => setField("discount", v)} hint="Flat $ off the final Total Job Sale" />
                 <NumInput label="Footings ($)" value={inp.footings} onChange={(v) => setField("footings", v)} />

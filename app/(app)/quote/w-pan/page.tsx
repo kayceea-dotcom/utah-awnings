@@ -7,7 +7,7 @@ import { calcWPan } from "@/lib/pricing/wpan";
 import { groundMountSurcharge } from "@/lib/pricing/shared";
 import { estimateMonthlyPayment, BID_FINANCING_OPTIONS } from "@/lib/financing";
 import { useEditableMaterialList } from "@/lib/hooks/useEditableMaterialList";
-import { useCommissionFloorDefault } from "@/lib/hooks/useCommissionFloorDefault";
+import { useMarkupTier } from "@/lib/hooks/useMarkupTier";
 import type { WPanInputs, WPanType } from "@/lib/pricing/wpan";
 import TopBar from "@/components/TopBar";
 import Field from "@/components/quote/Field";
@@ -16,6 +16,7 @@ import ProductSwitcher from "@/components/quote/ProductSwitcher";
 import CoverDiagram from "@/components/quote/CoverDiagram";
 import SideProfileDiagram from "@/components/quote/SideProfileDiagram";
 import CommissionPanel from "@/components/quote/CommissionPanel";
+import MarkupTierSelect from "@/components/quote/MarkupTierSelect";
 import { ChevronDown, ChevronUp, RefreshCw, DollarSign, Send } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useProfile";
 import { useRouter } from "next/navigation";
@@ -312,7 +313,7 @@ export default function WPanQuotePage() {
   const groundMountAddOn = groundMountSurcharge(inp.groundAttachment, groundMountHoles);
   const editableList = useEditableMaterialList(result, inp);
   const effectiveResult = editableList.displayResult;
-  const commissionFloor = useCommissionFloorDefault({
+  const markupTier = useMarkupTier({
     materialCost: effectiveResult.materialCost,
     subtotal: effectiveResult.subtotal,
     discount: inp.discount,
@@ -368,7 +369,7 @@ export default function WPanQuotePage() {
   return (
     <>
       <TopBar title="W-Pan Cover" subtitle="V-panel and DuraKing roof systems - live pricing" titleNode={<ProductSwitcher current="w-pan" />}>
-        <button onClick={() => { setInp(DEFAULT); commissionFloor.resetTouched(); }} className="btn-secondary text-xs px-3 py-2">
+        <button onClick={() => { setInp(DEFAULT); markupTier.reset(); }} className="btn-secondary text-xs px-3 py-2">
           <RefreshCw size={13} /> Reset
         </button>
         <button onClick={() => setShowSaveModal(true)} className="btn-primary text-xs px-3 py-2">
@@ -448,7 +449,8 @@ export default function WPanQuotePage() {
               </SectionCard>
 
               <SectionCard id="pricing" title="Pricing Adjustments" open={open.has("pricing")} onToggle={toggleSection}>
-                <NumInput label="Markup" value={inp.markup} onChange={(v) => { commissionFloor.markMarkupTouched(); setField("markup", v); }} hint="1.9 = 90% above cost" />
+                <MarkupTierSelect tier={markupTier.tier} onTierChange={markupTier.setTier}
+                  markup={inp.markup} onMarkupChange={(v) => setField("markup", v)} />
                 <NumInput label="Tax Rate" value={inp.taxRate} onChange={(v) => setField("taxRate", v)} hint="e.g. 0.0745" />
                 <NumInput label="Discount ($)" value={inp.discount} onChange={(v) => setField("discount", v)} hint="Flat $ off the final Total Job Sale" />
                 <NumInput label="Footings ($)" value={inp.footings} onChange={(v) => setField("footings", v)} />

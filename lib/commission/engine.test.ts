@@ -153,6 +153,18 @@ describe("edge cases", () => {
     expect(r.commissionRate).toBeCloseTo(0.2); // 3000/2300 = 1.304, well past the 1.15 top tier
   });
 
+  it("treats a price a hair under floor from float noise as AT floor, not below it", () => {
+    // The quote-builder UI derives price from a markup multiplier via a
+    // separate tax/CC-fee/discount pipeline (lib/pricing/shared.ts) that
+    // doesn't invert bit-for-bit against the floor math here - a price
+    // meant to land exactly on the floor can come out a fraction of a
+    // cent under it. That's float noise, not a real below-floor quote.
+    const floor = computeFloorPrice(9372.38);
+    const r = computeCommission(9372.38, floor - 0.0000001);
+    expect(r.belowFloor).toBe(false);
+    expect(r.commissionRate).toBeCloseTo(0.14);
+  });
+
   it("negative material cost is treated as $0", () => {
     const r = computeCommission(-500, undefined);
     expect(r.materialCost).toBe(0);

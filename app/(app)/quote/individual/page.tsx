@@ -7,10 +7,11 @@ import { calcIndividual } from "@/lib/pricing/individual";
 import type { IndividualInputs, IndividualLineInput } from "@/lib/pricing/individual";
 import { CATALOG, CATALOG_BY_KEY, CATEGORIES } from "@/lib/pricing/catalog";
 import { RATES } from "@/lib/pricing/rates";
-import { useCommissionFloorDefault } from "@/lib/hooks/useCommissionFloorDefault";
+import { useMarkupTier } from "@/lib/hooks/useMarkupTier";
 import TopBar from "@/components/TopBar";
 import Field from "@/components/quote/Field";
 import CommissionPanel from "@/components/quote/CommissionPanel";
+import MarkupTierSelect from "@/components/quote/MarkupTierSelect";
 import { ChevronDown, ChevronUp, RefreshCw, Plus, Trash2, Send } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useProfile";
 import { useRouter } from "next/navigation";
@@ -196,7 +197,7 @@ export default function IndividualQuotePage() {
   const [draftColor, setDraftColor] = useState("");
 
   const result = useMemo(() => calcIndividual(inp), [inp]);
-  const commissionFloor = useCommissionFloorDefault({
+  const markupTier = useMarkupTier({
     materialCost: result.materialCost,
     subtotal: result.subtotal,
     discount: inp.discount,
@@ -262,7 +263,7 @@ export default function IndividualQuotePage() {
   return (
     <>
       <TopBar title="Individual Items" subtitle="Custom line-item / mixed job - live pricing" titleNode={<ProductSwitcher current="individual" />}>
-        <button onClick={() => { setInp(DEFAULT); commissionFloor.resetTouched(); }} className="btn-secondary text-xs px-3 py-2">
+        <button onClick={() => { setInp(DEFAULT); markupTier.reset(); }} className="btn-secondary text-xs px-3 py-2">
           <RefreshCw size={13} /> Reset
         </button>
         <button onClick={() => setShowSaveModal(true)} className="btn-primary text-xs px-3 py-2">
@@ -372,7 +373,8 @@ export default function IndividualQuotePage() {
 
               <SectionCard id="pricing" title="Pricing Adjustments" open={open.has("pricing")} onToggle={toggleSection}>
                 <div className="grid grid-cols-2 gap-3 lg:gap-4">
-                  <NumInput label="Markup" value={inp.markup} onChange={(v) => { commissionFloor.markMarkupTouched(); setField("markup", v); }} hint="1.8 = 80% above cost" />
+                  <MarkupTierSelect tier={markupTier.tier} onTierChange={markupTier.setTier}
+                    markup={inp.markup} onMarkupChange={(v) => setField("markup", v)} />
                   <NumInput label="Tax Rate" value={inp.taxRate} onChange={(v) => setField("taxRate", v)} hint="e.g. 0.0745" />
                   <NumInput label="Discount ($)" value={inp.discount} onChange={(v) => setField("discount", v)} hint="Flat $ off the final Total Job Sale" />
                   <NumInput label="Footings ($)" value={inp.footings} onChange={(v) => setField("footings", v)} />
