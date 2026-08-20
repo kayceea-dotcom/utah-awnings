@@ -24,22 +24,27 @@ const TIER_RATIOS: Record<Exclude<MarkupTier, "custom">, number> = {
 // change instead of once. Picking "Custom" freezes it so the rep can type
 // any multiplier by hand (including a below-floor one - that's still
 // allowed, just flagged red elsewhere, per how this was scoped).
+//
+// Deliberately solves against a $0 discount (the pre-discount sticker
+// price), not whatever discount is currently applied - if it re-targeted
+// including the live discount, applying a discount would just make this
+// hook raise markup to cancel it back out, and the customer's price would
+// never actually move. A discount should genuinely reduce what they pay.
 export function useMarkupTier(opts: {
   materialCost: number;
   subtotal: number;
-  discount: number;
   markup: number;
   setMarkup: (markup: number) => void;
 }) {
   const [tier, setTier] = useState<MarkupTier>("floor");
-  const { materialCost, subtotal, discount, markup, setMarkup } = opts;
+  const { materialCost, subtotal, markup, setMarkup } = opts;
 
   useEffect(() => {
     if (tier === "custom") return;
     if (materialCost <= 0 || subtotal <= 0) return;
     const floor = computeFloorPrice(materialCost);
     const targetPrice = TIER_RATIOS[tier] * floor;
-    const required = markupForTargetPrice(targetPrice, subtotal, discount);
+    const required = markupForTargetPrice(targetPrice, subtotal, 0);
     if (!Number.isFinite(required) || required <= 0) return;
     // Round UP (never down) at high precision - rounding down, even by a
     // fraction of a cent, can land the price a cent under the tier's
@@ -49,7 +54,7 @@ export function useMarkupTier(opts: {
       setMarkup(rounded);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tier, materialCost, subtotal, discount]);
+  }, [tier, materialCost, subtotal]);
 
   return {
     tier,

@@ -202,7 +202,6 @@ export default function IndividualQuotePage() {
   const markupTier = useMarkupTier({
     materialCost: result.materialCost,
     subtotal: result.subtotal,
-    discount: inp.discount,
     markup: inp.markup,
     setMarkup: (m) => setField("markup", m),
   });

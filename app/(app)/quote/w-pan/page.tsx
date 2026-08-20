@@ -318,7 +318,6 @@ export default function WPanQuotePage() {
   const markupTier = useMarkupTier({
     materialCost: effectiveResult.materialCost,
     subtotal: effectiveResult.subtotal,
-    discount: inp.discount,
     markup: inp.markup,
     setMarkup: (m) => setField("markup", m),
   });
