@@ -3,7 +3,7 @@ import { CATALOG_BY_KEY } from "./catalog";
 import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType } from "./types";
 import {
   li, nextStockLength, rollFormGutterStockLength, wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen,
-  anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems,
+  anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, beamTypeLabel,
 } from "./shared";
 
 export type WPanType = "wpan_032" | "duraking_025" | "duraking_032" | "duraking_040";
@@ -131,20 +131,25 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   }
   function steelRate(beamType: string): number {
     if (beamType === "3x3") return RATES.steel_3x3_g_beam_ft;
+    if (beamType === "3x8_no_insert") return 0;
     return RATES.steel_3x8_14ga_ft;
   }
 
   if (inp.beamLength1 > 0) {
     const bq1 = inp.beamQty1 || 1;
-    items.push(li("Beam #1 (" + inp.beamType1 + ")", bq1, inp.beamLength1, beamRate(inp.beamType1), "", inp.colorPostsBeam));
-    const steelStock = nextStockLength(inp.beamLength1);
-    items.push(li("Steel Insert #1", bq1, steelStock, steelRate(inp.beamType1)));
+    items.push(li("Beam #1 (" + beamTypeLabel(inp.beamType1) + ")", bq1, inp.beamLength1, beamRate(inp.beamType1), "", inp.colorPostsBeam));
+    const steelRate1 = steelRate(inp.beamType1);
+    if (steelRate1 > 0) {
+      items.push(li("Steel Insert #1", bq1, nextStockLength(inp.beamLength1), steelRate1));
+    }
   }
   if (inp.beamLength2 > 0 && inp.beamType2) {
     const bq2 = inp.beamQty2 || 1;
-    items.push(li("Beam #2 (" + inp.beamType2 + ")", bq2, inp.beamLength2, beamRate(inp.beamType2), "", inp.colorPostsBeam));
-    const steelStock2 = nextStockLength(inp.beamLength2);
-    items.push(li("Steel Insert #2", bq2, steelStock2, steelRate(inp.beamType2)));
+    items.push(li("Beam #2 (" + beamTypeLabel(inp.beamType2) + ")", bq2, inp.beamLength2, beamRate(inp.beamType2), "", inp.colorPostsBeam));
+    const steelRate2 = steelRate(inp.beamType2);
+    if (steelRate2 > 0) {
+      items.push(li("Steel Insert #2", bq2, nextStockLength(inp.beamLength2), steelRate2));
+    }
   }
 
   // ── POSTS ──

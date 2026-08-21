@@ -1,7 +1,7 @@
 import { RATES } from "./rates";
 import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType } from "./types";
 import {
-  li, nextStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, anchorQty,
+  li, nextStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, beamTypeLabel, anchorQty,
   wrapKitRates, wrapKitFinishingItems, deckHeightSurcharge, postMaterialLength, groundMountSurcharge,
   finalizePricing, shadeBeamItems,
 } from "./shared";
@@ -133,12 +133,18 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
 
   // ── BEAMS ──
   if (inp.beamLength1 > 0) {
-    items.push(li("Beam #1 (" + inp.beamType1 + ")", 1, inp.beamLength1, beamMaterialRate(inp.beamType1), "", inp.colorPostsBeam));
-    items.push(li("Steel Insert #1", 1, nextStockLength(inp.beamLength1), steelInsertRate(inp.beamType1)));
+    items.push(li("Beam #1 (" + beamTypeLabel(inp.beamType1) + ")", 1, inp.beamLength1, beamMaterialRate(inp.beamType1), "", inp.colorPostsBeam));
+    const steelRate1 = steelInsertRate(inp.beamType1);
+    if (steelRate1 > 0) {
+      items.push(li("Steel Insert #1", 1, nextStockLength(inp.beamLength1), steelRate1));
+    }
   }
   if (inp.beamLength2 > 0 && inp.beamType2) {
-    items.push(li("Beam #2 (" + inp.beamType2 + ")", 1, inp.beamLength2, beamMaterialRate(inp.beamType2), "", inp.colorPostsBeam));
-    items.push(li("Steel Insert #2", 1, nextStockLength(inp.beamLength2), steelInsertRate(inp.beamType2)));
+    items.push(li("Beam #2 (" + beamTypeLabel(inp.beamType2) + ")", 1, inp.beamLength2, beamMaterialRate(inp.beamType2), "", inp.colorPostsBeam));
+    const steelRate2 = steelInsertRate(inp.beamType2);
+    if (steelRate2 > 0) {
+      items.push(li("Steel Insert #2", 1, nextStockLength(inp.beamLength2), steelRate2));
+    }
   }
 
   // ── BEAM END CAPS — sized to the beam's own type, zero for I-beams ──

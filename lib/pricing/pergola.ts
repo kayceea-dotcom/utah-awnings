@@ -1,6 +1,6 @@
 import { RATES } from "./rates";
 import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType } from "./types";
-import { li, nextStockLength, anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems } from "./shared";
+import { li, nextStockLength, anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, beamTypeLabel } from "./shared";
 
 export interface PergolaInputs {
   jobName: string;
@@ -75,9 +75,11 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
 
   // ── BEAMS ──
   if (inp.beamLength > 0 && inp.beamQty > 0) {
-    items.push(li("Beam (" + inp.beamType + ")", inp.beamQty, inp.beamLength, RATES.beam_3x8, "", inp.colorPergola));
-    const steelStock = nextStockLength(inp.beamLength);
-    items.push(li("Steel Insert", inp.beamQty, steelStock, RATES.steel_3x8_14ga_ft));
+    items.push(li("Beam (" + beamTypeLabel(inp.beamType) + ")", inp.beamQty, inp.beamLength, RATES.beam_3x8, "", inp.colorPergola));
+    if (inp.beamType !== "3x8_no_insert") {
+      const steelStock = nextStockLength(inp.beamLength);
+      items.push(li("Steel Insert", inp.beamQty, steelStock, RATES.steel_3x8_14ga_ft));
+    }
   }
 
   // ── POSTS ──

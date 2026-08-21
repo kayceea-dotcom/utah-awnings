@@ -51,6 +51,7 @@ const PANEL_TYPES = [
 
 const BEAM_TYPES = [
   { value: "3x8",        label: "3x8 Beam" },
+  { value: "3x8_no_insert", label: "3x8 Beam (No Insert)" },
   { value: "double_3x8", label: "Double 3x8 Beam" },
   { value: "3x3",        label: "3x3 Beam" },
   { value: "4_i_beam",   label: "4in I-Beam" },
@@ -574,6 +575,7 @@ export default function FlatPanelQuotePage() {
                                 }}>
                                 <option value="3x3">3x3 Beam</option>
                                 <option value="3x8">3x8 Beam</option>
+                                <option value="3x8_no_insert">3x8 Beam (No Insert)</option>
                                 <option value="double_3x8">Double 3x8</option>
                                 <option value="4_i_beam">4in I-Beam</option>
                                 <option value="7_i_beam">7in I-Beam</option>

@@ -108,6 +108,8 @@ export function fasciaQtyLen(maxProjection: number): { qty: number; length: numb
 // "double_3x8" is two 3x8 beams mounted to the front and back of the posts
 // (instead of one beam sitting on top) to get more span between posts - not a
 // distinct catalog rate, just 2x a single 3x8 beam's material/insert/endcap.
+// "3x8_no_insert" is a plain 3x8 beam ordered without its steel insert (same
+// beam material and end cap - only the insert itself is skipped).
 
 // Beam material rate depends on the selected beam type.
 export function beamMaterialRate(beamType: string): number {
@@ -118,7 +120,8 @@ export function beamMaterialRate(beamType: string): number {
   return RATES.beam_3x8;
 }
 
-// Only 3x3/3x8 beams take a steel insert — I-beams are solid, no insert needed.
+// Only 3x3/3x8 beams take a steel insert — I-beams are solid, no insert needed,
+// and "3x8_no_insert" opts out of it on purpose (falls through to the 0 default).
 export function steelInsertRate(beamType: string): number {
   if (beamType === "double_3x8") return RATES.steel_3x8_14ga_ft * 2;
   if (beamType === "3x3") return RATES.steel_3x3_g_beam_ft;
@@ -126,17 +129,21 @@ export function steelInsertRate(beamType: string): number {
   return 0;
 }
 
-// Beam's own end cap is sized to the beam type, not the wrap kit; I-beams don't take one.
+// Beam's own end cap is sized to the beam type, not the wrap kit; I-beams don't
+// take one. "3x8_no_insert" still gets the regular 3x8 end cap - it's the same
+// physical beam, just shipped without the insert.
 export function beamEndcapRate(beamType: string): number {
   if (beamType === "double_3x8") return RATES.endcap_3x8 * 2;
   if (beamType === "3x3") return RATES.endcap_3x3;
-  if (beamType === "3x8") return RATES.endcap_3x8;
+  if (beamType === "3x8" || beamType === "3x8_no_insert") return RATES.endcap_3x8;
   return 0;
 }
 
 // Friendly display name — everywhere else the raw beamType string is shown as-is.
 export function beamTypeLabel(beamType: string): string {
-  return beamType === "double_3x8" ? "Double 3x8" : beamType;
+  if (beamType === "double_3x8") return "Double 3x8";
+  if (beamType === "3x8_no_insert") return "3x8, No Insert";
+  return beamType;
 }
 
 // 2 anchors per post — skipped entirely when the job is ground-mounted (posts set

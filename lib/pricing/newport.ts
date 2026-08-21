@@ -17,7 +17,7 @@ function panelLabel(type: string): string {
 
 // Only 3x8/double-3x8 beams take the selected end-cut treatment (3x3/I-beam don't).
 function beamLabel(type: string, endCut: string): string {
-  const takesEndCut = type === "3x8" || type === "double_3x8";
+  const takesEndCut = type === "3x8" || type === "double_3x8" || type === "3x8_no_insert";
   if (!takesEndCut || !endCut) return beamTypeLabel(type);
   return beamTypeLabel(type) + ", " + (END_CUT_LABELS[endCut] ?? endCut);
 }
@@ -104,13 +104,17 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   // ── BEAMS — rate depends on selected beam type ──
   if (inp.beamLength1 > 0) {
     items.push(li("Beam #1 (" + beamLabel(inp.beamType1, inp.beamEndCut1) + ")", 1, inp.beamLength1, beamMaterialRate(inp.beamType1), "", inp.colorPostsBeam));
-    const steelStock = nextStockLength(inp.beamLength1);
-    items.push(li("Steel Insert #1", 1, steelStock, steelInsertRate(inp.beamType1)));
+    const steelRate1 = steelInsertRate(inp.beamType1);
+    if (steelRate1 > 0) {
+      items.push(li("Steel Insert #1", 1, nextStockLength(inp.beamLength1), steelRate1));
+    }
   }
   if (inp.beamLength2 > 0 && inp.beamType2) {
     items.push(li("Beam #2 (" + beamLabel(inp.beamType2, inp.beamEndCut2) + ")", 1, inp.beamLength2, beamMaterialRate(inp.beamType2), "", inp.colorPostsBeam));
-    const steelStock2 = nextStockLength(inp.beamLength2);
-    items.push(li("Steel Insert #2", 1, steelStock2, steelInsertRate(inp.beamType2)));
+    const steelRate2 = steelInsertRate(inp.beamType2);
+    if (steelRate2 > 0) {
+      items.push(li("Steel Insert #2", 1, nextStockLength(inp.beamLength2), steelRate2));
+    }
   }
 
   // ── POSTS ──
@@ -134,7 +138,10 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     const num = idx + 3;
     if (beam.length > 0 && beam.qty > 0) {
       items.push(li("Beam #" + num + " (" + beamTypeLabel(beam.type) + ")", beam.qty, beam.length, beamMaterialRate(beam.type), "", inp.colorPostsBeam));
-      items.push(li("Steel Insert #" + num, beam.qty, nextStockLength(beam.length), steelInsertRate(beam.type)));
+      const steelRateN = steelInsertRate(beam.type);
+      if (steelRateN > 0) {
+        items.push(li("Steel Insert #" + num, beam.qty, nextStockLength(beam.length), steelRateN));
+      }
       items.push(li("Beam End Caps #" + num, beam.qty * 2, 0, beamEndcapRate(beam.type), "", inp.colorPostsBeam));
     }
     if (beam.posts > 0) {

@@ -29,6 +29,7 @@ const COLOR_OPTS = COLORS.map((c) => ({ value: c, label: c }));
 
 const BEAM_TYPES = [
   { value: "3x8",      label: "3x8 Beam" },
+  { value: "3x8_no_insert", label: "3x8 Beam (No Insert)" },
   { value: "3x3",      label: "3x3 Beam" },
   { value: "4_i_beam", label: "4in I-Beam" },
   { value: "7_i_beam", label: "7in I-Beam" },
