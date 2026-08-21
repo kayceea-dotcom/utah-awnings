@@ -345,7 +345,7 @@ export default function IRPQuotePage() {
   return (
     <>
       <TopBar title="IRP / LRP" subtitle="Insulated roof panel system - live pricing" titleNode={<ProductSwitcher current="irp" />}>
-        <button onClick={() => { setInp(DEFAULT); markupTier.reset(); discountOption.reset(); }} className="btn-secondary text-xs px-3 py-2">
+        <button onClick={() => { setInp(DEFAULT); markupTier.reset(); discountOption.reset(); editableList.resetToCalculated(); }} className="btn-secondary text-xs px-3 py-2">
           <RefreshCw size={13} /> Reset
         </button>
         <button onClick={() => setShowSaveModal(true)} className="btn-primary text-xs px-3 py-2">

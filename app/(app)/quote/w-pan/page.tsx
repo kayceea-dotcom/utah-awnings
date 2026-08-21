@@ -375,7 +375,7 @@ export default function WPanQuotePage() {
   return (
     <>
       <TopBar title="W-Pan Cover" subtitle="V-panel and DuraKing roof systems - live pricing" titleNode={<ProductSwitcher current="w-pan" />}>
-        <button onClick={() => { setInp(DEFAULT); markupTier.reset(); discountOption.reset(); }} className="btn-secondary text-xs px-3 py-2">
+        <button onClick={() => { setInp(DEFAULT); markupTier.reset(); discountOption.reset(); editableList.resetToCalculated(); }} className="btn-secondary text-xs px-3 py-2">
           <RefreshCw size={13} /> Reset
         </button>
         <button onClick={() => setShowSaveModal(true)} className="btn-primary text-xs px-3 py-2">

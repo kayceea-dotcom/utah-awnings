@@ -450,7 +450,7 @@ export default function FlatPanelQuotePage() {
   return (
     <>
       <TopBar title="Flat Panel" subtitle="T6 flat pan roof system - live pricing" titleNode={<ProductSwitcher current="flat-panel" />}>
-        <button onClick={() => { setInp(DEFAULT); markupTier.reset(); discountOption.reset(); }} className="btn-secondary text-xs px-3 py-2">
+        <button onClick={() => { setInp(DEFAULT); markupTier.reset(); discountOption.reset(); editableList.resetToCalculated(); }} className="btn-secondary text-xs px-3 py-2">
           <RefreshCw size={13} /> Reset
         </button>
         <button onClick={() => setShowSaveModal(true)} className="btn-primary text-xs px-3 py-2">

@@ -342,7 +342,7 @@ export default function PergolaQuotePage() {
   return (
     <>
       <TopBar title="Pergola" subtitle="Open air rafter and lattice system - live pricing" titleNode={<ProductSwitcher current="pergola" />}>
-        <button onClick={() => { setInp(DEFAULT); markupTier.reset(); discountOption.reset(); }} className="btn-secondary text-xs px-3 py-2">
+        <button onClick={() => { setInp(DEFAULT); markupTier.reset(); discountOption.reset(); editableList.resetToCalculated(); }} className="btn-secondary text-xs px-3 py-2">
           <RefreshCw size={13} /> Reset
         </button>
         <button onClick={() => setShowSaveModal(true)} className="btn-primary text-xs px-3 py-2">
