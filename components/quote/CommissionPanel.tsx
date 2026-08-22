@@ -46,7 +46,7 @@ export default function CommissionPanel({ materialCost, price, discount = 0, dis
       <div className="space-y-1.5 text-sm">
         <Row label="Material Cost" value={fmt(materialCost)} />
         <Row label="Current Price" value={fmt(c.price)} />
-        <Row label="Markup" value={c.markup.toFixed(3) + "x"} warn={warn} />
+        <Row label="Commission Markup" value={c.markup.toFixed(3) + "x"} warn={warn} />
         <Row label="Gross Profit" value={fmt(c.grossProfit)} />
       </div>
 

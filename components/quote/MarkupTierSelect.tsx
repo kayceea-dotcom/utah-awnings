@@ -12,7 +12,7 @@ export default function MarkupTierSelect({ tier, onTierChange, markup, onMarkupC
 }) {
   return (
     <div className="col-span-2 space-y-2">
-      <Field label="Markup" hint={tier === "custom" ? "Manual multiplier - any commission rate" : "Preset markup tier"}>
+      <Field label="Commission Markup" hint={tier === "custom" ? "Manual multiplier - any commission rate" : "Preset markup tier"}>
         <div className="relative">
           <select
             className="select pr-8"

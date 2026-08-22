@@ -250,7 +250,7 @@ function PriceSummaryPanel({ result, onClose }: { result: ReturnType<typeof calc
         ))}
         <div className="border-t border-dashed border-gray-200 my-2" />
         <div className="flex justify-between text-gray-600">
-          <span>Markup</span>
+          <span title="The internal pricing multiplier - different from the Commission Markup shown below, which is Total Job Sale ÷ Material Cost.">Pricing Markup</span>
           <span className="font-mono text-gray-800">{result.markup}x</span>
         </div>
         <div className="flex justify-between text-gray-600">
