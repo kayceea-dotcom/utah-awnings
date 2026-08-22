@@ -1,296 +1,169 @@
 import { describe, it, expect } from "vitest";
-import { computeFloorPrice, computeCommission, computeBreakEven, nextTierPrompt } from "./engine";
+import { computeCommission, computeBreakEven, nextTierPrompt } from "./engine";
 
-describe("computeCommission - spec test cases", () => {
-  it("$500 material, default price", () => {
-    const floor = computeFloorPrice(500);
-    const r = computeCommission(500, floor);
-    expect(floor).toBe(2300);
-    expect(r.markup).toBeCloseTo(4.6, 3);
-    expect(r.ratioVsFloor).toBeCloseTo(1.0, 3);
-    expect(r.commissionRate).toBeCloseTo(0.14);
-    expect(r.grossProfit).toBe(1800);
-    expect(r.commissionDollars).toBe(252.0);
-  });
+// Rate card: markup -> commission rate.
+//   0 - 1.4x    -> 4%
+//   1.41 - 1.79x -> 8%
+//   1.8 - 1.89x  -> 14%
+//   1.9 - 1.99x  -> 16%
+//   2.0 - 2.09x  -> 19%
+//   2.1x+        -> 20%
+// material = $10,000 throughout unless noted, for clean round prices.
 
-  it("$1,500 material, default price", () => {
-    const floor = computeFloorPrice(1500);
-    const r = computeCommission(1500, floor);
-    expect(floor).toBe(3450);
-    expect(r.markup).toBeCloseTo(2.3, 3);
-    expect(r.ratioVsFloor).toBeCloseTo(1.0, 3);
-    expect(r.commissionRate).toBeCloseTo(0.14);
-    expect(r.grossProfit).toBe(1950);
-    expect(r.commissionDollars).toBe(273.0);
-  });
-
-  it("$2,750 material, default price", () => {
-    const floor = computeFloorPrice(2750);
-    const r = computeCommission(2750, floor);
-    expect(floor).toBe(6050);
-    expect(r.markup).toBeCloseTo(2.2, 3);
-    expect(r.ratioVsFloor).toBeCloseTo(1.0, 3);
-    expect(r.commissionRate).toBeCloseTo(0.14);
-    expect(r.grossProfit).toBe(3300);
-    expect(r.commissionDollars).toBe(462.0);
-  });
-
-  it("$6,000 material, default price", () => {
-    const floor = computeFloorPrice(6000);
-    const r = computeCommission(6000, floor);
-    expect(floor).toBe(12000);
-    expect(r.markup).toBeCloseTo(2.0, 3);
-    expect(r.ratioVsFloor).toBeCloseTo(1.0, 3);
-    expect(r.commissionRate).toBeCloseTo(0.14);
-    expect(r.grossProfit).toBe(6000);
-    expect(r.commissionDollars).toBe(840.0);
-  });
-
-  it("$10,000 material, default price", () => {
-    const floor = computeFloorPrice(10000);
-    const r = computeCommission(10000, floor);
-    expect(floor).toBe(19000);
-    expect(r.markup).toBeCloseTo(1.9, 3);
-    expect(r.ratioVsFloor).toBeCloseTo(1.0, 3);
-    expect(r.commissionRate).toBeCloseTo(0.14);
-    expect(r.grossProfit).toBe(9000);
-    expect(r.commissionDollars).toBe(1260.0);
-  });
-
-  it("$33,183 material, default price", () => {
-    const floor = computeFloorPrice(33183);
-    const r = computeCommission(33183, floor);
-    expect(floor).toBeCloseTo(56411.1, 2);
-    expect(r.markup).toBeCloseTo(1.7, 3);
-    expect(r.ratioVsFloor).toBeCloseTo(1.0, 3);
-    expect(r.commissionRate).toBeCloseTo(0.14);
-    expect(r.grossProfit).toBeCloseTo(23228.1, 2);
-    expect(r.commissionDollars).toBe(3251.93);
-  });
-
-  it("$6,000 material, $13,200 price (5%+ above floor tier)", () => {
-    const r = computeCommission(6000, 13200);
-    expect(r.floorPrice).toBe(12000);
-    expect(r.markup).toBeCloseTo(2.2, 3);
-    expect(r.ratioVsFloor).toBeCloseTo(1.1, 3);
-    expect(r.commissionRate).toBeCloseTo(0.17);
-    expect(r.grossProfit).toBe(7200);
-    expect(r.commissionDollars).toBe(1224.0);
-  });
-
-  it("$6,000 material, $11,000 price (below floor)", () => {
-    const r = computeCommission(6000, 11000);
-    expect(r.floorPrice).toBe(12000);
-    expect(r.markup).toBeCloseTo(1.833, 3);
-    expect(r.ratioVsFloor).toBeCloseTo(0.917, 3);
-    expect(r.belowFloor).toBe(true);
-    expect(r.commissionRate).toBeCloseTo(0.04);
-    expect(r.grossProfit).toBe(5000);
-    expect(r.commissionDollars).toBe(200.0);
-  });
-
-  it("$33,183 material, $49,739 price - the real job this was built for", () => {
-    const r = computeCommission(33183, 49739);
-    expect(r.floorPrice).toBeCloseTo(56411.1, 2);
-    expect(r.markup).toBeCloseTo(1.499, 3);
-    expect(r.ratioVsFloor).toBeCloseTo(0.882, 3);
-    expect(r.belowFloor).toBe(true);
-    expect(r.commissionRate).toBeCloseTo(0.04);
-    expect(r.grossProfit).toBe(16556);
-    expect(r.commissionDollars).toBe(662.24);
-    // Old scheme paid $1,647 on this job - this is the incentive redesign
-    // working as intended, not a bug.
-    expect(r.commissionDollars).toBeLessThan(1647);
-  });
-});
-
-describe("floor band edges - lower bounds are inclusive", () => {
+describe("computeCommission - markup rate card", () => {
   it.each([
-    [1000, 2300],
-    [2000, 4400],
-    [3500, 7350],
-    [5000, 10000],
-    [8000, 15200],
-    [12000, 21600],
-    [25000, 42500],
-  ])("material %d -> floor %d", (material, expectedFloor) => {
-    expect(computeFloorPrice(material)).toBeCloseTo(expectedFloor, 2);
+    [1.4,  4],
+    [1.41, 8],
+    [1.79, 8],
+    [1.8,  14],
+    [1.89, 14],
+    [1.9,  16],
+    [1.99, 16],
+    [2.0,  19],
+    [2.09, 19],
+    [2.1,  20],
+    [3.0,  20], // well past the top tier - stays at 20%, no band beyond it
+  ])("markup %sx -> %s%% commission rate", (markup, expectedPct) => {
+    const price = 10000 * markup;
+    const r = computeCommission(10000, price);
+    expect(r.markup).toBeCloseTo(markup, 3);
+    expect(r.commissionRate).toBeCloseTo(expectedPct / 100);
   });
 
-  it("is continuous across the flat/multiplier boundary at $1,000", () => {
-    // Just under $1,000 uses the flat $2,300 floor; at exactly $1,000 the
-    // 2.30x multiplier band kicks in - they should agree at the boundary.
-    expect(computeFloorPrice(999.99)).toBeCloseTo(2300, 0);
-    expect(computeFloorPrice(1000)).toBe(2300);
+  it("computes real gross profit and commission dollars at the default 2.0x markup", () => {
+    const r = computeCommission(10000, 20000);
+    expect(r.grossProfit).toBe(10000);
+    expect(r.commissionRate).toBeCloseTo(0.19);
+    expect(r.commissionDollars).toBe(1900);
+  });
+
+  it("computes correctly at 2.1x (top tier)", () => {
+    const r = computeCommission(10000, 21000);
+    expect(r.grossProfit).toBe(11000);
+    expect(r.commissionRate).toBeCloseTo(0.20);
+    expect(r.commissionDollars).toBe(2200);
+  });
+
+  it("a real job: material $33,183, price $49,739", () => {
+    const r = computeCommission(33183, 49739);
+    expect(r.markup).toBeCloseTo(1.499, 3);
+    expect(r.commissionRate).toBeCloseTo(0.08); // 1.41-1.79x band
+    expect(r.grossProfit).toBe(16556);
+    expect(r.commissionDollars).toBeCloseTo(1324.48, 2);
   });
 });
 
 describe("edge cases", () => {
-  it("treats $0 material cost as $0, not a crash", () => {
-    const r = computeCommission(0, undefined);
-    expect(r.floorPrice).toBe(2300);
-    expect(Number.isFinite(r.commissionDollars)).toBe(true);
+  it("defaults price to the 2.0x default markup when omitted", () => {
+    const r = computeCommission(10000, undefined);
+    expect(r.price).toBe(20000);
+    expect(r.commissionRate).toBeCloseTo(0.19);
   });
 
-  it("treats blank/null/undefined material cost as $0", () => {
-    for (const bad of [null, undefined, NaN, "" as unknown as number]) {
-      const r = computeCommission(bad, undefined);
+  it("treats $0/blank/negative material cost as $0, not a crash", () => {
+    for (const bad of [0, null, undefined, NaN, -500]) {
+      const r = computeCommission(bad, 5000);
       expect(r.materialCost).toBe(0);
-      expect(r.floorPrice).toBe(2300);
+      expect(Number.isFinite(r.commissionDollars)).toBe(true);
     }
   });
 
   it("never produces a negative commission when price is below material cost", () => {
-    const r = computeCommission(6000, 3000);
+    const r = computeCommission(10000, 6000);
     expect(r.grossProfit).toBeLessThan(0);
+    expect(r.commissionRate).toBeCloseTo(0.04); // markup 0.6x - the 0-1.4x band
     expect(r.commissionDollars).toBe(0);
   });
 
-  it("a sub-$1,000 material job quoted above $2,300 still ratios off the $2,300 floor", () => {
-    const r = computeCommission(700, 3000);
-    expect(r.floorPrice).toBe(2300);
-    expect(r.ratioVsFloor).toBeCloseTo(3000 / 2300, 3);
-    expect(r.commissionRate).toBeCloseTo(0.2); // 3000/2300 = 1.304, well past the 1.15 top tier
-  });
-
-  it("treats a price a hair under floor from float noise as AT floor, not below it", () => {
-    // The quote-builder UI derives price from a markup multiplier via a
-    // separate tax/CC-fee/discount pipeline (lib/pricing/shared.ts) that
-    // doesn't invert bit-for-bit against the floor math here - a price
-    // meant to land exactly on the floor can come out a fraction of a
-    // cent under it. That's float noise, not a real below-floor quote.
-    const floor = computeFloorPrice(9372.38);
-    const r = computeCommission(9372.38, floor - 0.0000001);
-    expect(r.belowFloor).toBe(false);
-    expect(r.commissionRate).toBeCloseTo(0.14);
-  });
-
-  it("negative material cost is treated as $0", () => {
-    const r = computeCommission(-500, undefined);
-    expect(r.materialCost).toBe(0);
-    expect(r.floorPrice).toBe(2300);
+  it("a markup of exactly 0 (price == material cost) is the bottom 4% band, not a crash", () => {
+    const r = computeCommission(10000, 10000);
+    expect(r.markup).toBe(1);
+    expect(r.commissionRate).toBeCloseTo(0.04);
+    expect(r.grossProfit).toBe(0);
+    expect(r.commissionDollars).toBe(0);
   });
 });
 
 describe("computeBreakEven", () => {
-  it("is reference-only and independent of the floor schedule", () => {
-    // breakEven = 2329 + 1.40 * materialCost
+  it("is reference-only and independent of the markup schedule", () => {
     expect(computeBreakEven(6000)).toBeCloseTo(2329 + 1.4 * 6000, 2);
-  });
-
-  it("sits above the floor on small jobs (the floor is deliberately below break-even there)", () => {
-    const material = 500;
-    expect(computeFloorPrice(material)).toBeLessThan(computeBreakEven(material));
-  });
-});
-
-describe("nextTierPrompt", () => {
-  it("gives the minimum price to enter the next tier and the commission delta at that exact price", () => {
-    // $6,000 material, quoted at floor ($12,000, 14%) - next tier (17%)
-    // starts at ratio 1.05, i.e. $12,600.
-    const prompt = nextTierPrompt(6000, 12000);
-    expect(prompt).not.toBeNull();
-    expect(prompt!.nextRate).toBeCloseTo(0.17);
-    expect(prompt!.targetPrice).toBe(12600);
-    // Commission at $12,600 (17% of $6,600 profit) minus commission at
-    // $12,000 (14% of $6,000 profit): 1122 - 840 = 282.
-    expect(prompt!.extraDollars).toBe(282);
-  });
-
-  it("returns null once already at the top tier", () => {
-    const prompt = nextTierPrompt(6000, 14000); // ratio ~1.167, already 20%
-    expect(prompt).toBeNull();
-  });
-
-  it("offers a path back up from below floor", () => {
-    const prompt = nextTierPrompt(6000, 11000);
-    expect(prompt).not.toBeNull();
-    expect(prompt!.nextRate).toBeCloseTo(0.14);
-    expect(prompt!.targetPrice).toBe(12000); // the floor itself
-    expect(prompt!.extraDollars).toBeGreaterThan(0);
   });
 });
 
 describe("discount commission exemption - first $600 doesn't count against the tier", () => {
-  // material $6,000 -> floor $12,000 (2.00x band) throughout this block.
+  // material $10,000, sticker price at 2.0x = $20,000 (19%) throughout.
 
-  it("a discount under $600 doesn't trip the below-floor warning", () => {
-    // $400 off the floor - fully exempt.
-    const r = computeCommission(6000, 11600, { discount: 400 });
-    expect(r.belowFloor).toBe(false);
-    expect(r.commissionRate).toBeCloseTo(0.14);
+  it("a discount under $600 doesn't drop the tier", () => {
+    const r = computeCommission(10000, 19600, { discount: 400 }); // $400 off $20,000
+    expect(r.commissionRate).toBeCloseTo(0.19);
     expect(r.discountForgiven).toBe(400);
     expect(r.discountCounted).toBe(0);
-    // Real money is still real - grossProfit/commission use the actual
-    // discounted price, not a hypothetical undiscounted one.
-    expect(r.grossProfit).toBe(5600);
-    expect(r.commissionDollars).toBe(784);
+    expect(r.grossProfit).toBe(9600);
+    expect(r.commissionDollars).toBeCloseTo(1824, 2);
   });
 
   it("exactly $600 off is still fully exempt (not \"more than\" $600)", () => {
-    const r = computeCommission(6000, 11400, { discount: 600 });
-    expect(r.belowFloor).toBe(false);
-    expect(r.commissionRate).toBeCloseTo(0.14);
+    const r = computeCommission(10000, 19400, { discount: 600 });
+    expect(r.commissionRate).toBeCloseTo(0.19);
     expect(r.discountForgiven).toBe(600);
     expect(r.discountCounted).toBe(0);
   });
 
   it("only the amount over $600 counts against the tier", () => {
-    // $800 off - $600 exempt, $200 counts, which is enough to drop below floor.
-    const r = computeCommission(6000, 11200, { discount: 800 });
-    expect(r.belowFloor).toBe(true);
-    expect(r.commissionRate).toBeCloseTo(0.04);
+    // $800 off - $600 exempt, $200 counts -> effective markup (19200+600)/10000 = 1.98 -> 16% band.
+    const r = computeCommission(10000, 19200, { discount: 800 });
+    expect(r.commissionRate).toBeCloseTo(0.16);
     expect(r.discountForgiven).toBe(600);
     expect(r.discountCounted).toBe(200);
-    expect(r.grossProfit).toBe(5200);
-    expect(r.commissionDollars).toBe(208);
-  });
-
-  it("ratioVsFloor still reports the real (un-adjusted) ratio for display", () => {
-    // Same $800-off case - the raw ratio should still reflect reality even
-    // though the commission rate itself is based on the adjusted ratio.
-    const r = computeCommission(6000, 11200, { discount: 800 });
-    expect(r.ratioVsFloor).toBeCloseTo(11200 / 12000, 3);
-  });
-
-  it("respects a custom exemption amount", () => {
-    const r = computeCommission(6000, 11500, { discount: 500, discountExemption: 300 });
-    // $300 exempt, $200 counts -> effective price for tier purposes is
-    // 11500 + 300 = 11800, still below the 12000 floor.
-    expect(r.belowFloor).toBe(true);
-    expect(r.discountForgiven).toBe(300);
-    expect(r.discountCounted).toBe(200);
-  });
-
-  it("nextTierPrompt accounts for an exempted discount already in play", () => {
-    // At floor via a fully-exempt $400 discount (real price $11,600) -
-    // reaching the next tier only needs to close the remaining $400 gap
-    // to $12,600 (1.05x floor), not the full $600 above the real price.
-    const prompt = nextTierPrompt(6000, 11600, { discount: 400 });
-    expect(prompt).not.toBeNull();
-    expect(prompt!.nextRate).toBeCloseTo(0.17);
-    expect(prompt!.targetPrice).toBe(12200);
+    expect(r.grossProfit).toBe(9200);
+    expect(r.commissionDollars).toBeCloseTo(1472, 2);
   });
 
   it("discountFullyExempt uncaps the exemption entirely (e.g. a CC-fee waiver on a big job)", () => {
-    // A $1,500 discount would normally leave $900 counting against the
-    // tier (well past the $600 cap) and land below floor - but a fully
-    // exempt discount (waiving the card fee isn't a real price cut) should
-    // never penalize commission, no matter the dollar amount.
-    const r = computeCommission(6000, 10500, { discount: 1500, discountFullyExempt: true });
-    expect(r.belowFloor).toBe(false);
-    expect(r.commissionRate).toBeCloseTo(0.14);
+    // $1,500 off would normally leave $900 counting against the tier - but a
+    // fully exempt discount should never affect the rate, any amount.
+    const r = computeCommission(10000, 18500, { discount: 1500, discountFullyExempt: true });
+    expect(r.commissionRate).toBeCloseTo(0.19);
     expect(r.discountForgiven).toBe(1500);
     expect(r.discountCounted).toBe(0);
-    // Still real money - grossProfit reflects the actual discounted price.
-    expect(r.grossProfit).toBe(4500);
+    expect(r.grossProfit).toBe(8500);
+  });
+});
+
+describe("nextTierPrompt", () => {
+  it("gives the minimum price to enter the next tier and the commission delta at that exact price", () => {
+    // At 2.0x (19%), the next tier (20%) starts at 2.1x = $21,000.
+    const prompt = nextTierPrompt(10000, 20000);
+    expect(prompt).not.toBeNull();
+    expect(prompt!.nextRate).toBeCloseTo(0.20);
+    expect(prompt!.targetPrice).toBe(21000);
+    // Commission at $21,000 (20% of $11,000) minus at $20,000 (19% of $10,000): 2200 - 1900 = 300.
+    expect(prompt!.extraDollars).toBe(300);
   });
 
-  it("nextTierPrompt also uncaps the target when fully exempt", () => {
-    const prompt = nextTierPrompt(6000, 10500, { discount: 1500, discountFullyExempt: true });
+  it("returns null once already at the top tier", () => {
+    const prompt = nextTierPrompt(10000, 25000); // 2.5x, already 20%
+    expect(prompt).toBeNull();
+  });
+
+  it("returns null when there's no material cost to base a markup on", () => {
+    expect(nextTierPrompt(0, 1000)).toBeNull();
+  });
+
+  it("offers a path up from the bottom tier", () => {
+    const prompt = nextTierPrompt(10000, 12000); // 1.2x, 4%
     expect(prompt).not.toBeNull();
-    expect(prompt!.nextRate).toBeCloseTo(0.17);
-    // 1.05 * 12000 - 1500 = 11100
-    expect(prompt!.targetPrice).toBe(11100);
+    expect(prompt!.nextRate).toBeCloseTo(0.08);
+    expect(prompt!.targetPrice).toBe(14100); // 1.41x
+  });
+
+  it("accounts for an exempted discount already in play", () => {
+    // At $19,600 (2.0x sticker minus a fully-exempt $400) - reaching the
+    // next tier (2.1x = $21,000) only needs to close the remaining $1,400
+    // gap, not the full $1,000 above the real price.
+    const prompt = nextTierPrompt(10000, 19600, { discount: 400 });
+    expect(prompt).not.toBeNull();
+    expect(prompt!.nextRate).toBeCloseTo(0.20);
+    expect(prompt!.targetPrice).toBe(20600);
   });
 });

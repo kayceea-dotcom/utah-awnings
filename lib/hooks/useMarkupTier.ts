@@ -1,54 +1,56 @@
 import { useEffect, useState } from "react";
-import { computeFloorPrice } from "@/lib/commission/engine";
 import { markupForTargetPrice } from "@/lib/pricing/shared";
 
-export type MarkupTier = "floor" | "plus5" | "plus15" | "custom";
+export type MarkupTier = "r8" | "r14" | "r16" | "r19" | "r20" | "custom";
 
 export const MARKUP_TIER_OPTIONS: { value: MarkupTier; label: string }[] = [
-  { value: "floor", label: "Floor (14% commission)" },
-  { value: "plus5", label: "+5% above floor (17% commission)" },
-  { value: "plus15", label: "+15% above floor (20% commission)" },
+  { value: "r8", label: "1.41x — 8% commission" },
+  { value: "r14", label: "1.8x — 14% commission" },
+  { value: "r16", label: "1.9x — 16% commission" },
+  { value: "r19", label: "2.0x — 19% commission" },
+  { value: "r20", label: "2.1x — 20% commission" },
   { value: "custom", label: "Custom" },
 ];
 
-const TIER_RATIOS: Record<Exclude<MarkupTier, "custom">, number> = {
-  floor: 1.0,
-  plus5: 1.05,
-  plus15: 1.15,
+const TIER_MARKUPS: Record<Exclude<MarkupTier, "custom">, number> = {
+  r8: 1.41,
+  r14: 1.8,
+  r16: 1.9,
+  r19: 2.0,
+  r20: 2.1,
 };
 
-// Keeps the quote's price pinned to a chosen commission tier (Floor/+5%/
-// +15% above floor) as material cost changes, by continuously solving for
-// the markup multiplier that hits that tier's ratio - the exact same
-// inversion the one-time floor default used, just re-applied on every
-// change instead of once. Picking "Custom" freezes it so the rep can type
-// any multiplier by hand (including a below-floor one - that's still
-// allowed, just flagged red elsewhere, per how this was scoped).
+// Keeps the quote's price pinned to a chosen commission-tier markup
+// (matching the rate card in lib/commission/schedule.ts) as material cost
+// changes, by continuously solving for the raw markup multiplier (the one
+// fed into finalizePricing) that produces that exact commission-basis
+// markup (price / materialCost) - same inversion technique the old
+// floor-based version used, just targeting a fixed markup directly instead
+// of a floor-derived price. Picking "Custom" freezes it so the rep can type
+// any multiplier by hand.
 //
 // Deliberately solves against a $0 discount (the pre-discount sticker
-// price), not whatever discount is currently applied - if it re-targeted
-// including the live discount, applying a discount would just make this
-// hook raise markup to cancel it back out, and the customer's price would
-// never actually move. A discount should genuinely reduce what they pay.
+// price) - if it re-targeted including the live discount, applying a
+// discount would just make this hook raise markup to cancel it back out,
+// and the customer's price would never actually move.
 export function useMarkupTier(opts: {
   materialCost: number;
   subtotal: number;
   markup: number;
   setMarkup: (markup: number) => void;
 }) {
-  const [tier, setTier] = useState<MarkupTier>("floor");
+  const [tier, setTier] = useState<MarkupTier>("r19");
   const { materialCost, subtotal, markup, setMarkup } = opts;
 
   useEffect(() => {
     if (tier === "custom") return;
     if (materialCost <= 0 || subtotal <= 0) return;
-    const floor = computeFloorPrice(materialCost);
-    const targetPrice = TIER_RATIOS[tier] * floor;
+    const targetPrice = TIER_MARKUPS[tier] * materialCost;
     const required = markupForTargetPrice(targetPrice, subtotal, 0);
     if (!Number.isFinite(required) || required <= 0) return;
     // Round UP (never down) at high precision - rounding down, even by a
     // fraction of a cent, can land the price a cent under the tier's
-    // threshold (e.g. falsely dip back below floor).
+    // markup threshold.
     const rounded = Math.ceil(required * 1e6) / 1e6;
     if (Math.abs(rounded - markup) > 0.000001) {
       setMarkup(rounded);
@@ -59,6 +61,6 @@ export function useMarkupTier(opts: {
   return {
     tier,
     setTier,
-    reset: () => setTier("floor"),
+    reset: () => setTier("r19"),
   };
 }

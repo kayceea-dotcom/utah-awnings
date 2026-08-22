@@ -1,48 +1,32 @@
-// Config data for the floor-price / commission engine. An admin should be
-// able to tune these bands without touching lib/commission/engine.ts.
+// Config data for the commission engine. An admin should be able to tune
+// these bands without touching lib/commission/engine.ts.
 
-export interface FloorBand {
-  /** Inclusive lower bound of material cost this band applies to. */
+export interface MarkupCommissionBand {
+  /** Inclusive lower bound of markup (price / materialCost) this band
+   *  applies to. Bands are matched by taking the highest band whose `min`
+   *  the markup meets or exceeds, so each band implicitly ends where the
+   *  next one's `min` begins. */
   min: number;
-  /** "flat" bands ignore material cost and use `value` as the floor price
-   *  directly; "multiplier" bands multiply material cost by `value`. */
-  type: "flat" | "multiplier";
-  value: number;
-}
-
-// Bands are matched by taking the highest band whose `min` the material
-// cost meets or exceeds, so lower bounds are inclusive and each band
-// implicitly ends where the next one's `min` begins.
-export const FLOOR_SCHEDULE: FloorBand[] = [
-  { min: 0, type: "flat", value: 2300 },
-  { min: 1000, type: "multiplier", value: 2.30 },
-  { min: 2000, type: "multiplier", value: 2.20 },
-  { min: 3500, type: "multiplier", value: 2.10 },
-  { min: 5000, type: "multiplier", value: 2.00 },
-  { min: 8000, type: "multiplier", value: 1.90 },
-  { min: 12000, type: "multiplier", value: 1.80 },
-  { min: 25000, type: "multiplier", value: 1.70 },
-];
-
-export interface CommissionBand {
-  /** Inclusive lower bound of price-vs-floor ratio (price / floorPrice). */
-  minRatio: number;
   rate: number;
 }
 
-// Ratio bands: [minRatio, next band's minRatio) - so "at floor" covers
-// 1.00 up to (but not including) 1.05, etc. The last band has no upper
-// bound.
-export const COMMISSION_SCHEDULE: CommissionBand[] = [
-  { minRatio: -Infinity, rate: 0.04 }, // below floor
-  { minRatio: 1.00, rate: 0.14 },      // at floor
-  { minRatio: 1.05, rate: 0.17 },      // 5%+ above floor
-  { minRatio: 1.15, rate: 0.20 },      // 15%+ above floor
+// Straight from the rate card: commission is a direct function of markup
+// (price / materialCost) - no floor/ratio concept, just this lookup.
+export const MARKUP_COMMISSION_SCHEDULE: MarkupCommissionBand[] = [
+  { min: 0,    rate: 0.04 }, // 0 - 1.4x
+  { min: 1.41, rate: 0.08 }, // 1.41 - 1.79x
+  { min: 1.8,  rate: 0.14 }, // 1.8 - 1.89x
+  { min: 1.9,  rate: 0.16 }, // 1.9 - 1.99x
+  { min: 2.0,  rate: 0.19 }, // 2.0 - 2.09x
+  { min: 2.1,  rate: 0.20 }, // 2.1x and above
 ];
 
+// Default markup a quote starts at once material cost is known.
+export const DEFAULT_MARKUP = 2.0;
+
 // Reference-only break-even formula: breakEven = BASE + MATERIAL_MULTIPLIER * materialCost.
-// This is NOT a quoting floor (the floor schedule above is deliberately
-// below break-even on small jobs) - display only, never enforced.
+// Purely informational (e.g. shown alongside the commission panel) - never
+// enforced and unrelated to the markup/commission bands above.
 export const BREAK_EVEN_BASE = 2329;
 export const BREAK_EVEN_MATERIAL_MULTIPLIER = 1.40;
 

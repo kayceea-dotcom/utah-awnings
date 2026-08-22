@@ -27,42 +27,43 @@ export default function CommissionPanel({ materialCost, price, discount = 0, dis
 
   const c = computeCommission(materialCost, price, { discount, discountFullyExempt });
   const next = nextTierPrompt(materialCost, price, { discount, discountFullyExempt });
+  // Bottom two rate-card tiers (4%/8%, markup under 1.8x) get flagged red -
+  // there's no hard floor anymore, just a low-tier warning.
+  const warn = c.commissionRate < 0.14;
 
   return (
     <div className="card p-5 space-y-3">
       <h2 className="section-heading">Commission</h2>
 
-      {c.belowFloor && (
+      {warn && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2">
           <p className="text-xs font-bold text-red-700">
-            Below minimum — commission drops to {(c.commissionRate * 100).toFixed(0)}%
+            Low markup — commission is only {(c.commissionRate * 100).toFixed(0)}%
           </p>
         </div>
       )}
 
       <div className="space-y-1.5 text-sm">
         <Row label="Material Cost" value={fmt(materialCost)} />
-        <Row label="Floor Price" value={fmt(c.floorPrice)} />
         <Row label="Current Price" value={fmt(c.price)} />
-        <Row label="Markup" value={c.markup.toFixed(3) + "x"} warn={c.belowFloor} />
-        <Row label="vs Floor" value={(c.percentVsFloor >= 0 ? "+" : "") + c.percentVsFloor.toFixed(1) + "%"} warn={c.belowFloor} />
+        <Row label="Markup" value={c.markup.toFixed(3) + "x"} warn={warn} />
         <Row label="Gross Profit" value={fmt(c.grossProfit)} />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className={"rounded-xl p-3 border " + (c.belowFloor ? "border-red-200 bg-red-50" : "border-green-100 bg-green-50")}>
-          <p className={"text-xs font-bold uppercase tracking-wide " + (c.belowFloor ? "text-red-600" : "text-green-600")}>
+        <div className={"rounded-xl p-3 border " + (warn ? "border-red-200 bg-red-50" : "border-green-100 bg-green-50")}>
+          <p className={"text-xs font-bold uppercase tracking-wide " + (warn ? "text-red-600" : "text-green-600")}>
             Commission Rate
           </p>
-          <p className={"text-lg font-bold " + (c.belowFloor ? "text-red-700" : "text-green-700")}>
+          <p className={"text-lg font-bold " + (warn ? "text-red-700" : "text-green-700")}>
             {(c.commissionRate * 100).toFixed(0)}%
           </p>
         </div>
-        <div className={"rounded-xl p-3 border " + (c.belowFloor ? "border-red-200 bg-red-50" : "border-green-100 bg-green-50")}>
-          <p className={"text-xs font-bold uppercase tracking-wide " + (c.belowFloor ? "text-red-600" : "text-green-600")}>
+        <div className={"rounded-xl p-3 border " + (warn ? "border-red-200 bg-red-50" : "border-green-100 bg-green-50")}>
+          <p className={"text-xs font-bold uppercase tracking-wide " + (warn ? "text-red-600" : "text-green-600")}>
             Commission $
           </p>
-          <p className={"text-lg font-bold " + (c.belowFloor ? "text-red-700" : "text-green-700")}>
+          <p className={"text-lg font-bold " + (warn ? "text-red-700" : "text-green-700")}>
             {fmt(c.commissionDollars)}
           </p>
         </div>
