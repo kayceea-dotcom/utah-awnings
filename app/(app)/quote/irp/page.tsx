@@ -241,9 +241,12 @@ function PriceSummaryPanel({ result, onClose }: { result: ReturnType<typeof calc
           </div>
         ))}
         <div className="border-t border-dashed border-gray-200 my-2" />
-        <div className="flex justify-between text-gray-600">
-          <span title="The internal pricing multiplier - different from the Commission Markup shown below, which is Total Job Sale ÷ Material Cost.">Pricing Markup</span>
-          <span className="font-mono text-gray-800">{result.markup}x</span>
+        <div>
+          <div className="flex justify-between text-gray-600">
+            <span>Pricing Markup</span>
+            <span className="font-mono text-gray-800">{result.markup}x</span>
+          </div>
+          <p className="text-[10px] text-gray-400 mt-0.5">Applies to subtotal (materials + tax + add-ons) - always lower than Commission Markup below, which is price ÷ material cost only</p>
         </div>
         <div className="flex justify-between text-gray-600">
           <span>CC Fee (3.25%)</span>
