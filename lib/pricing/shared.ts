@@ -66,15 +66,16 @@ export function finalizePricing(materialCost: number, opts: PricingSummaryOpts):
   };
 }
 
-// Exact inverse of finalizePricing's markup step: what markup multiplier
-// produces a given Total Job Sale, for a job whose subtotal/discount are
-// already known? Used to default a quote's price to the commission
-// engine's floor (lib/commission) without duplicating the CC-fee math here.
-export function markupForTargetPrice(targetTotalJobSale: number, subtotal: number, discount: number): number {
-  if (subtotal <= 0) return 0;
-  const k = RATES.CC_FEE_RATE / (1 - RATES.CC_FEE_RATE);
-  const preSaleTotal = (targetTotalJobSale + discount) / (1 + k);
-  return preSaleTotal / subtotal;
+// The price commission is actually calculated against - preSaleTotal (the
+// markup applied to subtotal), before the CC fee is layered on top and
+// before a Check/Cash "discount" (which only exists to cancel that fee back
+// out) is subtracted. This makes commission identical whether the customer
+// pays by card or check/cash - the fee (and waiving it) never touches it.
+// A real discount ($200/$600/Custom) DOES reduce it, dollar for dollar,
+// since that's an actual price concession.
+export function commissionBasisPrice(result: PricingSummary, isCashDiscount: boolean): number {
+  const preSaleTotal = result.subtotal * result.markup;
+  return isCashDiscount ? preSaleTotal : preSaleTotal - result.discount;
 }
 
 // Real supplier stock lengths (not a uniform step) — smallest one that fits. 4/8ft

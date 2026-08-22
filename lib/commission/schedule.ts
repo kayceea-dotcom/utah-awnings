@@ -29,11 +29,3 @@ export const DEFAULT_MARKUP = 2.0;
 // enforced and unrelated to the markup/commission bands above.
 export const BREAK_EVEN_BASE = 2329;
 export const BREAK_EVEN_MATERIAL_MULTIPLIER = 1.40;
-
-// The first $600 of any discount doesn't count against the rep's commission
-// tier - only the amount by which a discount exceeds this counts as a real
-// price concession for commission purposes. Covers small accommodations
-// (e.g. waiving the credit-card fee for a check/cash payment) without
-// needing to special-case discount reasons - it's purely about the dollar
-// amount.
-export const DISCOUNT_COMMISSION_EXEMPTION = 600;

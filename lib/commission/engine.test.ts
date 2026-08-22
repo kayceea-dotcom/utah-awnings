@@ -90,43 +90,32 @@ describe("computeBreakEven", () => {
   });
 });
 
-describe("discount commission exemption - first $600 doesn't count against the tier", () => {
-  // material $10,000, sticker price at 2.0x = $20,000 (19%) throughout.
+describe("discounts count fully against commission", () => {
+  // material $10,000, sticker price at 2.0x = $20,000 (19%).
+  // The CC fee (and waiving it for Check/Cash) never reaches this engine at
+  // all - callers pass a price that already excludes it (see
+  // lib/pricing/shared.ts commissionBasisPrice) - so there's nothing to
+  // exempt here. Any discount reflected in `price` counts for real.
 
-  it("a discount under $600 doesn't drop the tier", () => {
-    const r = computeCommission(10000, 19600, { discount: 400 }); // $400 off $20,000
-    expect(r.commissionRate).toBeCloseTo(0.19);
-    expect(r.discountForgiven).toBe(400);
-    expect(r.discountCounted).toBe(0);
-    expect(r.grossProfit).toBe(9600);
-    expect(r.commissionDollars).toBeCloseTo(1824, 2);
-  });
-
-  it("exactly $600 off is still fully exempt (not \"more than\" $600)", () => {
-    const r = computeCommission(10000, 19400, { discount: 600 });
-    expect(r.commissionRate).toBeCloseTo(0.19);
-    expect(r.discountForgiven).toBe(600);
-    expect(r.discountCounted).toBe(0);
-  });
-
-  it("only the amount over $600 counts against the tier", () => {
-    // $800 off - $600 exempt, $200 counts -> effective markup (19200+600)/10000 = 1.98 -> 16% band.
-    const r = computeCommission(10000, 19200, { discount: 800 });
+  it("a $400 discount can drop the rate tier - no forgiveness cushion", () => {
+    const r = computeCommission(10000, 19600); // $400 off $20,000 -> 1.96x, drops from 19% to 16%
     expect(r.commissionRate).toBeCloseTo(0.16);
-    expect(r.discountForgiven).toBe(600);
-    expect(r.discountCounted).toBe(200);
-    expect(r.grossProfit).toBe(9200);
-    expect(r.commissionDollars).toBeCloseTo(1472, 2);
+    expect(r.grossProfit).toBe(9600);
+    expect(r.commissionDollars).toBeCloseTo(1536, 2);
   });
 
-  it("discountFullyExempt uncaps the exemption entirely (e.g. a CC-fee waiver on a big job)", () => {
-    // $1,500 off would normally leave $900 counting against the tier - but a
-    // fully exempt discount should never affect the rate, any amount.
-    const r = computeCommission(10000, 18500, { discount: 1500, discountFullyExempt: true });
-    expect(r.commissionRate).toBeCloseTo(0.19);
-    expect(r.discountForgiven).toBe(1500);
-    expect(r.discountCounted).toBe(0);
-    expect(r.grossProfit).toBe(8500);
+  it("a $600 discount drops the rate tier further", () => {
+    const r = computeCommission(10000, 19400); // 1.94x - still in the 16% band
+    expect(r.commissionRate).toBeCloseTo(0.16);
+    expect(r.grossProfit).toBe(9400);
+  });
+
+  it("a large discount drops the rate tier and the dollar amount together", () => {
+    // $600 off a $10,000-material, 4000-total example (2.0x, 19% -> 1.7x, 8%).
+    const r = computeCommission(2000, 3400);
+    expect(r.commissionRate).toBeCloseTo(0.08);
+    expect(r.grossProfit).toBe(1400);
+    expect(r.commissionDollars).toBeCloseTo(112, 2);
   });
 });
 
@@ -155,15 +144,5 @@ describe("nextTierPrompt", () => {
     expect(prompt).not.toBeNull();
     expect(prompt!.nextRate).toBeCloseTo(0.08);
     expect(prompt!.targetPrice).toBe(14100); // 1.41x
-  });
-
-  it("accounts for an exempted discount already in play", () => {
-    // At $19,600 (2.0x sticker minus a fully-exempt $400) - reaching the
-    // next tier (2.1x = $21,000) only needs to close the remaining $1,400
-    // gap, not the full $1,000 above the real price.
-    const prompt = nextTierPrompt(10000, 19600, { discount: 400 });
-    expect(prompt).not.toBeNull();
-    expect(prompt!.nextRate).toBeCloseTo(0.20);
-    expect(prompt!.targetPrice).toBe(20600);
   });
 });

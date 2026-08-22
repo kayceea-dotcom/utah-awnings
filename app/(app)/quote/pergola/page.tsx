@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useState, useMemo, useEffect } from "react";
 import { calcPergola } from "@/lib/pricing/pergola";
-import { groundMountSurcharge } from "@/lib/pricing/shared";
+import { groundMountSurcharge, commissionBasisPrice } from "@/lib/pricing/shared";
 import { estimateMonthlyPayment, BID_FINANCING_OPTIONS } from "@/lib/financing";
 import { useEditableMaterialList } from "@/lib/hooks/useEditableMaterialList";
 import { useMarkupTier } from "@/lib/hooks/useMarkupTier";
@@ -317,6 +317,8 @@ export default function PergolaQuotePage() {
     discount: inp.discount,
     setDiscount: (d) => setField("discount", d),
   });
+  const isCashDiscount = discountOption.option === "cash";
+  const commissionPrice = commissionBasisPrice(effectiveResult, isCashDiscount);
 
   useEffect(() => {
     if (profile?.full_name) {
@@ -484,7 +486,7 @@ export default function PergolaQuotePage() {
                 showRafterTail
               />
               <PriceSummaryPanel result={effectiveResult} />
-              <CommissionPanel materialCost={effectiveResult.materialCost} price={effectiveResult.totalJobSale} discount={inp.discount} discountFullyExempt={discountOption.option === 'cash'} />
+              <CommissionPanel materialCost={effectiveResult.materialCost} price={commissionPrice} discount={inp.discount} isCashDiscount={isCashDiscount} />
             </div>
           </div>
         </div>
@@ -497,7 +499,7 @@ export default function PergolaQuotePage() {
           <div className="bg-white w-full rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto">
             <PriceSummaryPanel result={effectiveResult} onClose={() => setShowPricePanel(false)} />
             <div className="mt-4">
-              <CommissionPanel materialCost={effectiveResult.materialCost} price={effectiveResult.totalJobSale} discount={inp.discount} discountFullyExempt={discountOption.option === 'cash'} />
+              <CommissionPanel materialCost={effectiveResult.materialCost} price={commissionPrice} discount={inp.discount} isCashDiscount={isCashDiscount} />
             </div>
           </div>
         </div>

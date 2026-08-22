@@ -3,40 +3,24 @@ import {
   DEFAULT_MARKUP,
   BREAK_EVEN_BASE,
   BREAK_EVEN_MATERIAL_MULTIPLIER,
-  DISCOUNT_COMMISSION_EXEMPTION,
   type MarkupCommissionBand,
 } from "./schedule";
 
 export interface CommissionResult {
   materialCost: number;
   price: number;
-  /** price / materialCost (0 when materialCost is 0). The real, un-adjusted
-   *  markup - informational; the commission rate is driven by the
-   *  discount-adjusted markup, not necessarily this exact number, once a
-   *  discount is involved. */
+  /** price / materialCost (0 when materialCost is 0). Drives the rate
+   *  lookup directly - no floor, no discount exemption. */
   markup: number;
-  /** Looked up from the discount-adjusted markup against
-   *  MARKUP_COMMISSION_SCHEDULE - a direct function of markup, no floor
-   *  or ratio concept involved. */
+  /** Looked up from markup against MARKUP_COMMISSION_SCHEDULE. */
   commissionRate: number;
   /** price - materialCost. Real money; can be negative, never clamped. */
   grossProfit: number;
   /** commissionRate * grossProfit, floored at 0 - a below-cost quote never
-   *  produces a negative commission. Uses the real grossProfit above - the
-   *  discount exemption only affects which rate tier applies, never the
-   *  actual dollars the math is based on. */
+   *  produces a negative commission. */
   commissionDollars: number;
   /** Reference-only informational number - see schedule.ts. Not enforced. */
   breakEven: number;
-  /** The discount fed in via config.discount (0 if none). */
-  discount: number;
-  /** Portion of `discount` exempted from counting against the commission
-   *  tier (up to DISCOUNT_COMMISSION_EXEMPTION, or all of it when
-   *  config.discountFullyExempt is set). */
-  discountForgiven: number;
-  /** Portion of `discount` beyond the exemption - this part DOES count
-   *  against the commission tier, same as any other price cut. */
-  discountCounted: number;
 }
 
 export interface NextTierPrompt {
@@ -63,11 +47,10 @@ function normalizeMaterialCost(materialCost: number | null | undefined): number 
   return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
-// Absorbs floating-point noise from the UI's tax/CC-fee/markup pipeline
-// (which doesn't perfectly bit-for-bit invert against markupForTargetPrice)
-// so a markup that's a fraction of a cent off a tier boundary - purely from
-// float arithmetic, not a real pricing difference - doesn't get classified
-// into the wrong band.
+// Absorbs floating-point noise from the UI's tax/markup pipeline so a price
+// that lands a fraction of a cent off a tier boundary - purely from float
+// arithmetic, not a real pricing difference - doesn't get classified into
+// the wrong band.
 const MARKUP_EPS = 1e-6;
 
 function commissionRateForMarkup(
@@ -88,17 +71,6 @@ export function computeBreakEven(materialCost: number | null | undefined): numbe
 
 export interface CommissionScheduleConfig {
   commissionSchedule?: MarkupCommissionBand[];
-  /** The discount applied to reach `price` - up to `discountExemption` of
-   *  it is excluded when determining the commission tier (see
-   *  DISCOUNT_COMMISSION_EXEMPTION in schedule.ts). Omit/0 for no discount. */
-  discount?: number;
-  discountExemption?: number;
-  /** When true, ALL of `discount` is excluded from the commission tier -
-   *  no $600 cap. For a discount that isn't a real price concession (e.g.
-   *  waiving the credit-card fee for a check/cash payment) - the rep
-   *  shouldn't be penalized just because the customer didn't pay by card,
-   *  no matter how large that fee is on a bigger job. */
-  discountFullyExempt?: boolean;
 }
 
 export function computeCommission(
@@ -111,17 +83,7 @@ export function computeCommission(
   const p = Number.isFinite(Number(price)) ? Number(price) : material * DEFAULT_MARKUP;
 
   const markup = material > 0 ? round3(p / material) : 0;
-
-  const discount = Math.max(0, Number(config.discount) || 0);
-  const exemption = config.discountExemption ?? DISCOUNT_COMMISSION_EXEMPTION;
-  const discountForgiven = config.discountFullyExempt ? discount : Math.min(discount, exemption);
-  const discountCounted = discount - discountForgiven;
-
-  // The rate is driven by what the markup would be if the exempt portion of
-  // the discount hadn't been taken off - so a discount within the exemption
-  // never drops the rep into a lower tier.
-  const commissionBasisMarkup = material > 0 ? (p + discountForgiven) / material : 0;
-  const commissionRate = commissionRateForMarkup(commissionBasisMarkup, commissionSchedule);
+  const commissionRate = commissionRateForMarkup(markup, commissionSchedule);
 
   const grossProfit = round2(p - material);
   const commissionDollars = Math.max(0, round2(commissionRate * grossProfit));
@@ -134,9 +96,6 @@ export function computeCommission(
     grossProfit,
     commissionDollars,
     breakEven: computeBreakEven(material),
-    discount,
-    discountForgiven,
-    discountCounted,
   };
 }
 
@@ -160,11 +119,7 @@ export function nextTierPrompt(
   const nextBand = currentIndex >= 0 ? sorted[currentIndex + 1] : undefined;
   if (!nextBand) return null;
 
-  // The real price needed only has to cover the gap after accounting for
-  // whatever discount is already being forgiven - so a rep with an
-  // exempted discount doesn't get told to raise price further than they
-  // actually need to.
-  const targetPrice = round2(nextBand.min * material - current.discountForgiven);
+  const targetPrice = round2(nextBand.min * material);
   const targetCommission = computeCommission(material, targetPrice, config);
 
   return {

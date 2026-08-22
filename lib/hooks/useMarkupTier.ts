@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { markupForTargetPrice } from "@/lib/pricing/shared";
 
 export type MarkupTier = "r8" | "r14" | "r16" | "r19" | "r20" | "custom";
 
@@ -24,15 +23,15 @@ const TIER_MARKUPS: Record<Exclude<MarkupTier, "custom">, number> = {
 // (matching the rate card in lib/commission/schedule.ts) as material cost
 // changes, by continuously solving for the raw markup multiplier (the one
 // fed into finalizePricing) that produces that exact commission-basis
-// markup (price / materialCost) - same inversion technique the old
-// floor-based version used, just targeting a fixed markup directly instead
-// of a floor-derived price. Picking "Custom" freezes it so the rep can type
-// any multiplier by hand.
+// markup (price / materialCost). Picking "Custom" freezes it so the rep can
+// type any multiplier by hand.
 //
 // Deliberately solves against a $0 discount (the pre-discount sticker
 // price) - if it re-targeted including the live discount, applying a
 // discount would just make this hook raise markup to cancel it back out,
-// and the customer's price would never actually move.
+// and the customer's price would never actually move. At $0 discount the
+// commission basis price is just subtotal * markup (see
+// lib/pricing/shared.ts commissionBasisPrice) - no CC-fee math to invert.
 export function useMarkupTier(opts: {
   materialCost: number;
   subtotal: number;
@@ -46,7 +45,7 @@ export function useMarkupTier(opts: {
     if (tier === "custom") return;
     if (materialCost <= 0 || subtotal <= 0) return;
     const targetPrice = TIER_MARKUPS[tier] * materialCost;
-    const required = markupForTargetPrice(targetPrice, subtotal, 0);
+    const required = targetPrice / subtotal;
     if (!Number.isFinite(required) || required <= 0) return;
     // Round UP (never down) at high precision - rounding down, even by a
     // fraction of a cent, can land the price a cent under the tier's

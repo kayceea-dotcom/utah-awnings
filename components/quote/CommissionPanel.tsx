@@ -13,8 +13,8 @@ function Row({ label, value, warn }: { label: string; value: string; warn?: bool
   );
 }
 
-export default function CommissionPanel({ materialCost, price, discount = 0, discountFullyExempt = false }: {
-  materialCost: number; price: number; discount?: number; discountFullyExempt?: boolean;
+export default function CommissionPanel({ materialCost, price, discount = 0, isCashDiscount = false }: {
+  materialCost: number; price: number; discount?: number; isCashDiscount?: boolean;
 }) {
   if (materialCost <= 0) {
     return (
@@ -25,8 +25,8 @@ export default function CommissionPanel({ materialCost, price, discount = 0, dis
     );
   }
 
-  const c = computeCommission(materialCost, price, { discount, discountFullyExempt });
-  const next = nextTierPrompt(materialCost, price, { discount, discountFullyExempt });
+  const c = computeCommission(materialCost, price);
+  const next = nextTierPrompt(materialCost, price);
   // Bottom two rate-card tiers (4%/8%, markup under 1.8x) get flagged red -
   // there's no hard floor anymore, just a low-tier warning.
   const warn = c.commissionRate < 0.14;
@@ -77,12 +77,11 @@ export default function CommissionPanel({ materialCost, price, discount = 0, dis
         </div>
       )}
 
-      {c.discount > 0 && (
+      {discount > 0 && (
         <p className="text-[11px] text-gray-400">
-          {discountFullyExempt
-            ? <>{fmt(c.discount)} check/cash discount — fully exempt from commission (not a price concession)</>
-            : <>{fmt(c.discountForgiven)} of the {fmt(c.discount)} discount is exempt from commission
-                {c.discountCounted > 0 && <> — {fmt(c.discountCounted)} counts against it</>}</>}
+          {isCashDiscount
+            ? <>{fmt(discount)} check/cash discount — waives the CC fee, doesn't affect commission</>
+            : <>Reflects a {fmt(discount)} discount already counted against commission above</>}
         </p>
       )}
 

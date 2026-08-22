@@ -7,6 +7,7 @@ import { calcIndividual } from "@/lib/pricing/individual";
 import type { IndividualInputs, IndividualLineInput } from "@/lib/pricing/individual";
 import { CATALOG, CATALOG_BY_KEY, CATEGORIES } from "@/lib/pricing/catalog";
 import { RATES } from "@/lib/pricing/rates";
+import { commissionBasisPrice } from "@/lib/pricing/shared";
 import { useMarkupTier } from "@/lib/hooks/useMarkupTier";
 import { useDiscountOption } from "@/lib/hooks/useDiscountOption";
 import TopBar from "@/components/TopBar";
@@ -210,6 +211,8 @@ export default function IndividualQuotePage() {
     discount: inp.discount,
     setDiscount: (d) => setField("discount", d),
   });
+  const isCashDiscount = discountOption.option === "cash";
+  const commissionPrice = commissionBasisPrice(result, isCashDiscount);
   const draftEntry = CATALOG_BY_KEY[draftKey];
   const categoryItems = CATALOG.filter((c) => c.category === draftCategory);
 
@@ -397,7 +400,7 @@ export default function IndividualQuotePage() {
 
             <div className="hidden lg:block w-80 flex-shrink-0 sticky top-20 space-y-4">
               <PriceSummaryPanel result={result} />
-              <CommissionPanel materialCost={result.materialCost} price={result.totalJobSale} discount={inp.discount} discountFullyExempt={discountOption.option === 'cash'} />
+              <CommissionPanel materialCost={result.materialCost} price={commissionPrice} discount={inp.discount} isCashDiscount={isCashDiscount} />
             </div>
           </div>
         </div>
@@ -410,7 +413,7 @@ export default function IndividualQuotePage() {
           <div className="bg-white w-full rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto">
             <PriceSummaryPanel result={result} onClose={() => setShowPricePanel(false)} />
             <div className="mt-4">
-              <CommissionPanel materialCost={result.materialCost} price={result.totalJobSale} discount={inp.discount} discountFullyExempt={discountOption.option === 'cash'} />
+              <CommissionPanel materialCost={result.materialCost} price={commissionPrice} discount={inp.discount} isCashDiscount={isCashDiscount} />
             </div>
           </div>
         </div>
