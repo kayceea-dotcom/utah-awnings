@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createServerClient } from "@/lib/supabase/server";
-import { Resend } from "resend";
 import { getFollowUpStatus } from "@/lib/followups/engine";
 import type { ProposalFollowUpTimestamps } from "@/lib/followups/types";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
+// Read-only mirror of /api/proposal/followup - same step validation, but
+// only renders the HTML (optionally with an in-progress edited body) for a
+// rep to preview. Never sends anything or touches proposals/*_sent_at.
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerClient();
@@ -32,9 +32,6 @@ export async function POST(request: NextRequest) {
       final_followup_sent_at: proposal.final_followup_sent_at,
     };
 
-    // Never trust the client-supplied stepKey: re-derive server-side which
-    // step is actually due so a stale tab or forged request can't skip or
-    // replay a step out of order.
     const status = getFollowUpStatus(timestamps);
     if (status.kind !== "action_due" || status.step.key !== stepKey) {
       return NextResponse.json({ error: "This step is not currently due" }, { status: 400 });
@@ -62,20 +59,9 @@ export async function POST(request: NextRequest) {
       logoUrl: (company.logo_url as string) || null,
     }, typeof customBody === "string" && customBody.trim() ? customBody : undefined);
 
-    await resend.emails.send({
-      from: "Utah Awnings <noreply@uaquotepro.com>",
-      to: customer.email as string,
-      subject: step.subject,
-      html,
-    });
-
-    await supabase
-      .from("proposals")
-      .update({ [step.fieldName]: new Date().toISOString() })
-      .eq("token", proposalToken);
-
-    return NextResponse.json({ success: true, step: step.key });
-  } catch {
+    return NextResponse.json({ subject: step.subject, html, defaultBody: step.defaultBody });
+  } catch (err) {
+    console.error("Follow-up preview error:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

@@ -1,5 +1,8 @@
 import type { FollowUpStepConfig } from "./types";
-import { buildFollowup1Html, buildFollowup2Html, buildFinalFollowupHtml } from "./templates";
+import {
+  buildFollowup1Html, buildFollowup2Html, buildFinalFollowupHtml,
+  FOLLOWUP1_DEFAULT_BODY, FOLLOWUP2_DEFAULT_BODY, FINAL_FOLLOWUP_DEFAULT_BODY,
+} from "./templates";
 
 // The ONLY file to edit for a 5th/6th step (plus one new DB column + a
 // template function in templates.ts). engine.ts iterates this array
@@ -21,6 +24,7 @@ export const FOLLOWUP_STEPS: FollowUpStepConfig[] = [
     enabled: true,
     subject: null,
     buildHtml: null,
+    defaultBody: null,
     sendRoute: "existing-proposal-route",
   },
   {
@@ -34,6 +38,7 @@ export const FOLLOWUP_STEPS: FollowUpStepConfig[] = [
     enabled: true,
     subject: "Just checking in on your Utah Awnings proposal",
     buildHtml: buildFollowup1Html,
+    defaultBody: FOLLOWUP1_DEFAULT_BODY,
     sendRoute: "followup-engine-route",
   },
   {
@@ -47,6 +52,7 @@ export const FOLLOWUP_STEPS: FollowUpStepConfig[] = [
     enabled: true,
     subject: "Still thinking it over? Your Utah Awnings quote is ready",
     buildHtml: buildFollowup2Html,
+    defaultBody: FOLLOWUP2_DEFAULT_BODY,
     sendRoute: "followup-engine-route",
   },
   {
@@ -60,6 +66,7 @@ export const FOLLOWUP_STEPS: FollowUpStepConfig[] = [
     enabled: true,
     subject: "Final reminder: your Utah Awnings proposal",
     buildHtml: buildFinalFollowupHtml,
+    defaultBody: FINAL_FOLLOWUP_DEFAULT_BODY,
     sendRoute: "followup-engine-route",
   },
 ];

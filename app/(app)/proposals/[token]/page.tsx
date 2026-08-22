@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import TopBar from "@/components/TopBar";
@@ -31,6 +31,12 @@ export default function ProposalPreviewPage() {
   const [previewError, setPreviewError] = useState("");
   const [sendingFollowUp, setSendingFollowUp] = useState(false);
   const [followUpError, setFollowUpError] = useState("");
+  const [followUpStep, setFollowUpStep] = useState<{ key: string; label: string; actionLabel: string } | null>(null);
+  const [followUpPreviewLoading, setFollowUpPreviewLoading] = useState(false);
+  const [followUpPreviewHtml, setFollowUpPreviewHtml] = useState<string | null>(null);
+  const [followUpPreviewSubject, setFollowUpPreviewSubject] = useState("");
+  const [followUpBody, setFollowUpBody] = useState("");
+  const followUpDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [resendingContract, setResendingContract] = useState(false);
   const [contractResent, setContractResent] = useState(false);
   const [resendContractError, setResendContractError] = useState("");
@@ -150,18 +156,63 @@ export default function ProposalPreviewPage() {
     setResendingContract(false);
   }
 
-  async function handleSendFollowUp(stepKey: string) {
+  async function fetchFollowUpPreview(stepKey: string, customBody?: string) {
+    const res = await fetch("/api/proposal/followup/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ proposalToken: token, stepKey, customBody }),
+    });
+    return { ok: res.ok, data: await res.json() };
+  }
+
+  async function handleOpenFollowUpPreview(step: { key: string; label: string; actionLabel: string }) {
+    setFollowUpStep(step);
+    setFollowUpPreviewLoading(true);
+    setFollowUpPreviewHtml(null);
+    setFollowUpError("");
+    const { ok, data } = await fetchFollowUpPreview(step.key);
+    if (!ok) {
+      setFollowUpError(data.error || "Failed to build preview");
+    } else {
+      setFollowUpPreviewHtml(data.html);
+      setFollowUpPreviewSubject(data.subject);
+      setFollowUpBody(data.defaultBody || "");
+    }
+    setFollowUpPreviewLoading(false);
+  }
+
+  function handleFollowUpBodyChange(value: string) {
+    setFollowUpBody(value);
+    if (followUpDebounceRef.current) clearTimeout(followUpDebounceRef.current);
+    followUpDebounceRef.current = setTimeout(async () => {
+      if (!followUpStep) return;
+      const { ok, data } = await fetchFollowUpPreview(followUpStep.key, value);
+      if (ok) setFollowUpPreviewHtml(data.html);
+    }, 400);
+  }
+
+  function closeFollowUpPreview() {
+    if (followUpDebounceRef.current) clearTimeout(followUpDebounceRef.current);
+    setFollowUpStep(null);
+    setFollowUpPreviewHtml(null);
+    setFollowUpBody("");
+    setFollowUpError("");
+  }
+
+  async function handleConfirmSendFollowUp() {
+    if (!followUpStep) return;
     setSendingFollowUp(true);
     setFollowUpError("");
     const res = await fetch("/api/proposal/followup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ proposalToken: token, stepKey }),
+      body: JSON.stringify({ proposalToken: token, stepKey: followUpStep.key, customBody: followUpBody }),
     });
     const data = await res.json();
     if (!res.ok) {
       setFollowUpError(data.error || "Failed to send follow-up");
     } else {
+      closeFollowUpPreview();
       await load();
     }
     setSendingFollowUp(false);
@@ -417,10 +468,10 @@ export default function ProposalPreviewPage() {
             </button>
 
             {followUpStatus?.kind === "action_due" && followUpStatus.step.key !== "initial" && (
-              <button onClick={() => handleSendFollowUp(followUpStatus.step.key)} disabled={sendingFollowUp}
+              <button onClick={() => handleOpenFollowUpPreview(followUpStatus.step)}
                 className="btn-primary w-full disabled:opacity-50">
-                <Send size={15} />
-                {sendingFollowUp ? "Sending..." : followUpStatus.step.actionLabel}
+                <Eye size={15} />
+                Preview {followUpStatus.step.label}
               </button>
             )}
             {followUpStatus?.kind === "waiting" && (
@@ -431,11 +482,6 @@ export default function ProposalPreviewPage() {
             {followUpStatus?.kind === "complete" && (
               <div className="flex justify-center py-1">
                 <FollowUpBadge status={followUpStatus} />
-              </div>
-            )}
-            {followUpError && (
-              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                <p className="text-red-600 text-sm">{followUpError}</p>
               </div>
             )}
 
@@ -485,6 +531,57 @@ export default function ProposalPreviewPage() {
               <div className="px-5 pb-4">
                 <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
                   <p className="text-red-600 text-sm">{error}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {followUpStep && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <div>
+                <p className="font-bold text-gray-800 text-sm">Preview &amp; Edit &mdash; {followUpStep.label}</p>
+                {followUpPreviewSubject && (
+                  <p className="text-xs text-gray-400 mt-0.5">Subject: {followUpPreviewSubject}</p>
+                )}
+              </div>
+              <button onClick={closeFollowUpPreview} className="text-gray-400 hover:text-gray-600">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="px-5 py-4 border-b border-gray-100">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Message</label>
+              <textarea
+                className="input text-sm w-full"
+                style={{ minHeight: "auto" }}
+                rows={4}
+                value={followUpBody}
+                onChange={(e) => handleFollowUpBodyChange(e.target.value)}
+              />
+            </div>
+            {followUpPreviewLoading && !followUpPreviewHtml ? (
+              <div className="flex-1 flex items-center justify-center text-sm text-gray-400" style={{ minHeight: "40vh" }}>
+                Loading preview...
+              </div>
+            ) : (
+              <iframe srcDoc={followUpPreviewHtml || ""} sandbox="" className="flex-1 w-full" style={{ minHeight: "40vh" }} />
+            )}
+            <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
+              <button onClick={closeFollowUpPreview} className="btn-secondary flex-1 justify-center">
+                Cancel
+              </button>
+              <button onClick={handleConfirmSendFollowUp} disabled={sendingFollowUp} className="btn-primary flex-1 disabled:opacity-50">
+                <Send size={15} />
+                {sendingFollowUp ? "Sending..." : followUpStep.actionLabel}
+              </button>
+            </div>
+            {followUpError && (
+              <div className="px-5 pb-4">
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                  <p className="text-red-600 text-sm">{followUpError}</p>
                 </div>
               </div>
             )}

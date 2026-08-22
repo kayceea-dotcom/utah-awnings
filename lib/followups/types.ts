@@ -33,7 +33,11 @@ export interface FollowUpStepConfig {
   channel: FollowUpChannel; // "sms" reserved for future use, not implemented
   enabled: boolean; // config-level kill switch
   subject: string | null; // null when sendRoute is "existing-proposal-route"
-  buildHtml: ((ctx: FollowUpEmailContext) => string) | null;
+  buildHtml: ((ctx: FollowUpEmailContext, customBody?: string) => string) | null;
+  // The body text a rep sees pre-filled in the preview-and-edit modal before
+  // sending; null when sendRoute is "existing-proposal-route" (that flow has
+  // no editable body of its own).
+  defaultBody: string | null;
   // Which API route sends + stamps this step. "initial" reuses the existing
   // proposal-send flow; everything else goes through the follow-up engine route.
   sendRoute: "existing-proposal-route" | "followup-engine-route";

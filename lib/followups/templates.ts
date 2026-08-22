@@ -3,6 +3,29 @@ import type { FollowUpEmailContext } from "./types";
 const fmt = (n: number) =>
   (n || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
 
+// The body is editable by a rep before sending (preview-then-send flow), so
+// it's now real user input landing in an actual email - must be escaped, not
+// trusted as safe HTML like the rest of the template.
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function bodyToHtml(text: string): string {
+  return escapeHtml(text).replace(/\n/g, "<br>");
+}
+
+export const FOLLOWUP1_DEFAULT_BODY =
+  "Just following up on the proposal we sent for your project. Your quote is still available — click below any time to review the details or get started with your deposit.";
+export const FOLLOWUP2_DEFAULT_BODY =
+  "It's been a few weeks since we sent your Utah Awnings proposal. We know shade projects take some planning — your quote is still on file and ready whenever you are. Let us know if you have questions or want to adjust anything before moving forward.";
+export const FINAL_FOLLOWUP_DEFAULT_BODY =
+  "This is our final check-in on your Utah Awnings proposal from a few months back. Pricing and availability can change, so if you'd still like to move forward, now's a great time to lock it in. Reach out any time — we're happy to help.";
+
 function logoBlock(logoUrl: string | null): string {
   return logoUrl
     ? `<img src="${logoUrl}" alt="Utah Awnings" style="max-height: 80px; max-width: 240px; object-fit: contain; margin-bottom: 8px;" />`
@@ -72,29 +95,29 @@ function wrapFollowUpEmail(opts: {
   `;
 }
 
-export function buildFollowup1Html(ctx: FollowUpEmailContext): string {
+export function buildFollowup1Html(ctx: FollowUpEmailContext, customBody?: string): string {
   return wrapFollowUpEmail({
     ctx,
     heading: `Hi ${ctx.customerName},`,
-    bodyHtml: `Just following up on the proposal we sent for your project. Your quote is still available &mdash; click below any time to review the details or get started with your deposit.`,
+    bodyHtml: bodyToHtml(customBody ?? FOLLOWUP1_DEFAULT_BODY),
     ctaLabel: "Review Your Proposal",
   });
 }
 
-export function buildFollowup2Html(ctx: FollowUpEmailContext): string {
+export function buildFollowup2Html(ctx: FollowUpEmailContext, customBody?: string): string {
   return wrapFollowUpEmail({
     ctx,
     heading: `Hi ${ctx.customerName},`,
-    bodyHtml: `It's been a few weeks since we sent your Utah Awnings proposal. We know shade projects take some planning &mdash; your quote is still on file and ready whenever you are. Let us know if you have questions or want to adjust anything before moving forward.`,
+    bodyHtml: bodyToHtml(customBody ?? FOLLOWUP2_DEFAULT_BODY),
     ctaLabel: "Review Your Proposal",
   });
 }
 
-export function buildFinalFollowupHtml(ctx: FollowUpEmailContext): string {
+export function buildFinalFollowupHtml(ctx: FollowUpEmailContext, customBody?: string): string {
   return wrapFollowUpEmail({
     ctx,
     heading: `Hi ${ctx.customerName},`,
-    bodyHtml: `This is our final check-in on your Utah Awnings proposal from a few months back. Pricing and availability can change, so if you'd still like to move forward, now's a great time to lock it in. Reach out any time &mdash; we're happy to help.`,
+    bodyHtml: bodyToHtml(customBody ?? FINAL_FOLLOWUP_DEFAULT_BODY),
     ctaLabel: "Review Your Proposal",
   });
 }
