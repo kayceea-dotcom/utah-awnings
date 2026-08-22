@@ -84,12 +84,19 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li(gutterName, gutterMultiplier, gutterStockLength(combinedWidth), gutterRate, "", inp.colorGutterFascia));
   }
 
-  // ── EXTRUDED SIDE FASCIA — only with extruded gutter; length keyed off the DEEPER of the two
-  // projections. Rate is a single fixed value, not split by wrap type. Up to a 12ft
-  // projection, 1 piece covers both sides (cut in half); past that, 2 separate pieces. ──
-  if (inp.gutterType === "extruded" && (inp.projection1 > 0 || inp.projection2 > 0)) {
+  // ── SIDE FASCIA — extruded gutter uses a generic extruded profile; roll form gutter
+  // uses a 2x6 board as its side fascia instead, independent of wrap kit selection (a
+  // roll-form job needs this piece regardless of whether a 2x6/3x8 wrap was chosen).
+  // Length keyed off the DEEPER of the two projections either way. Rate is a single
+  // fixed value, not split by wrap type. Up to a 12ft projection, 1 piece covers both
+  // sides (cut in half); past that, 2 separate pieces. ──
+  if (inp.projection1 > 0 || inp.projection2 > 0) {
     const { qty: fasciaQty, length: fasciaLen } = fasciaQtyLen(Math.max(inp.projection1, inp.projection2));
-    items.push(li("Extruded Side Fascia", fasciaQty, fasciaLen, RATES.fascia_extruded_ft, "", inp.colorGutterFascia));
+    if (inp.gutterType === "extruded") {
+      items.push(li("Extruded Side Fascia", fasciaQty, fasciaLen, RATES.fascia_extruded_ft, "", inp.colorGutterFascia));
+    } else if (inp.gutterType === "roll_form") {
+      items.push(li("Side Fascia (2x6)", fasciaQty, fasciaLen, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
+    }
   }
 
   // ── WRAP KIT — front plate gutter, rafter tails, inside/outside brackets ──
