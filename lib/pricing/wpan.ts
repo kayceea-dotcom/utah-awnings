@@ -110,7 +110,8 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     items.push(li("Roll Form Gutter", 1, rollFormGutterStockLength(totalWidth + 1.5), RATES.gutter_roll_form_ft, "", inp.colorGutterFascia));
     // Roll form gutter uses a 2x6 board as its side fascia, independent of
     // wrap kit selection - needed regardless of whether a 2x6/3x8 wrap was chosen.
-    const { qty: rollFasciaQty, length: rollFasciaStockLen } = fasciaQtyLen(maxProjection);
+    // Gets an extra 1ft past the projection to cut to fit on site.
+    const { qty: rollFasciaQty, length: rollFasciaStockLen } = fasciaQtyLen(maxProjection, 1);
     items.push(li("Side Fascia (2x6)", rollFasciaQty, rollFasciaStockLen, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
   } else {
     items.push(li("Extruded Gutter 2.5in", 1, gutterStockLen, RATES.gutter_extruded_ft, "", inp.colorGutterFascia));

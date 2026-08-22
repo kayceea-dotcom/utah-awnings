@@ -97,12 +97,20 @@ export function rollFormGutterStockLength(ft: number): number {
 // Extruded side fascia stock only goes up to 24ft. Up to a 12ft projection, one
 // piece covers both sides (cut in half) — 8ft -> one 16ft piece, 10ft -> one 20ft,
 // 12ft -> one 24ft. Past 12ft, a single piece can't cover both cuts anymore, so it's
-// back to 2 separate pieces, each its own stock length.
-export function fasciaQtyLen(maxProjection: number): { qty: number; length: number } {
+// back to 2 separate pieces, each its own stock length. The 1-piece/2-piece decision
+// is always based on the raw projection - only the resulting cut length gets the
+// extra allowance, applied per side (so the 1-piece case, which yields 2 finished
+// pieces off one board, gets 2x the allowance baked in).
+//
+// `extraPerSideFt` is a cut-to-fit allowance added past the projection before
+// rounding to a stock length. Extruded fascia doesn't need one explicitly - stock
+// rounding already leaves a few inches of slack. 2x6 (roll form gutter) does, since
+// it's ordered with a flat 1ft allowance regardless of where the projection lands.
+export function fasciaQtyLen(maxProjection: number, extraPerSideFt = 0): { qty: number; length: number } {
   if (maxProjection <= 12) {
-    return { qty: 1, length: nextStockLength(2 * maxProjection) };
+    return { qty: 1, length: nextStockLength(2 * (maxProjection + extraPerSideFt)) };
   }
-  return { qty: 2, length: nextStockLength(maxProjection) };
+  return { qty: 2, length: nextStockLength(maxProjection + extraPerSideFt) };
 }
 
 // "double_3x8" is two 3x8 beams mounted to the front and back of the posts

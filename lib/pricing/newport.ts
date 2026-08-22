@@ -89,12 +89,16 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   // roll-form job needs this piece regardless of whether a 2x6/3x8 wrap was chosen).
   // Length keyed off the DEEPER of the two projections either way. Rate is a single
   // fixed value, not split by wrap type. Up to a 12ft projection, 1 piece covers both
-  // sides (cut in half); past that, 2 separate pieces. ──
+  // sides (cut in half); past that, 2 separate pieces. The 2x6 gets an extra 1ft past
+  // the projection to cut to fit on site - extruded stock rounding already leaves
+  // enough slack on its own. ──
+  const maxProjection = Math.max(inp.projection1, inp.projection2);
   if (inp.projection1 > 0 || inp.projection2 > 0) {
-    const { qty: fasciaQty, length: fasciaLen } = fasciaQtyLen(Math.max(inp.projection1, inp.projection2));
     if (inp.gutterType === "extruded") {
+      const { qty: fasciaQty, length: fasciaLen } = fasciaQtyLen(maxProjection);
       items.push(li("Extruded Side Fascia", fasciaQty, fasciaLen, RATES.fascia_extruded_ft, "", inp.colorGutterFascia));
     } else if (inp.gutterType === "roll_form") {
+      const { qty: fasciaQty, length: fasciaLen } = fasciaQtyLen(maxProjection, 1);
       items.push(li("Side Fascia (2x6)", fasciaQty, fasciaLen, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
     }
   }
