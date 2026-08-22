@@ -80,7 +80,7 @@ export default function CommissionPanel({ materialCost, price, discount = 0, isC
       {discount > 0 && (
         <p className="text-[11px] text-gray-400">
           {isCashDiscount
-            ? <>{fmt(discount)} check/cash discount — waives the CC fee, doesn't affect commission</>
+            ? <>{fmt(discount)} check/cash discount — waives the CC fee, no effect on commission</>
             : <>Reflects a {fmt(discount)} discount already counted against commission above</>}
         </p>
       )}
