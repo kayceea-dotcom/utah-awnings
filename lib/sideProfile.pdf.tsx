@@ -38,6 +38,7 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
     houseX, roofY, tailStartX, tailW,
     footingX, footingWidth,
     isDeck, isGroundMount, houseAttachment, groundAttachment, deckHeight, postHeight, showRafterTail,
+    isLattice, tubeXs, tubeSize,
   } = geo;
 
   const MAX_PDF_W = maxWidth;
@@ -137,11 +138,19 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
           {/* Beam - drawn end-on (real cross-section), not as a flat slab along the projection */}
           <Rect x={postX - beamWidth / 2} y={beamTopY} width={beamWidth} height={beamHeight} fill="#1e40af" stroke="#1e3a8a" strokeWidth={1} />
 
-          {/* Panel / wrap edge - sits on top of the beam and overhangs past its front face (18in default) */}
+          {/* Panel / wrap edge - sits on top of the beam and overhangs past its front face (18in default).
+              A pergola's "panel" is its own 2x6 rafter (real 6in height, 1ft overhang) - same rect, different meaning. */}
           <Rect x={houseX} y={panelTopY} width={panelFrontX - houseX} height={panelHeight} fill="#93c5fd" stroke="#3b82f6" strokeWidth={1.5} />
 
-          {/* Rafter tail profile - spans the full panel + beam front face */}
-          {showRafterTail && (
+          {/* Lattice tubes - 2x2 (or 2x3) cross-sections spaced along the rafter's full length */}
+          {isLattice && tubeXs.map((tx, i) => (
+            <Rect key={"tube-" + i} x={tx - tubeSize / 2} y={panelTopY - tubeSize} width={tubeSize} height={tubeSize}
+              fill="#60a5fa" stroke="#1e40af" strokeWidth={0.75} />
+          ))}
+
+          {/* Rafter tail profile - spans the full panel + beam front face. Not
+              shown for a lattice rafter - the tubes above already read as its real end. */}
+          {!isLattice && showRafterTail && (
             <G transform={"translate(" + tailStartX + "," + panelTopY + ") scale(" + tailScaleX + "," + tailScaleY + ")"}>
               <Path d={tailPath} fill="#3b82f6" stroke="#1e3a8a" strokeWidth={1} />
             </G>

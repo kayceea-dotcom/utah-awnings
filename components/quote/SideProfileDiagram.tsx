@@ -14,6 +14,9 @@ interface SideProfileDiagramProps {
   hasPanel?: boolean;
   endCut?: string;
   showRafterTail?: boolean;
+  isLattice?: boolean;
+  latticeType?: string;
+  latticeSpacing?: string;
   className?: string;
 }
 
@@ -40,10 +43,14 @@ export default function SideProfileDiagram({
   hasPanel = true,
   endCut = "beveled",
   showRafterTail = true,
+  isLattice = false,
+  latticeType = "2x2",
+  latticeSpacing = "1x",
   className = "",
 }: SideProfileDiagramProps) {
   const geo = computeSideProfileGeometry({
     projection, postHeight, deckHeight, houseAttachment, groundAttachment, beamType, wrapType, hasPanel, endCut, showRafterTail,
+    isLattice, latticeType, latticeSpacing,
   });
 
   if (!geo) {
@@ -62,7 +69,7 @@ export default function SideProfileDiagram({
     panelTopY, panelHeight, panelFrontX,
     houseX, roofY, tailStartX, tailW,
     footingX, footingWidth,
-    isDeck, isGroundMount,
+    isDeck, isGroundMount, tubeXs, tubeSize,
   } = geo;
 
   const tailPath = endCutProfilePath(endCut);
@@ -169,11 +176,20 @@ export default function SideProfileDiagram({
           {/* Beam - drawn end-on (real cross-section), not as a flat slab along the projection */}
           <rect x={postX - beamWidth / 2} y={beamTopY} width={beamWidth} height={beamHeight} fill="#1e40af" stroke="#1e3a8a" strokeWidth="1" />
 
-          {/* Panel / wrap edge - sits on top of the beam and overhangs past its front face (18in default) */}
+          {/* Panel / wrap edge - sits on top of the beam and overhangs past its front face (18in default).
+              A pergola's "panel" is its own 2x6 rafter (real 6in height, 1ft overhang) - same rect, different meaning. */}
           <rect x={houseX} y={panelTopY} width={panelFrontX - houseX} height={panelHeight} fill="#93c5fd" stroke="#3b82f6" strokeWidth="1.5" />
 
-          {/* Rafter tail profile - spans the full panel + beam front face */}
-          {showRafterTail && (
+          {/* Lattice tubes - 2x2 (or 2x3) cross-sections spaced along the rafter's full length */}
+          {isLattice && tubeXs.map((tx, i) => (
+            <rect key={"tube-" + i} x={tx - tubeSize / 2} y={panelTopY - tubeSize} width={tubeSize} height={tubeSize}
+              fill="#60a5fa" stroke="#1e40af" strokeWidth="0.75" />
+          ))}
+
+          {/* Rafter tail profile - spans the full panel + beam front face.
+              Not shown for a lattice rafter - it isn't wrapped/cut like a
+              panel edge, the tubes above already read as its real end. */}
+          {!isLattice && showRafterTail && (
             <g transform={"translate(" + tailStartX + "," + panelTopY + ") scale(" + (tailW / 44) + "," + ((panelHeight + beamHeight) / 24) + ")"}>
               <path d={tailPath} fill="#3b82f6" stroke="#1e3a8a" strokeWidth="1" />
             </g>

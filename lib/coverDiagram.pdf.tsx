@@ -29,7 +29,7 @@ export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170
     postPositions, postPositions2, multiSpanBeams,
     tailCount, tailCount2, frontEdgeY, frontEdgeY2, tailTipY, tailTipY2,
     downspoutPositions, beamType1, beamType2, width1, width2, projection1,
-    showRafterTails,
+    showRafterTails, isLattice, rafterXs, tubeYs,
   } = geo;
 
   // Scale the whole diagram down to fit a comfortable box on the printed
@@ -59,8 +59,8 @@ export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170
           )}
           <Text x={ox + totalW / 2} y={oy - HOUSE_H / 2 + 4} textAnchor="middle" fill="#475569" style={{ ...bold, fontSize: 9 }}>HOUSE</Text>
 
-          {/* Cover rectangle run 1 */}
-          <Rect x={ox} y={run1TopY} width={coverW1} height={coverH1} fill="#eff6ff" stroke="#3b82f6" strokeWidth={1.5} />
+          {/* Cover rectangle run 1 - lattice pergola gets an outline only, rafters/tubes convey the cover */}
+          <Rect x={ox} y={run1TopY} width={coverW1} height={coverH1} fill={isLattice ? "transparent" : "#eff6ff"} stroke="#3b82f6" strokeWidth={1.5} />
 
           {/* Cover rectangle run 2 */}
           {hasRun2 && (
@@ -108,11 +108,21 @@ export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170
           <Line x1={ox} y1={run1TopY} x2={ox} y2={tailTipY} stroke="#1e40af" strokeWidth={2.5} />
           <Line x1={ox + coverW1} y1={run1TopY} x2={ox + coverW1} y2={tailTipY} stroke="#1e40af" strokeWidth={2.5} />
 
-          {/* Rafter tails run 1 */}
-          {showRafterTails && Array.from({ length: tailCount }).map((_, i) => {
+          {/* Rafter tails run 1 - lattice rafters are drawn full-length instead */}
+          {!isLattice && showRafterTails && Array.from({ length: tailCount }).map((_, i) => {
             const rx = ox + (width1 / (tailCount + 1)) * (i + 1) * scale;
             return <Line key={i} x1={rx} y1={frontEdgeY} x2={rx} y2={tailTipY} stroke="#1e40af" strokeWidth={2} />;
           })}
+
+          {/* Pergola rafters - full length, house wall to 1ft-past-beam tip */}
+          {isLattice && rafterXs.map((rx, i) => (
+            <Line key={"rafter-" + i} x1={rx} y1={run1TopY} x2={rx} y2={frontEdgeY} stroke="#1e40af" strokeWidth={2} />
+          ))}
+
+          {/* Lattice tubes - cross the rafters at their real spacing, parallel to the house */}
+          {isLattice && tubeYs.map((ty, i) => (
+            <Line key={"tube-" + i} x1={ox} y1={ty} x2={ox + coverW1} y2={ty} stroke="#93c5fd" strokeWidth={1} />
+          ))}
 
           {/* Side plate run 2 */}
           {hasRun2 && (

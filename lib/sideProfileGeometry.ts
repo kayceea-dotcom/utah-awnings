@@ -10,6 +10,12 @@ export interface SideProfileGeometryInput {
   panelOverhangInches?: number;
   endCut?: string;
   showRafterTail?: boolean;
+  /** Pergola only - open lattice structure. Draws a real 6in-tall rafter
+   *  (not a wrap-kit panel) running house-to-tip with a 1ft overhang past
+   *  the beam, plus 2x2 tube cross-sections spaced along its length. */
+  isLattice?: boolean;
+  latticeType?: string;
+  latticeSpacing?: string;
 }
 
 export interface SideProfileGeometry {
@@ -47,6 +53,11 @@ export interface SideProfileGeometry {
   projection: number;
   endCut: string;
   showRafterTail: boolean;
+  isLattice: boolean;
+  /** X positions of each lattice tube cross-section along the rafter, pergola only. */
+  tubeXs: number[];
+  /** Px size (both width and height) of each tube cross-section. */
+  tubeSize: number;
 }
 
 // Real beam depth (the "tall" dimension when mounted, viewed end-on in this
@@ -89,6 +100,9 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
     panelOverhangInches = 18,
     endCut = "beveled",
     showRafterTail = true,
+    isLattice = false,
+    latticeType = "2x2",
+    latticeSpacing = "1x",
   } = input;
 
   if (!projection || !postHeight) return null;
@@ -96,6 +110,14 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
   const PAD = 44;
   const GROUND_MARGIN = 26;
   const TAIL_W = 32;
+
+  // Real 2x6 rafter (always - lib/pricing/pergola.ts hardcodes 2x6 regardless
+  // of any gauge setting) with a 1ft overhang past the beam, plus 2x2 (or
+  // 2x3) tube cross-sections at their real spacing along its full length.
+  const LATTICE_RAFTER_HEIGHT_IN = 6;
+  const LATTICE_OVERHANG_FT = 1;
+  const tubeWidthIn = latticeType === "2x3" ? 3 : 2;
+  const tubePitchIn = latticeSpacing === "1.5x" ? tubeWidthIn * 3 : tubeWidthIn * 2;
 
   const availW = 300;
   const scaleX = availW / projection;
@@ -120,15 +142,31 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
   // rafter tail's height (which spans panel+beam) since it wouldn't scale
   // with the diagram's actual px-per-foot factor like every other real
   // dimension does.
-  const panelHeight = hasPanel ? (panelHeightInches(wrapType) / 12) * scale : 0;
+  const panelHeight = isLattice
+    ? (LATTICE_RAFTER_HEIGHT_IN / 12) * scale
+    : hasPanel ? (panelHeightInches(wrapType) / 12) * scale : 0;
   // Panel overhangs past the beam's front face - 18in is the normal default,
   // matching how the cover material actually extends past its support beam.
-  const overhangPx = hasPanel ? (panelOverhangInches / 12) * scale : 0;
+  // A pergola's rafter is structural, not a wrap - it overhangs by exactly 1ft.
+  const overhangPx = isLattice
+    ? LATTICE_OVERHANG_FT * scale
+    : hasPanel ? (panelOverhangInches / 12) * scale : 0;
 
   const houseX = PAD;
   const postX = PAD + projPx;
   const panelFrontX = postX + beamWidth / 2 + overhangPx;
   const tailStartX = panelFrontX + 4;
+
+  // Lattice tube cross-sections - spaced along the rafter's full length
+  // (house to tip), same real pitch as the top-view diagram.
+  const tubeSize = (tubeWidthIn / 12) * scale;
+  const tubePitchPx = (tubePitchIn / 12) * scale;
+  const tubeXs: number[] = [];
+  if (isLattice && tubePitchPx > 0) {
+    for (let x = houseX + tubePitchPx / 2; x <= panelFrontX; x += tubePitchPx) {
+      tubeXs.push(x);
+    }
+  }
 
   const topMargin = 40;
   const embedPx = isGroundMount ? 2 * scale : 0;
@@ -161,5 +199,6 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
     footingX, footingWidth,
     scale, isDeck, isGroundMount,
     houseAttachment, groundAttachment, deckHeight, postHeight, projection, endCut, showRafterTail,
+    isLattice, tubeXs, tubeSize,
   };
 }

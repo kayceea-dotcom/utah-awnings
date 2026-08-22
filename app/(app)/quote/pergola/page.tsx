@@ -430,6 +430,9 @@ export default function PergolaQuotePage() {
                   width1={inp.width}
                   posts1={inp.posts}
                   downspouts={0}
+                  isLattice
+                  latticeType={inp.latticeType}
+                  latticeSpacing={inp.latticeSpacing}
                 />
                 <SideProfileDiagram
                   projection={inp.projection}
@@ -441,6 +444,9 @@ export default function PergolaQuotePage() {
                   hasPanel={false}
                   endCut={inp.endCut}
                   showRafterTail
+                  isLattice
+                  latticeType={inp.latticeType}
+                  latticeSpacing={inp.latticeSpacing}
                 />
               </div>
 
@@ -476,6 +482,9 @@ export default function PergolaQuotePage() {
                 width1={inp.width}
                 posts1={inp.posts}
                 downspouts={0}
+                isLattice
+                latticeType={inp.latticeType}
+                latticeSpacing={inp.latticeSpacing}
               />
               <SideProfileDiagram
                 projection={inp.projection}
@@ -487,6 +496,9 @@ export default function PergolaQuotePage() {
                 hasPanel={false}
                 endCut={inp.endCut}
                 showRafterTail
+                isLattice
+                latticeType={inp.latticeType}
+                latticeSpacing={inp.latticeSpacing}
               />
               <PriceSummaryPanel result={effectiveResult} />
               <CommissionPanel materialCost={effectiveResult.materialCost} price={commissionPrice} discount={inp.discount} isCashDiscount={isCashDiscount} />

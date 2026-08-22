@@ -14,6 +14,16 @@ export interface CoverDiagramGeometryInput {
   beams?: BeamConfig[];
   beamType1?: string;
   beamType2?: string;
+  /** Pergola only - open lattice structure, no panel. Swaps the solid cover
+   *  fill for individual rafters (full length, house to tip) crossing
+   *  individual lattice tubes, and pulls the beam in to a 1ft overhang
+   *  (vs. the generic 1.5ft inset every other product uses). */
+  isLattice?: boolean;
+  /** "2x2" (default) or "2x3" - real tube width, matches PergolaInputs.latticeType. */
+  latticeType?: string;
+  /** "1.5x" widens the gap; anything else (including unset) is the default
+   *  2x-tube-width spacing. Matches PergolaInputs.latticeSpacing. */
+  latticeSpacing?: string;
 }
 
 export interface CoverDiagramGeometry {
@@ -55,6 +65,11 @@ export interface CoverDiagramGeometry {
   width2: number;
   projection1: number;
   showRafterTails: boolean;
+  isLattice: boolean;
+  /** X positions of each full-length rafter (house to tip), pergola only. */
+  rafterXs: number[];
+  /** Y positions of each lattice tube cross-line (spans the width), pergola only. */
+  tubeYs: number[];
 }
 
 // Post X positions evenly spaced across a run's width - 1.5ft inset from each
@@ -88,6 +103,9 @@ export function computeCoverDiagramGeometry(input: CoverDiagramGeometryInput): C
     jogType = "ground",
     beams = [],
     beamType1 = "3x8", beamType2 = "3x8",
+    isLattice = false,
+    latticeType = "2x2",
+    latticeSpacing = "1x",
   } = input;
 
   if (!projection1 || !width1) return null;
@@ -97,6 +115,15 @@ export function computeCoverDiagramGeometry(input: CoverDiagramGeometryInput): C
   const PAD = 40;
   const HOUSE_H = 20;
   const TAIL_LEN = 12;
+
+  // Pergola-only: rafters run every 2ft of width (matches lib/pricing/pergola.ts
+  // rafterQty), the beam sits a 1ft overhang back from the rafter tips (not the
+  // generic 1.5ft other products use), and lattice tubes cross the rafters at
+  // their real tube-width + gap pitch.
+  const LATTICE_RAFTER_SPACING_FT = 2;
+  const LATTICE_OVERHANG_FT = 1;
+  const tubeWidthIn = latticeType === "2x3" ? 3 : 2;
+  const tubePitchIn = latticeSpacing === "1.5x" ? tubeWidthIn * 3 : tubeWidthIn * 2;
 
   const hasRun2 = projection2 > 0 && width2 > 0;
   const isHouseJog = hasRun2 && jogType === "house";
@@ -130,8 +157,9 @@ export function computeCoverDiagramGeometry(input: CoverDiagramGeometryInput): C
   const run1FrontY = isHouseJog ? commonFrontY : oy + coverH1;
   const run2FrontY = isHouseJog ? commonFrontY : oy + coverH2;
 
-  // Beam Y = 1.5ft from BOTTOM (front) of cover
-  const beamY1 = run1FrontY - 1.5 * scale;
+  // Beam Y = 1.5ft from BOTTOM (front) of cover - except a pergola's rafters
+  // are structural and overhang the beam by exactly 1ft, not the generic inset.
+  const beamY1 = run1FrontY - (isLattice ? LATTICE_OVERHANG_FT : 1.5) * scale;
   const beamY2 = run2FrontY - 1.5 * scale;
 
   // Post X positions along beam - 1.5ft from each end, evenly spaced
@@ -148,11 +176,29 @@ export function computeCoverDiagramGeometry(input: CoverDiagramGeometryInput): C
 
   const tailCount = Math.round(width1 / 2);
   const frontEdgeY = run1FrontY;
-  const tailTipY = showRafterTails ? frontEdgeY + TAIL_LEN : frontEdgeY;
+  // A lattice's rafters already run the full length to the front edge - no
+  // extra stub past it like the generic rafter-tail flourish other products get.
+  const tailTipY = isLattice ? frontEdgeY : showRafterTails ? frontEdgeY + TAIL_LEN : frontEdgeY;
 
   const tailCount2 = hasRun2 ? Math.round(width2 / 2) : 0;
   const frontEdgeY2 = run2FrontY;
   const tailTipY2 = showRafterTails ? frontEdgeY2 + TAIL_LEN : frontEdgeY2;
+
+  // Rafters - full length (house to tip), evenly spaced, one every 2ft of
+  // width (same count as lib/pricing/pergola.ts rafterQty).
+  const rafterCount = isLattice ? Math.max(0, Math.round(width1 / LATTICE_RAFTER_SPACING_FT)) : 0;
+  const rafterXs = Array.from({ length: rafterCount }, (_, i) =>
+    ox + (width1 / (rafterCount + 1)) * (i + 1) * scale);
+
+  // Lattice tubes - cross-lines spanning the width, spaced at the real tube
+  // pitch (tube width + gap) along the full projection, house to tip.
+  const tubePitchPx = (tubePitchIn / 12) * scale;
+  const tubeYs: number[] = [];
+  if (isLattice && tubePitchPx > 0) {
+    for (let y = run1TopY + tubePitchPx / 2; y <= frontEdgeY; y += tubePitchPx) {
+      tubeYs.push(y);
+    }
+  }
 
   // Downspouts - hang just in front of (past) the corner post, at the true
   // front edge rather than the post's own beam-line position.
@@ -174,5 +220,6 @@ export function computeCoverDiagramGeometry(input: CoverDiagramGeometryInput): C
     tailCount, tailCount2, frontEdgeY, frontEdgeY2, tailTipY, tailTipY2,
     downspoutPositions,
     beamType1, beamType2, width1, width2, projection1, showRafterTails,
+    isLattice, rafterXs, tubeYs,
   };
 }

@@ -17,6 +17,9 @@ interface CoverDiagramProps {
   beams?: BeamConfig[];
   beamType1?: string;
   beamType2?: string;
+  isLattice?: boolean;
+  latticeType?: string;
+  latticeSpacing?: string;
   className?: string;
 }
 
@@ -32,11 +35,15 @@ export default function CoverDiagram({
   beams = [],
   beamType1 = "3x8",
   beamType2 = "3x8",
+  isLattice = false,
+  latticeType = "2x2",
+  latticeSpacing = "1x",
   className = "",
 }: CoverDiagramProps) {
   const geo = computeCoverDiagramGeometry({
     projection1, width1, projection2, width2, posts1, posts2,
     downspouts, downspoutSide, showRafterTails, jogType, beams, beamType1, beamType2,
+    isLattice, latticeType, latticeSpacing,
   });
 
   if (!geo) {
@@ -56,7 +63,7 @@ export default function CoverDiagram({
     beamY1, beamY2,
     postPositions, postPositions2, multiSpanBeams,
     tailCount, tailCount2, frontEdgeY, frontEdgeY2, tailTipY, tailTipY2,
-    downspoutPositions,
+    downspoutPositions, rafterXs, tubeYs,
   } = geo;
 
   return (
@@ -89,9 +96,11 @@ export default function CoverDiagram({
           <text x={ox + totalW / 2} y={oy - HOUSE_H / 2 + 4}
             textAnchor="middle" fontSize="9" fill="#475569" fontWeight="600">HOUSE</text>
 
-          {/* Cover rectangle run 1 */}
+          {/* Cover rectangle run 1 - a lattice pergola has nothing solid to
+              fill (open structure), so it's just an outline; the rafters +
+              tubes drawn below convey the actual cover */}
           <rect x={ox} y={run1TopY} width={coverW1} height={coverH1}
-            fill="#eff6ff" stroke="#3b82f6" strokeWidth="1.5" />
+            fill={isLattice ? "none" : "#eff6ff"} stroke="#3b82f6" strokeWidth="1.5" />
 
           {/* Cover rectangle run 2 */}
           {hasRun2 && (
@@ -152,14 +161,27 @@ export default function CoverDiagram({
           <line x1={ox + coverW1} y1={run1TopY} x2={ox + coverW1} y2={tailTipY}
             stroke="#1e40af" strokeWidth="2.5" />
 
-          {/* Rafter tails - short stubs below front edge (run 1) */}
-          {showRafterTails && Array.from({ length: tailCount }).map((_, i) => {
+          {/* Rafter tails - short stubs below front edge (run 1) - lattice
+              rafters are drawn full-length below instead */}
+          {!isLattice && showRafterTails && Array.from({ length: tailCount }).map((_, i) => {
             const rx = ox + (width1 / (tailCount + 1)) * (i + 1) * geo.scale;
             return (
               <line key={i} x1={rx} y1={frontEdgeY} x2={rx} y2={tailTipY}
                 stroke="#1e40af" strokeWidth="2" />
             );
           })}
+
+          {/* Pergola rafters - full length, house wall to 1ft-past-beam tip */}
+          {isLattice && rafterXs.map((rx, i) => (
+            <line key={"rafter-" + i} x1={rx} y1={run1TopY} x2={rx} y2={frontEdgeY}
+              stroke="#1e40af" strokeWidth="2" />
+          ))}
+
+          {/* Lattice tubes - cross the rafters at their real spacing, parallel to the house */}
+          {isLattice && tubeYs.map((ty, i) => (
+            <line key={"tube-" + i} x1={ox} y1={ty} x2={ox + coverW1} y2={ty}
+              stroke="#93c5fd" strokeWidth="1" />
+          ))}
 
           {/* Side plate - outer edge + tail (run 2) */}
           {hasRun2 && (
