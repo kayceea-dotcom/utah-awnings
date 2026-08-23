@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     await resend.emails.send({
       from: "Utah Awnings Orders <noreply@uaquotepro.com>",
       to: "sales@wpatio.com",
-      cc: "info@utahawnings.com",
+      cc: ["info@utahawnings.com", "utahawnings@gmail.com"],
       subject: "Material Order - PO# " + data.poNumber + " - " + data.jobName,
       html,
       attachments: [
