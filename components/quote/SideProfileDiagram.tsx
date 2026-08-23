@@ -70,12 +70,10 @@ export default function SideProfileDiagram({
     houseX, roofY, tailStartX, tailW,
     footingX, footingWidth,
     isDeck, isGroundMount, tubeXs, tubeSize,
+    isEaveMount, eavePoints, wallStubTopY,
   } = geo;
 
   const tailPath = endCutProfilePath(endCut);
-  const isEaveMount = houseAttachment === "eave" || houseAttachment === "angled_eave";
-  const roofBackX = houseAttachment === "angled_eave" ? houseX - 16 : houseX - 30;
-  const wallStubTopY = roofY - 4;
 
   return (
     <div className={"bg-white rounded-xl border border-gray-200 overflow-hidden " + className}>
@@ -91,17 +89,15 @@ export default function SideProfileDiagram({
             </pattern>
           </defs>
 
-          {/* House attachment - a flat wall for stucco/siding, or a sloped
-              roofline over a short wall stub for an eave/angled-eave mount.
+          {/* House attachment - a flat wall for stucco/siding, or a simple
+              eave fascia profile (6in vertical face the awning attaches to,
+              a 90deg corner into the soffit at the bottom, a 45deg roofline
+              off the top) over a wall stub for an eave/angled-eave mount.
               Either way the wall itself runs all the way down to the ground. */}
           {isEaveMount ? (
             <>
-              <polygon points={roofBackX + ",6 " + (houseX - 4) + "," + wallStubTopY + " " + roofBackX + "," + wallStubTopY}
-                fill="#a8a29e" stroke="#57534e" strokeWidth="1.5" />
               <rect x={houseX - 10} y={wallStubTopY} width={10} height={groundY - wallStubTopY} fill="url(#sp-hatch)" stroke="#64748b" strokeWidth="1.5" />
-              {/* Eave header/fascia board - caps the roofline where it meets
-                  the wall, right where the awning's hanger actually attaches */}
-              <rect x={houseX - 12} y={wallStubTopY - 7} width={14} height={9} fill="#92400e" stroke="#78350f" strokeWidth="1" />
+              <polygon points={eavePoints} fill="#92400e" stroke="#78350f" strokeWidth="1.5" />
             </>
           ) : (
             <rect x={houseX - 10} y={10} width={10} height={groundY - 10} fill="url(#sp-hatch)" stroke="#64748b" strokeWidth="1.5" />

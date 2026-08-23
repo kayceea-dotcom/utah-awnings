@@ -58,6 +58,15 @@ export interface SideProfileGeometry {
   tubeXs: number[];
   /** Px size (both width and height) of each tube cross-section. */
   tubeSize: number;
+  isEaveMount: boolean;
+  /** SVG/PDF "x,y x,y ..." points string for the eave fascia profile (eave/
+   *  angled_eave house attachment only) - a 6in vertical face where the
+   *  awning attaches, a 90deg corner at the bottom (soffit), and a 45deg
+   *  line off the top (roofline). Empty string when not an eave mount. */
+  eavePoints: string;
+  /** Y where the plain wall stub below the eave should start - the eave
+   *  profile's own back-top corner, so the wall fully backs it with no gap. */
+  wallStubTopY: number;
 }
 
 // Real beam depth (the "tall" dimension when mounted, viewed end-on in this
@@ -190,6 +199,20 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
   const footingWidth = isGroundMount ? 14 : 26;
   const footingX = postX - footingWidth / 2;
 
+  // Eave fascia profile - the awning attaches to a real 6in vertical face,
+  // a 90deg corner into the soffit at its bottom, and a 45deg roofline off
+  // its top (run = rise, so the angle is always true regardless of scale).
+  const isEaveMount = houseAttachment === "eave" || houseAttachment === "angled_eave";
+  const EAVE_H = (6 / 12) * scale;
+  const fasciaBottomY = roofY + EAVE_H;
+  const eaveBackX = houseX - EAVE_H;
+  const roofBackY = roofY - EAVE_H;
+  const eavePoints = isEaveMount
+    ? eaveBackX + "," + fasciaBottomY + " " + houseX + "," + fasciaBottomY + " "
+      + houseX + "," + roofY + " " + eaveBackX + "," + roofBackY
+    : "";
+  const wallStubTopY = isEaveMount ? roofBackY : roofY;
+
   return {
     svgW, svgH, groundY, surfaceY, deckY, deckHpx,
     postX, postWidth: 10, postTopY, postBottomY, embeddedBottomY,
@@ -200,5 +223,6 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
     scale, isDeck, isGroundMount,
     houseAttachment, groundAttachment, deckHeight, postHeight, projection, endCut, showRafterTail,
     isLattice, tubeXs, tubeSize,
+    isEaveMount, eavePoints, wallStubTopY,
   };
 }
