@@ -200,18 +200,23 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
   const footingX = postX - footingWidth / 2;
 
   // Eave fascia profile - the awning attaches to a real 6in vertical face,
-  // a 90deg corner into the soffit at its bottom, and a 45deg roofline off
-  // its top (run = rise, so the angle is always true regardless of scale).
+  // a 90deg corner into a 2ft soffit (the eave's real projection from the
+  // wall) at its bottom, and a 45deg roofline off its top (run = rise, so
+  // the angle is always true regardless of scale). The wall stub itself
+  // stops at the bottom of the eave - the soffit/roofline above isn't
+  // backed by wall, same as a real overhang.
   const isEaveMount = houseAttachment === "eave" || houseAttachment === "angled_eave";
   const EAVE_H = (6 / 12) * scale;
+  const EAVE_PROJECTION = 2 * scale;
   const fasciaBottomY = roofY + EAVE_H;
-  const eaveBackX = houseX - EAVE_H;
+  const soffitBackX = houseX - EAVE_PROJECTION;
+  const roofBackX = houseX - EAVE_H;
   const roofBackY = roofY - EAVE_H;
   const eavePoints = isEaveMount
-    ? eaveBackX + "," + fasciaBottomY + " " + houseX + "," + fasciaBottomY + " "
-      + houseX + "," + roofY + " " + eaveBackX + "," + roofBackY
+    ? soffitBackX + "," + fasciaBottomY + " " + houseX + "," + fasciaBottomY + " "
+      + houseX + "," + roofY + " " + roofBackX + "," + roofBackY
     : "";
-  const wallStubTopY = isEaveMount ? roofBackY : roofY;
+  const wallStubTopY = isEaveMount ? fasciaBottomY : roofY;
 
   return {
     svgW, svgH, groundY, surfaceY, deckY, deckHpx,
