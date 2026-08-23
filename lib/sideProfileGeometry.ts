@@ -59,13 +59,18 @@ export interface SideProfileGeometry {
   /** Px size (both width and height) of each tube cross-section. */
   tubeSize: number;
   isEaveMount: boolean;
-  /** SVG/PDF "x,y x,y ..." points string for the eave fascia profile (eave/
-   *  angled_eave house attachment only) - a 6in vertical face where the
-   *  awning attaches, a 90deg corner at the bottom (soffit), and a 45deg
-   *  line off the top (roofline). Empty string when not an eave mount. */
-  eavePoints: string;
-  /** Y where the plain wall stub below the eave should start - the eave
-   *  profile's own back-top corner, so the wall fully backs it with no gap. */
+  /** Soffit board (eave/angled_eave only) - horizontal, wall to fascia,
+   *  the eave's real 2ft projection. */
+  eaveSoffit: { x: number; y: number; width: number; height: number };
+  /** Fascia board (eave/angled_eave only) - vertical, real 6in face where
+   *  the awning attaches. */
+  eaveFascia: { x: number; y: number; width: number; height: number };
+  /** Roof edge line (eave/angled_eave only) - true 45deg (run = rise) off
+   *  the fascia's top, drawn as a thick stroke so it reads as roof
+   *  sheathing, not just an outline edge. */
+  eaveRoofLine: { x1: number; y1: number; x2: number; y2: number };
+  /** Y where the plain wall stub below the eave should start - the bottom
+   *  of the eave, matching where the soffit board sits. */
   wallStubTopY: number;
 }
 
@@ -199,23 +204,30 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
   const footingWidth = isGroundMount ? 14 : 26;
   const footingX = postX - footingWidth / 2;
 
-  // Eave fascia profile - the awning attaches to a real 6in vertical face,
-  // a 90deg corner into a 2ft soffit (the eave's real projection from the
-  // wall) at its bottom, and a 45deg roofline off its top (run = rise, so
-  // the angle is always true regardless of scale). The wall stub itself
-  // stops at the bottom of the eave - the soffit/roofline above isn't
-  // backed by wall, same as a real overhang.
+  // Eave assembly, drawn as the actual boards rather than one abstract
+  // outline: a soffit board under the overhang (real 2ft projection from
+  // the wall), a fascia board capping the front (real 6in face - where the
+  // awning attaches), and a roof edge line off the fascia's top at a true
+  // 45deg (run = rise, holds at any scale). The wall stub stops at the
+  // bottom of the eave - the overhang above isn't backed by wall, same as
+  // a real house.
   const isEaveMount = houseAttachment === "eave" || houseAttachment === "angled_eave";
   const EAVE_H = (6 / 12) * scale;
   const EAVE_PROJECTION = 2 * scale;
+  const EAVE_BOARD_T = 4;
   const fasciaBottomY = roofY + EAVE_H;
-  const soffitBackX = houseX - EAVE_PROJECTION;
-  const roofBackX = houseX - EAVE_H;
-  const roofBackY = roofY - EAVE_H;
-  const eavePoints = isEaveMount
-    ? soffitBackX + "," + fasciaBottomY + " " + houseX + "," + fasciaBottomY + " "
-      + houseX + "," + roofY + " " + roofBackX + "," + roofBackY
-    : "";
+  const eaveSoffit = {
+    x: houseX - EAVE_PROJECTION, y: fasciaBottomY - EAVE_BOARD_T,
+    width: EAVE_PROJECTION, height: EAVE_BOARD_T,
+  };
+  const eaveFascia = {
+    x: houseX - EAVE_BOARD_T, y: roofY,
+    width: EAVE_BOARD_T, height: EAVE_H,
+  };
+  const eaveRoofLine = {
+    x1: houseX, y1: roofY,
+    x2: houseX - EAVE_H, y2: roofY - EAVE_H,
+  };
   const wallStubTopY = isEaveMount ? fasciaBottomY : roofY;
 
   return {
@@ -228,6 +240,6 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
     scale, isDeck, isGroundMount,
     houseAttachment, groundAttachment, deckHeight, postHeight, projection, endCut, showRafterTail,
     isLattice, tubeXs, tubeSize,
-    isEaveMount, eavePoints, wallStubTopY,
+    isEaveMount, eaveSoffit, eaveFascia, eaveRoofLine, wallStubTopY,
   };
 }

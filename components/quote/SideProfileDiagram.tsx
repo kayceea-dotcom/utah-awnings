@@ -70,7 +70,7 @@ export default function SideProfileDiagram({
     houseX, roofY, tailStartX, tailW,
     footingX, footingWidth,
     isDeck, isGroundMount, tubeXs, tubeSize,
-    isEaveMount, eavePoints, wallStubTopY,
+    isEaveMount, eaveSoffit, eaveFascia, eaveRoofLine, wallStubTopY,
   } = geo;
 
   const tailPath = endCutProfilePath(endCut);
@@ -89,15 +89,22 @@ export default function SideProfileDiagram({
             </pattern>
           </defs>
 
-          {/* House attachment - a flat wall for stucco/siding, or a simple
-              eave fascia profile (6in vertical face the awning attaches to,
-              a 90deg corner into the soffit at the bottom, a 45deg roofline
-              off the top) over a wall stub for an eave/angled-eave mount.
-              Either way the wall itself runs all the way down to the ground. */}
+          {/* House attachment - a flat wall for stucco/siding, or a real
+              eave assembly for an eave/angled-eave mount: a soffit board
+              under the 2ft overhang, a fascia board capping its front (the
+              6in face the awning attaches to), and a roof edge line off
+              the fascia's top at a true 45deg. The wall stub stops at the
+              bottom of the eave - it isn't backed by wall above that, same
+              as a real house - but still runs to the ground below it. */}
           {isEaveMount ? (
             <>
               <rect x={houseX - 10} y={wallStubTopY} width={10} height={groundY - wallStubTopY} fill="url(#sp-hatch)" stroke="#64748b" strokeWidth="1.5" />
-              <polygon points={eavePoints} fill="#92400e" stroke="#78350f" strokeWidth="1.5" />
+              <line x1={eaveRoofLine.x1} y1={eaveRoofLine.y1} x2={eaveRoofLine.x2} y2={eaveRoofLine.y2}
+                stroke="#78716c" strokeWidth="5" strokeLinecap="square" />
+              <rect x={eaveSoffit.x} y={eaveSoffit.y} width={eaveSoffit.width} height={eaveSoffit.height}
+                fill="#fef3c7" stroke="#d97706" strokeWidth="1" />
+              <rect x={eaveFascia.x} y={eaveFascia.y} width={eaveFascia.width} height={eaveFascia.height}
+                fill="#fefce8" stroke="#78350f" strokeWidth="1.5" />
             </>
           ) : (
             <rect x={houseX - 10} y={10} width={10} height={groundY - 10} fill="url(#sp-hatch)" stroke="#64748b" strokeWidth="1.5" />
