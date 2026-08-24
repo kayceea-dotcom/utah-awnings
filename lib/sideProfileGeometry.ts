@@ -123,7 +123,7 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
 
   const PAD = 44;
   const GROUND_MARGIN = 26;
-  const TAIL_W = 32;
+  const TAIL_W = 16;
 
   // Real 2x6 rafter (always - lib/pricing/pergola.ts hardcodes 2x6 regardless
   // of any gauge setting) with a 1ft overhang past the beam, plus 2x2 (or
