@@ -70,7 +70,7 @@ export default function SideProfileDiagram({
     houseX, roofY, tailStartX, tailW,
     footingX, footingWidth,
     isDeck, isGroundMount, tubeXs, tubeSize,
-    isEaveMount, eaveSoffit, eaveFascia, eaveRoofLine, wallStubTopY,
+    isEaveMount, eaveSoffit, eaveFascia, eaveRoofLine, wallStubTopY, eaveWallX,
   } = geo;
 
   const tailPath = endCutProfilePath(endCut);
@@ -98,7 +98,7 @@ export default function SideProfileDiagram({
               as a real house - but still runs to the ground below it. */}
           {isEaveMount ? (
             <>
-              <rect x={houseX - 10} y={wallStubTopY} width={10} height={groundY - wallStubTopY} fill="url(#sp-hatch)" stroke="#64748b" strokeWidth="1.5" />
+              <rect x={eaveWallX - 10} y={wallStubTopY} width={10} height={groundY - wallStubTopY} fill="url(#sp-hatch)" stroke="#64748b" strokeWidth="1.5" />
               <line x1={eaveRoofLine.x1} y1={eaveRoofLine.y1} x2={eaveRoofLine.x2} y2={eaveRoofLine.y2}
                 stroke="#78716c" strokeWidth="5" strokeLinecap="square" />
               <rect x={eaveSoffit.x} y={eaveSoffit.y} width={eaveSoffit.width} height={eaveSoffit.height}
@@ -113,9 +113,11 @@ export default function SideProfileDiagram({
             {HOUSE_ATTACHMENT_LABELS[houseAttachment] || houseAttachment.toUpperCase()}
           </text>
 
-          {/* Ground line */}
-          <line x1={houseX - 20} y1={groundY} x2={svgW - 10} y2={groundY} stroke="#64748b" strokeWidth="1.5" />
-          <rect x={houseX - 20} y={groundY} width={svgW - 10 - (houseX - 20)} height={8} fill="url(#sp-hatch)" opacity={0.5} />
+          {/* Ground line - starts past whichever sits further back, the
+              wall or (for an eave mount) its overhanging eave - clamped so
+              a large overhang can't push it past the diagram's left edge */}
+          <line x1={Math.max(0, eaveWallX - 20)} y1={groundY} x2={svgW - 10} y2={groundY} stroke="#64748b" strokeWidth="1.5" />
+          <rect x={Math.max(0, eaveWallX - 20)} y={groundY} width={svgW - 10 - Math.max(0, eaveWallX - 20)} height={8} fill="url(#sp-hatch)" opacity={0.5} />
 
           {/* Deck platform - a 12in skirt/rim board at the surface (what you'd
               actually see looking at the deck's edge), with a support post

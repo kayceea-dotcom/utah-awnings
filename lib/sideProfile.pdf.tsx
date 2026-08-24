@@ -38,7 +38,7 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
     houseX, roofY, tailStartX, tailW,
     footingX, footingWidth,
     isDeck, isGroundMount, houseAttachment, groundAttachment, deckHeight, postHeight, showRafterTail,
-    isLattice, tubeXs, tubeSize, isEaveMount, eaveSoffit, eaveFascia, eaveRoofLine, wallStubTopY,
+    isLattice, tubeXs, tubeSize, isEaveMount, eaveSoffit, eaveFascia, eaveRoofLine, wallStubTopY, eaveWallX,
   } = geo;
 
   const MAX_PDF_W = maxWidth;
@@ -63,7 +63,7 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
               the fascia's top at a true 45deg */}
           {isEaveMount ? (
             <G>
-              <Rect x={houseX - 10} y={wallStubTopY} width={10} height={groundY - wallStubTopY} fill="#cbd5e1" stroke="#64748b" strokeWidth={1.5} />
+              <Rect x={eaveWallX - 10} y={wallStubTopY} width={10} height={groundY - wallStubTopY} fill="#cbd5e1" stroke="#64748b" strokeWidth={1.5} />
               <Line x1={eaveRoofLine.x1} y1={eaveRoofLine.y1} x2={eaveRoofLine.x2} y2={eaveRoofLine.y2}
                 stroke="#78716c" strokeWidth={5} strokeLinecap="square" />
               <Rect x={eaveSoffit.x} y={eaveSoffit.y} width={eaveSoffit.width} height={eaveSoffit.height}
@@ -78,9 +78,11 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
             {HOUSE_ATTACHMENT_LABELS[houseAttachment] || houseAttachment.toUpperCase()}
           </Text>
 
-          {/* Ground line */}
-          <Line x1={houseX - 20} y1={groundY} x2={svgW - 10} y2={groundY} stroke="#64748b" strokeWidth={1.5} />
-          <Rect x={houseX - 20} y={groundY} width={svgW - 10 - (houseX - 20)} height={8} fill="#e2e8f0" />
+          {/* Ground line - starts past whichever sits further back, the
+              wall or (for an eave mount) its overhanging eave - clamped so
+              a large overhang can't push it past the diagram's left edge */}
+          <Line x1={Math.max(0, eaveWallX - 20)} y1={groundY} x2={svgW - 10} y2={groundY} stroke="#64748b" strokeWidth={1.5} />
+          <Rect x={Math.max(0, eaveWallX - 20)} y={groundY} width={svgW - 10 - Math.max(0, eaveWallX - 20)} height={8} fill="#e2e8f0" />
 
           {/* Deck platform - a 12in skirt/rim board at the surface (what you'd
               actually see looking at the deck's edge), with a support post

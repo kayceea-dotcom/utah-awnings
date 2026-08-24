@@ -72,6 +72,11 @@ export interface SideProfileGeometry {
   /** Y where the plain wall stub below the eave should start - the bottom
    *  of the eave, matching where the soffit board sits. */
   wallStubTopY: number;
+  /** X of the wall's outer face for an eave mount - set back from the
+   *  fascia by the eave's full projection, since a real eave overhangs
+   *  past the wall rather than sitting flush with it. Equals houseX for
+   *  every other house attachment. */
+  eaveWallX: number;
 }
 
 // Real beam depth (the "tall" dimension when mounted, viewed end-on in this
@@ -231,6 +236,10 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
     x2: houseX - EAVE_H, y2: roofY - EAVE_H,
   };
   const wallStubTopY = isEaveMount ? fasciaBottomY : roofY;
+  // The wall itself sits at the BACK of the soffit, not flush with the
+  // fascia - a real eave overhangs past the wall by its full projection,
+  // it isn't flush with it.
+  const eaveWallX = isEaveMount ? eaveSoffit.x : houseX;
 
   return {
     svgW, svgH, groundY, surfaceY, deckY, deckHpx,
@@ -242,6 +251,6 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
     scale, isDeck, isGroundMount,
     houseAttachment, groundAttachment, deckHeight, postHeight, projection, endCut, showRafterTail,
     isLattice, tubeXs, tubeSize,
-    isEaveMount, eaveSoffit, eaveFascia, eaveRoofLine, wallStubTopY,
+    isEaveMount, eaveSoffit, eaveFascia, eaveRoofLine, wallStubTopY, eaveWallX,
   };
 }
