@@ -189,11 +189,12 @@ export default function SideProfileDiagram({
               fill="#60a5fa" stroke="#1e40af" strokeWidth="0.75" />
           ))}
 
-          {/* Rafter tail profile - spans the full panel + beam front face.
-              Not shown for a lattice rafter - it isn't wrapped/cut like a
-              panel edge, the tubes above already read as its real end. */}
+          {/* Rafter tail profile - matches the panel's own height (the top
+              of the cover), not the beam beneath it. Not shown for a
+              lattice rafter - it isn't wrapped/cut like a panel edge, the
+              tubes above already read as its real end. */}
           {!isLattice && showRafterTail && (
-            <g transform={"translate(" + tailStartX + "," + panelTopY + ") scale(" + (tailW / 44) + "," + ((panelHeight + beamHeight) / 24) + ")"}>
+            <g transform={"translate(" + tailStartX + "," + panelTopY + ") scale(" + (tailW / 44) + "," + (panelHeight / 24) + ")"}>
               <path d={tailPath} fill="#3b82f6" stroke="#1e3a8a" strokeWidth="1" />
             </g>
           )}

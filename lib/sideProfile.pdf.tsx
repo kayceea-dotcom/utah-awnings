@@ -49,7 +49,7 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
 
   const tailPath = endCutProfilePath(geo.endCut);
   const tailScaleX = tailW / 44;
-  const tailScaleY = (panelHeight + beamHeight) / 24;
+  const tailScaleY = panelHeight / 24;
 
   return (
     <View style={styles.wrap}>

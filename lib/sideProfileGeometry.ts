@@ -169,7 +169,9 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
   const houseX = PAD;
   const postX = PAD + projPx;
   const panelFrontX = postX + beamWidth / 2 + overhangPx;
-  const tailStartX = panelFrontX + 4;
+  // Flush with the panel's own front edge - no gap, the rafter tail is
+  // attached right there, not floating in front of the cover.
+  const tailStartX = panelFrontX;
 
   // Lattice tube cross-sections - spaced along the rafter's full length
   // (house to tip), same real pitch as the top-view diagram.
