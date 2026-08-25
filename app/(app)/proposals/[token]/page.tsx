@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import TopBar from "@/components/TopBar";
-import { Send, ExternalLink, CheckCircle, Clock, Eye, X, FileDown, Pencil, Save } from "lucide-react";
+import { Send, ExternalLink, CheckCircle, Clock, Eye, X, FileDown, Pencil, Save, Upload } from "lucide-react";
 import { getFollowUpStatus } from "@/lib/followups/engine";
 import type { ProposalFollowUpTimestamps } from "@/lib/followups/types";
 import FollowUpBadge from "@/components/FollowUpBadge";
@@ -40,6 +40,9 @@ export default function ProposalPreviewPage() {
   const [resendingContract, setResendingContract] = useState(false);
   const [contractResent, setContractResent] = useState(false);
   const [resendContractError, setResendContractError] = useState("");
+  const [uploadingContract, setUploadingContract] = useState(false);
+  const [uploadContractError, setUploadContractError] = useState("");
+  const contractFileRef = useRef<HTMLInputElement>(null);
   const [editingInfo, setEditingInfo] = useState(false);
   const [savingInfo, setSavingInfo] = useState(false);
   const [infoError, setInfoError] = useState("");
@@ -154,6 +157,52 @@ export default function ProposalPreviewPage() {
       setContractResent(true);
     }
     setResendingContract(false);
+  }
+
+  async function handleUploadSignedContract(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !proposal) return;
+    setUploadingContract(true);
+    setUploadContractError("");
+
+    const ext = file.name.split(".").pop() || "pdf";
+    const filename = "signed-contracts/" + token + "/" + Date.now() + "." + ext;
+    const { error: uploadError } = await supabase.storage.from("renders").upload(filename, file);
+    if (uploadError) {
+      setUploadContractError("Upload failed: " + uploadError.message);
+      setUploadingContract(false);
+      return;
+    }
+    const { data: urlData } = supabase.storage.from("renders").getPublicUrl(filename);
+
+    // A paper contract marks the proposal signed the same way an online
+    // e-signature does - stamping the follow-up chain complete too, so it
+    // doesn't sit there prompting "Send Initial Email" for a deal that's
+    // already closed. Never downgrades a proposal that's already further
+    // along (accepted/ordered/etc) - only fills in what's missing.
+    const currentStatus = proposal.status as string;
+    const alreadySigned = ["signed", "accepted", "pending_payment", "ordered"].includes(currentStatus);
+    const nowIso = new Date().toISOString();
+    const update: Record<string, unknown> = { signed_contract_url: urlData.publicUrl };
+    if (!alreadySigned) {
+      update.status = "signed";
+      update.signed_at = nowIso;
+      update.initial_email_sent_at = proposal.initial_email_sent_at || nowIso;
+      update.followup1_sent_at = proposal.followup1_sent_at || nowIso;
+      update.followup2_sent_at = proposal.followup2_sent_at || nowIso;
+      update.final_followup_sent_at = proposal.final_followup_sent_at || nowIso;
+    }
+
+    const { error: updateError } = await supabase.from("proposals").update(update).eq("token", token);
+    if (updateError) {
+      setUploadContractError("File uploaded, but failed to update the proposal: " + updateError.message);
+      setUploadingContract(false);
+      return;
+    }
+
+    await load();
+    setUploadingContract(false);
+    if (contractFileRef.current) contractFileRef.current.value = "";
   }
 
   async function fetchFollowUpPreview(stepKey: string, customBody?: string) {
@@ -458,6 +507,29 @@ export default function ProposalPreviewPage() {
               )}
             </div>
           )}
+
+          <div className="card p-5 space-y-3">
+            <p className="section-heading">Paper Contract</p>
+            <p className="text-xs text-gray-500">
+              Signed a paper copy in person instead of emailing it? Upload it here as the record - this marks the proposal signed and skips the online contract flow.
+            </p>
+            {proposal.signed_contract_url ? (
+              <a href={String(proposal.signed_contract_url)} target="_blank" rel="noopener noreferrer"
+                className="btn-secondary w-full justify-center text-sm">
+                <FileDown size={14} />
+                View Uploaded Contract
+              </a>
+            ) : null}
+            <input ref={contractFileRef} type="file" accept="application/pdf,image/*" className="hidden" onChange={handleUploadSignedContract} />
+            <button onClick={() => contractFileRef.current?.click()} disabled={uploadingContract}
+              className="btn-secondary w-full justify-center text-sm disabled:opacity-50">
+              <Upload size={14} />
+              {uploadingContract ? "Uploading..." : proposal.signed_contract_url ? "Replace Uploaded Contract" : "Upload Signed Contract"}
+            </button>
+            {uploadContractError && (
+              <p className="text-xs text-red-600 text-center">{uploadContractError}</p>
+            )}
+          </div>
 
           <div className="card p-5 space-y-3">
             <p className="section-heading">Actions</p>
