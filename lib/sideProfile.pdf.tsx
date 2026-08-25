@@ -98,7 +98,11 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
             const deckEdgeX = postX + deckInset;
             const deckPostX = postX;
             const deckPostW = 6;
-            const deckStartX = houseX;
+            // The deck always runs back to the actual wall - for an eave
+            // mount that's set back behind the overhang (eaveWallX), not
+            // the fascia/awning attachment point (houseX).
+            const deckStartX = eaveWallX;
+            const deckDimX = Math.min(houseX - 30, eaveWallX - 10);
             return (
               <G>
                 <Rect x={deckStartX} y={deckY} width={deckEdgeX - deckStartX} height={Math.max(deckSkirtPx, 4)} fill="#fef3c7" stroke="#d97706" strokeWidth={1} />
@@ -106,11 +110,11 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
                   <Rect x={deckPostX - deckPostW / 2} y={skirtBottomY} width={deckPostW} height={groundY - skirtBottomY}
                     fill="#92400e" stroke="#78350f" strokeWidth={1} />
                 )}
-                <Line x1={houseX - 30} y1={deckY} x2={houseX - 30} y2={groundY} stroke="#d97706" strokeWidth={1} />
-                <Line x1={houseX - 34} y1={deckY} x2={houseX - 26} y2={deckY} stroke="#d97706" strokeWidth={1} />
-                <Line x1={houseX - 34} y1={groundY} x2={houseX - 26} y2={groundY} stroke="#d97706" strokeWidth={1} />
-                <Text x={houseX - 30} y={(deckY + groundY) / 2 + 3} textAnchor="middle" fill="#d97706" style={{ ...bold, fontSize: 7 }}
-                  transform={"rotate(-90," + (houseX - 30) + "," + (deckY + groundY) / 2 + ")"}>
+                <Line x1={deckDimX} y1={deckY} x2={deckDimX} y2={groundY} stroke="#d97706" strokeWidth={1} />
+                <Line x1={deckDimX - 4} y1={deckY} x2={deckDimX + 4} y2={deckY} stroke="#d97706" strokeWidth={1} />
+                <Line x1={deckDimX - 4} y1={groundY} x2={deckDimX + 4} y2={groundY} stroke="#d97706" strokeWidth={1} />
+                <Text x={deckDimX} y={(deckY + groundY) / 2 + 3} textAnchor="middle" fill="#d97706" style={{ ...bold, fontSize: 7 }}
+                  transform={"rotate(-90," + deckDimX + "," + (deckY + groundY) / 2 + ")"}>
                   {deckHeight}&apos; deck
                 </Text>
               </G>

@@ -133,7 +133,11 @@ export default function SideProfileDiagram({
             const deckEdgeX = postX + deckInset;
             const deckPostX = postX;
             const deckPostW = 6;
-            const deckStartX = houseX;
+            // The deck always runs back to the actual wall - for an eave
+            // mount that's set back behind the overhang (eaveWallX), not
+            // the fascia/awning attachment point (houseX).
+            const deckStartX = eaveWallX;
+            const deckDimX = Math.min(houseX - 30, eaveWallX - 10);
             return (
               <>
                 <rect x={deckStartX} y={deckY} width={deckEdgeX - deckStartX} height={Math.max(deckSkirtPx, 4)}
@@ -144,11 +148,11 @@ export default function SideProfileDiagram({
                 )}
                 {/* Deck height dimension - still measures the real (full)
                     deck height, only the drawing above is simplified */}
-                <line x1={houseX - 30} y1={deckY} x2={houseX - 30} y2={groundY} stroke="#d97706" strokeWidth="1" />
-                <line x1={houseX - 34} y1={deckY} x2={houseX - 26} y2={deckY} stroke="#d97706" strokeWidth="1" />
-                <line x1={houseX - 34} y1={groundY} x2={houseX - 26} y2={groundY} stroke="#d97706" strokeWidth="1" />
-                <text x={houseX - 30} y={(deckY + groundY) / 2 + 3} textAnchor="middle" fontSize="7" fontWeight="700" fill="#d97706"
-                  transform={"rotate(-90," + (houseX - 30) + "," + (deckY + groundY) / 2 + ")"}>
+                <line x1={deckDimX} y1={deckY} x2={deckDimX} y2={groundY} stroke="#d97706" strokeWidth="1" />
+                <line x1={deckDimX - 4} y1={deckY} x2={deckDimX + 4} y2={deckY} stroke="#d97706" strokeWidth="1" />
+                <line x1={deckDimX - 4} y1={groundY} x2={deckDimX + 4} y2={groundY} stroke="#d97706" strokeWidth="1" />
+                <text x={deckDimX} y={(deckY + groundY) / 2 + 3} textAnchor="middle" fontSize="7" fontWeight="700" fill="#d97706"
+                  transform={"rotate(-90," + deckDimX + "," + (deckY + groundY) / 2 + ")"}>
                   {deckHeight}&apos; deck
                 </text>
               </>
