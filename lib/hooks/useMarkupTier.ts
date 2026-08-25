@@ -29,23 +29,29 @@ const TIER_MARKUPS: Record<Exclude<MarkupTier, "custom">, number> = {
 // Deliberately solves against a $0 discount (the pre-discount sticker
 // price) - if it re-targeted including the live discount, applying a
 // discount would just make this hook raise markup to cancel it back out,
-// and the customer's price would never actually move. At $0 discount the
-// commission basis price is just subtotal * markup (see
-// lib/pricing/shared.ts commissionBasisPrice) - no CC-fee math to invert.
+// and the customer's price would never actually move.
+//
+// Solves against materialsBase (materialCost + tax) rather than the full
+// subtotal - the full subtotal also includes footings/roof mounts/misc,
+// and solving against that would do the exact same silent cancel-out for
+// THOSE: adding $500 of footings would just make this hook lower markup by
+// enough to hold the same target price, quietly eating the $500 out of
+// margin instead of passing it through to the customer. Add-on costs need
+// to move the price; only the true materials markup should stay pinned.
 export function useMarkupTier(opts: {
   materialCost: number;
-  subtotal: number;
+  materialsBase: number;
   markup: number;
   setMarkup: (markup: number) => void;
 }) {
   const [tier, setTier] = useState<MarkupTier>("r19");
-  const { materialCost, subtotal, markup, setMarkup } = opts;
+  const { materialCost, materialsBase, markup, setMarkup } = opts;
 
   useEffect(() => {
     if (tier === "custom") return;
-    if (materialCost <= 0 || subtotal <= 0) return;
+    if (materialCost <= 0 || materialsBase <= 0) return;
     const targetPrice = TIER_MARKUPS[tier] * materialCost;
-    const required = targetPrice / subtotal;
+    const required = targetPrice / materialsBase;
     if (!Number.isFinite(required) || required <= 0) return;
     // Round UP (never down) at high precision - rounding down, even by a
     // fraction of a cent, can land the price a cent under the tier's
@@ -55,7 +61,7 @@ export function useMarkupTier(opts: {
       setMarkup(rounded);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tier, materialCost, subtotal]);
+  }, [tier, materialCost, materialsBase]);
 
   return {
     tier,

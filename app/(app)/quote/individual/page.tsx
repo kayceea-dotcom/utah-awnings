@@ -206,7 +206,7 @@ export default function IndividualQuotePage() {
   const result = useMemo(() => calcIndividual(inp), [inp]);
   const markupTier = useMarkupTier({
     materialCost: result.materialCost,
-    subtotal: result.subtotal,
+    materialsBase: result.totalMaterials,
     markup: inp.markup,
     setMarkup: (m) => setField("markup", m),
   });

@@ -155,6 +155,8 @@ export default function ProposalPage() {
   const q = quote as Record<string, unknown>;
   const c = customer as Record<string, unknown>;
   const co = company as Record<string, unknown>;
+  const discount = Number((q.inputs as Record<string, unknown>)?.discount) || 0;
+  const preDiscountTotal = (q.total_job_sale as number) + discount;
 
   if (step === "done") {
     return (
@@ -344,9 +346,17 @@ export default function ProposalPage() {
           {/* Total investment + financing */}
           <div className="text-center">
             <p className="text-xs uppercase tracking-widest text-gray-400 mb-2">Total Investment</p>
+            {discount > 0 && (
+              <p className="text-lg text-gray-400 line-through">{fmt(preDiscountTotal)}</p>
+            )}
             <p className="text-4xl sm:text-5xl font-extrabold tracking-tight" style={{ color: "#222222" }}>
               {fmt(q.total_job_sale as number)}
             </p>
+            {discount > 0 && (
+              <p className="mt-1 text-sm font-bold" style={{ color: "#2E7D32" }}>
+                You saved {fmt(discount)}
+              </p>
+            )}
             <p className="mt-3 text-xl sm:text-2xl font-bold" style={{ color: "#2E7D32" }}>
               As low as {fmt(estimateMonthlyPayment(q.total_job_sale as number, FINANCING_APR, FINANCING_TERM_YEARS))}/mo with financing
             </p>

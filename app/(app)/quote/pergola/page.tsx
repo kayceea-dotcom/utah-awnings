@@ -312,7 +312,7 @@ export default function PergolaQuotePage() {
   const effectiveResult = editableList.displayResult;
   const markupTier = useMarkupTier({
     materialCost: effectiveResult.materialCost,
-    subtotal: effectiveResult.subtotal,
+    materialsBase: effectiveResult.totalMaterials,
     markup: inp.markup,
     setMarkup: (m) => setField("markup", m),
   });
