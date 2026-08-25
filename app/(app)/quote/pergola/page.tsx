@@ -20,6 +20,7 @@ import SideProfileDiagram from "@/components/quote/SideProfileDiagram";
 import CommissionPanel from "@/components/quote/CommissionPanel";
 import MarkupTierSelect from "@/components/quote/MarkupTierSelect";
 import DiscountOptionSelect from "@/components/quote/DiscountOptionSelect";
+import HousePhotoUpload from "@/components/quote/HousePhotoUpload";
 import ProductSwitcher from "@/components/quote/ProductSwitcher";
 import { useRouter } from "next/navigation";
 import SaveQuoteModal from "@/components/quote/SaveQuoteModal";
@@ -76,7 +77,7 @@ const GROUND_ATTACHMENTS = [
 ];
 
 const DEFAULT: PergolaInputs = {
-  jobName: "", salesman: "",
+  jobName: "", salesman: "", housePhotoUrl: "",
   projection: 0, width: 0,
   beamLength: 0, beamType: "3x8", beamEndCut: "beveled", beamQty: 1,
   rafterGauge: "032",
@@ -364,6 +365,7 @@ export default function PergolaQuotePage() {
               <SectionCard id="job" title="Job Information" open={open.has("job")} onToggle={toggleSection}>
                 <TextInput label="Job Name" value={inp.jobName} onChange={(v) => setField("jobName", v)} span={2} />
                 <TextInput label="Salesman" value={inp.salesman} readOnly span={2} />
+                <HousePhotoUpload value={inp.housePhotoUrl} onChange={(v) => setField("housePhotoUrl", v)} />
               </SectionCard>
 
               <SectionCard id="dimensions" title="Dimensions" open={open.has("dimensions")} onToggle={toggleSection}>

@@ -5,6 +5,7 @@ import { li, nextStockLength, anchorQty, deckHeightSurcharge, postMaterialLength
 export interface PergolaInputs {
   jobName: string;
   salesman: string;
+  housePhotoUrl: string;
   projection: number;
   width: number;
   beamLength: number;

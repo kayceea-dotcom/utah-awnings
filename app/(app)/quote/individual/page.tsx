@@ -15,6 +15,7 @@ import Field from "@/components/quote/Field";
 import CommissionPanel from "@/components/quote/CommissionPanel";
 import MarkupTierSelect from "@/components/quote/MarkupTierSelect";
 import DiscountOptionSelect from "@/components/quote/DiscountOptionSelect";
+import HousePhotoUpload from "@/components/quote/HousePhotoUpload";
 import { ChevronDown, ChevronUp, RefreshCw, Plus, Trash2, Send } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useProfile";
 import { useRouter } from "next/navigation";
@@ -25,7 +26,7 @@ const COLORS = ["White","Siennawood","Slate","Driftwood","Beechwood","Maplewood"
 const COLOR_OPTS = [{ value: "", label: "None" }, ...COLORS.map((c) => ({ value: c, label: c }))];
 
 const DEFAULT: IndividualInputs = {
-  jobName: "", salesman: "",
+  jobName: "", salesman: "", housePhotoUrl: "",
   items: [],
   discount: 0, footings: 0, roofMounts: 0, misc: 0,
   markup: 1.8, taxRate: 0.0745,
@@ -292,6 +293,7 @@ export default function IndividualQuotePage() {
                 <div className="grid grid-cols-2 gap-3 lg:gap-4">
                   <TextInput label="Job Name" value={inp.jobName} onChange={(v) => setField("jobName", v)} span={2} />
                   <TextInput label="Salesman" value={inp.salesman} readOnly span={2} />
+                  <HousePhotoUpload value={inp.housePhotoUrl} onChange={(v) => setField("housePhotoUrl", v)} />
                 </div>
               </SectionCard>
 

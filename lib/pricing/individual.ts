@@ -14,6 +14,7 @@ export interface IndividualLineInput {
 export interface IndividualInputs {
   jobName: string;
   salesman: string;
+  housePhotoUrl: string;
   items: IndividualLineInput[];
   discount: number;
   footings: number;

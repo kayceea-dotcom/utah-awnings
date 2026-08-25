@@ -19,6 +19,7 @@ import SideProfileDiagram from "@/components/quote/SideProfileDiagram";
 import CommissionPanel from "@/components/quote/CommissionPanel";
 import MarkupTierSelect from "@/components/quote/MarkupTierSelect";
 import DiscountOptionSelect from "@/components/quote/DiscountOptionSelect";
+import HousePhotoUpload from "@/components/quote/HousePhotoUpload";
 import { ChevronDown, ChevronUp, RefreshCw, DollarSign, Send } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useProfile";
 import { useRouter } from "next/navigation";
@@ -83,7 +84,7 @@ const DOWNSPOUT_SIDES = [
 ];
 
 const DEFAULT: WPanInputs = {
-  jobName: "", salesman: "",
+  jobName: "", salesman: "", housePhotoUrl: "",
   projection1: 0, width1: 0,
   projection2: 0, width2: 0,
   panelType: "wpan_032",
@@ -397,6 +398,7 @@ export default function WPanQuotePage() {
               <SectionCard id="job" title="Job Information" open={open.has("job")} onToggle={toggleSection}>
                 <TextInput label="Job Name" value={inp.jobName} onChange={(v) => setField("jobName", v)} span={2} />
                 <TextInput label="Salesman" value={inp.salesman} readOnly span={2} />
+                <HousePhotoUpload value={inp.housePhotoUrl} onChange={(v) => setField("housePhotoUrl", v)} />
               </SectionCard>
 
               <SectionCard id="dimensions" title="Dimensions" open={open.has("dimensions")} onToggle={toggleSection}>

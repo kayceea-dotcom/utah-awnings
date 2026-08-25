@@ -397,6 +397,13 @@ export default function ProposalPreviewPage() {
                 <div><span className="text-gray-500">City:</span> <span className="font-medium">{c.city as string}</span></div>
                 <div className="col-span-2"><span className="text-gray-500">Address:</span> <span className="font-medium">{(c.address as string) || "-"}{c.zip ? ", " + c.zip : ""}</span></div>
                 <div className="col-span-2"><span className="text-gray-500">Job Name:</span> <span className="font-medium">{((q.inputs as Record<string, unknown>)?.jobName as string) || "-"}</span></div>
+                {!!((q.inputs as Record<string, unknown>)?.housePhotoUrl as string) && (
+                  <div className="col-span-2">
+                    <span className="text-gray-500 block mb-1">House Photo:</span>
+                    <img src={(q.inputs as Record<string, unknown>).housePhotoUrl as string} alt="House"
+                      className="h-32 w-32 rounded-lg object-cover border border-gray-200" />
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -11,6 +11,7 @@ export type IRPType = "lrp_3_032" | "lrp_4_032";
 export interface IRPInputs {
   jobName: string;
   salesman: string;
+  housePhotoUrl: string;
   projection1: number;
   width1: number;
   projection2: number;
