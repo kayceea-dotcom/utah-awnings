@@ -40,6 +40,7 @@ export interface IRPInputs {
   footings: number;
   roofMounts: number;
   misc: number;
+  tearDown: number;
   markup: number;
   taxRate: number;
 }
@@ -235,7 +236,7 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
   const materialCost = items.reduce((s, i) => s + i.amount, 0);
   const pricing = finalizePricing(materialCost, {
     taxRate: inp.taxRate, discount: inp.discount,
-    footings: inp.footings, roofMounts: inp.roofMounts, misc, markup: inp.markup,
+    footings: inp.footings, roofMounts: inp.roofMounts, misc, tearDown: inp.tearDown, markup: inp.markup,
   });
   const totalSqFt =
     (inp.projection1 > 0 ? inp.projection1 * inp.width1 : 0) +

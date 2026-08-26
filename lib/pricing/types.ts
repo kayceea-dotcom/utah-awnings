@@ -77,6 +77,7 @@ export interface NewportInputs {
   footings: number;
   roofMounts: number;
   misc: number;
+  tearDown: number;
   markup: number;
   taxRate: number;
 }
@@ -103,6 +104,7 @@ export interface QuoteResult {
   footings: number;
   roofMounts: number;
   misc: number;
+  tearDown: number;
   subtotal: number;
   markup: number;
   ccFee: number;

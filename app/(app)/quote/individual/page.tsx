@@ -28,7 +28,7 @@ const COLOR_OPTS = [{ value: "", label: "None" }, ...COLORS.map((c) => ({ value:
 const DEFAULT: IndividualInputs = {
   jobName: "", salesman: "", housePhotoUrl: "",
   items: [],
-  discount: 0, footings: 0, roofMounts: 0, misc: 0,
+  discount: 0, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
   markup: 1.8, taxRate: 0.0745,
 };
 
@@ -141,6 +141,7 @@ function PriceSummaryPanel({ result, onClose }: { result: ReturnType<typeof calc
           ...(result.footings   ? [["Footings",    result.footings]]   : []),
           ...(result.roofMounts ? [["Roof Mounts", result.roofMounts]] : []),
           ...(result.misc       ? [["Misc",        result.misc]]        : []),
+          ...(result.tearDown   ? [["Tear Down",   result.tearDown]]    : []),
           ["Subtotal",        result.subtotal],
         ] as [string, number][]).map(([label, val]) => (
           <div key={label} className="flex justify-between text-gray-600">
@@ -395,6 +396,7 @@ export default function IndividualQuotePage() {
                   <NumInput label="Footings ($)" value={inp.footings} onChange={(v) => setField("footings", v)} />
                   <NumInput label="Roof Mounts ($)" value={inp.roofMounts} onChange={(v) => setField("roofMounts", v)} />
                   <NumInput label="Misc ($)" value={inp.misc} onChange={(v) => setField("misc", v)} />
+                  <NumInput label="Tear Down ($)" value={inp.tearDown} onChange={(v) => setField("tearDown", v)} />
                 </div>
               </SectionCard>
 

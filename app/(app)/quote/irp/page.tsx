@@ -84,7 +84,7 @@ const DEFAULT: IRPInputs = {
   downspouts: 1, downspoutSide: "right", sprayPaint: false,
   houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
   shadeBeamQty: 0, shadeBeamLength: 16,
-  discount: 0, footings: 0, roofMounts: 0, misc: 0,
+  discount: 0, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
   markup: 2.0, taxRate: 0.0745,
 };
 
@@ -234,6 +234,7 @@ function PriceSummaryPanel({ result, onClose }: { result: ReturnType<typeof calc
           ...(result.footings   ? [["Footings",    result.footings]]   : []),
           ...(result.roofMounts ? [["Roof Mounts", result.roofMounts]] : []),
           ...(result.misc       ? [["Misc",        result.misc]]        : []),
+          ...(result.tearDown   ? [["Tear Down",   result.tearDown]]    : []),
           ["Subtotal",        result.subtotal],
         ] as [string, number][]).map(([label, val]) => (
           <div key={label} className="flex justify-between text-gray-600">
@@ -433,6 +434,7 @@ export default function IRPQuotePage() {
                 <NumInput label="Roof Mounts ($)" value={inp.roofMounts} onChange={(v) => setField("roofMounts", v)} />
                 <NumInput label="Misc ($)" value={inp.misc} onChange={(v) => setField("misc", v)}
                   hint={groundMountAddOn > 0 ? `+$${groundMountAddOn} auto-added for ground-mount concrete/labor (${groundMountHoles} holes @ $100)` : undefined} />
+                <NumInput label="Tear Down ($)" value={inp.tearDown} onChange={(v) => setField("tearDown", v)} />
               </SectionCard>
 
               <div className="hidden lg:block">

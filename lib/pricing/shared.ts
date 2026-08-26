@@ -19,6 +19,7 @@ export interface PricingSummaryOpts {
   footings: number;
   roofMounts: number;
   misc: number;
+  tearDown: number;
   markup: number;
 }
 
@@ -29,6 +30,7 @@ export interface PricingSummary {
   footings: number;
   roofMounts: number;
   misc: number;
+  tearDown: number;
   subtotal: number;
   markup: number;
   ccFee: number;
@@ -38,10 +40,10 @@ export interface PricingSummary {
 }
 
 // Turns a material cost total into the rest of the pricing breakdown (taxes,
-// footings/roof mounts/misc, markup, credit-card fee, discount). Same formula
-// for every product - pulled out so the quote builder can re-run it against a
-// manually-edited material list without duplicating this math, not just so
-// the 4 calculators stay in sync with each other.
+// footings/roof mounts/misc/tear down, markup, credit-card fee, discount).
+// Same formula for every product - pulled out so the quote builder can
+// re-run it against a manually-edited material list without duplicating
+// this math, not just so the 4 calculators stay in sync with each other.
 //
 // Discount is a flat $ amount taken off the final Total Job Sale (after markup
 // and CC fee), not off the material cost - so it reduces the customer's price
@@ -49,7 +51,7 @@ export interface PricingSummary {
 export function finalizePricing(materialCost: number, opts: PricingSummaryOpts): PricingSummary {
   const taxes = materialCost * opts.taxRate;
   const totalMaterials = materialCost + taxes;
-  const subtotal = totalMaterials + opts.footings + opts.roofMounts + opts.misc;
+  const subtotal = totalMaterials + opts.footings + opts.roofMounts + opts.misc + opts.tearDown;
   const preSaleTotal = subtotal * opts.markup;
   const ccFee = preSaleTotal * RATES.CC_FEE_RATE / (1 - RATES.CC_FEE_RATE);
   const totalJobSale = preSaleTotal + ccFee - opts.discount;
@@ -60,6 +62,7 @@ export function finalizePricing(materialCost: number, opts: PricingSummaryOpts):
     footings: opts.footings,
     roofMounts: opts.roofMounts,
     misc: opts.misc,
+    tearDown: opts.tearDown,
     subtotal, markup: opts.markup, ccFee,
     discount: opts.discount,
     totalJobSale, totalProfit,
