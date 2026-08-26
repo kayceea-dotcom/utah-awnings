@@ -248,7 +248,7 @@ function PriceSummaryPanel({ result, onClose }: { result: ReturnType<typeof calc
             <span>Pricing Markup</span>
             <span className="font-mono text-gray-800">{result.markup}x</span>
           </div>
-          <p className="text-[10px] text-gray-400 mt-0.5">Applies to the full subtotal (materials + tax + add-ons) - matches Commission Markup below exactly when there's no discount and no add-ons like footings/misc; the two can drift apart otherwise</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">Applies to the full subtotal (materials + tax + add-ons) - matches Commission Markup below exactly with no discount and no add-ons like footings/misc; the two can drift apart otherwise</p>
         </div>
         <div className="flex justify-between text-gray-600">
           <span>CC Fee (3.25%)</span>
