@@ -21,6 +21,21 @@ export const MARKUP_COMMISSION_SCHEDULE: MarkupCommissionBand[] = [
   { min: 2.1,  rate: 0.20 }, // 2.1x and above
 ];
 
+// On a big job (material cost over this threshold), a markup as low as 1.7x
+// still earns a real commission instead of falling into the 8% band - the
+// dollar profit at 1.7x is already substantial when material cost is this
+// high, even though the ratio alone looks low.
+export const BIG_JOB_MATERIAL_THRESHOLD = 11500;
+export const MARKUP_COMMISSION_SCHEDULE_BIG_JOB: MarkupCommissionBand[] = [
+  { min: 0,    rate: 0.04 }, // 0 - 1.4x
+  { min: 1.41, rate: 0.08 }, // 1.41 - 1.69x
+  { min: 1.7,  rate: 0.13 }, // 1.7 - 1.79x - unlocked only above the threshold
+  { min: 1.8,  rate: 0.14 }, // 1.8 - 1.89x
+  { min: 1.9,  rate: 0.16 }, // 1.9 - 1.99x
+  { min: 2.0,  rate: 0.19 }, // 2.0 - 2.09x
+  { min: 2.1,  rate: 0.20 }, // 2.1x and above
+];
+
 // Default markup a quote starts at once material cost is known.
 export const DEFAULT_MARKUP = 2.0;
 

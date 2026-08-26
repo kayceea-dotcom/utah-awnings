@@ -1,5 +1,7 @@
 import {
   MARKUP_COMMISSION_SCHEDULE,
+  MARKUP_COMMISSION_SCHEDULE_BIG_JOB,
+  BIG_JOB_MATERIAL_THRESHOLD,
   DEFAULT_MARKUP,
   BREAK_EVEN_BASE,
   BREAK_EVEN_MATERIAL_MULTIPLIER,
@@ -73,13 +75,21 @@ export interface CommissionScheduleConfig {
   commissionSchedule?: MarkupCommissionBand[];
 }
 
+// Big jobs unlock the 1.7x/13% band (see schedule.ts) - everything else
+// uses the standard rate card. An explicit config.commissionSchedule (tests,
+// future admin override) always wins over this threshold check.
+function resolveSchedule(material: number, config: CommissionScheduleConfig): MarkupCommissionBand[] {
+  if (config.commissionSchedule) return config.commissionSchedule;
+  return material > BIG_JOB_MATERIAL_THRESHOLD ? MARKUP_COMMISSION_SCHEDULE_BIG_JOB : MARKUP_COMMISSION_SCHEDULE;
+}
+
 export function computeCommission(
   materialCost: number | null | undefined,
   price: number | null | undefined,
   config: CommissionScheduleConfig = {}
 ): CommissionResult {
   const material = normalizeMaterialCost(materialCost);
-  const commissionSchedule = config.commissionSchedule ?? MARKUP_COMMISSION_SCHEDULE;
+  const commissionSchedule = resolveSchedule(material, config);
   const p = Number.isFinite(Number(price)) ? Number(price) : material * DEFAULT_MARKUP;
 
   const markup = material > 0 ? round3(p / material) : 0;
@@ -111,7 +121,7 @@ export function nextTierPrompt(
 ): NextTierPrompt | null {
   const material = normalizeMaterialCost(materialCost);
   if (material <= 0) return null;
-  const commissionSchedule = config.commissionSchedule ?? MARKUP_COMMISSION_SCHEDULE;
+  const commissionSchedule = resolveSchedule(material, config);
   const current = computeCommission(material, price, config);
 
   const sorted = [...commissionSchedule].sort((a, b) => a.min - b.min);

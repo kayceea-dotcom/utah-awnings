@@ -119,6 +119,45 @@ describe("discounts count fully against commission", () => {
   });
 });
 
+describe("big job unlock - material over $11,500 opens a 1.7x/13% band", () => {
+  const BIG_MATERIAL = 12000; // > $11,500 threshold
+  const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+
+  it("at or below the $11,500 threshold, 1.7x markup still only pays 8%", () => {
+    const atThreshold = computeCommission(11500, 11500 * 1.7);
+    expect(atThreshold.commissionRate).toBeCloseTo(0.08);
+    const belowThreshold = computeCommission(10000, 10000 * 1.7);
+    expect(belowThreshold.commissionRate).toBeCloseTo(0.08);
+  });
+
+  it("above the threshold, 1.7x markup unlocks 13%", () => {
+    const r = computeCommission(BIG_MATERIAL, BIG_MATERIAL * 1.7);
+    expect(r.commissionRate).toBeCloseTo(0.13);
+  });
+
+  it("above the threshold, 1.79x still pays 13% (doesn't reach the 1.8x/14% band)", () => {
+    const r = computeCommission(BIG_MATERIAL, BIG_MATERIAL * 1.79);
+    expect(r.commissionRate).toBeCloseTo(0.13);
+  });
+
+  it("above the threshold, below 1.7x still only pays 8% - the unlock doesn't lower the floor", () => {
+    const r = computeCommission(BIG_MATERIAL, BIG_MATERIAL * 1.69);
+    expect(r.commissionRate).toBeCloseTo(0.08);
+  });
+
+  it("above the threshold, 1.8x+ is unaffected by the unlock", () => {
+    const r = computeCommission(BIG_MATERIAL, BIG_MATERIAL * 1.8);
+    expect(r.commissionRate).toBeCloseTo(0.14);
+  });
+
+  it("nextTierPrompt on a big job at 1.5x points to 1.7x/13%, not straight to 1.8x/14%", () => {
+    const prompt = nextTierPrompt(BIG_MATERIAL, BIG_MATERIAL * 1.5);
+    expect(prompt).not.toBeNull();
+    expect(prompt!.nextRate).toBeCloseTo(0.13);
+    expect(prompt!.targetPrice).toBe(round2(BIG_MATERIAL * 1.7));
+  });
+});
+
 describe("nextTierPrompt", () => {
   it("gives the minimum price to enter the next tier and the commission delta at that exact price", () => {
     // At 2.0x (19%), the next tier (20%) starts at 2.1x = $21,000.

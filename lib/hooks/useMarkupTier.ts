@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 
-export type MarkupTier = "r8" | "r14" | "r16" | "r19" | "r20" | "custom";
+export type MarkupTier = "r8" | "r13" | "r14" | "r16" | "r19" | "r20" | "custom";
 
 export const MARKUP_TIER_OPTIONS: { value: MarkupTier; label: string }[] = [
   { value: "r8", label: "1.41x — 8% commission" },
+  { value: "r13", label: "1.7x — 13% commission (jobs over $11,500 material)" },
   { value: "r14", label: "1.8x — 14% commission" },
   { value: "r16", label: "1.9x — 16% commission" },
   { value: "r19", label: "2.0x — 19% commission" },
@@ -13,6 +14,7 @@ export const MARKUP_TIER_OPTIONS: { value: MarkupTier; label: string }[] = [
 
 const TIER_MARKUPS: Record<Exclude<MarkupTier, "custom">, number> = {
   r8: 1.41,
+  r13: 1.7,
   r14: 1.8,
   r16: 1.9,
   r19: 2.0,
