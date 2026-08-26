@@ -44,6 +44,10 @@ export interface SideProfileGeometry {
   panelBottomY: number;
   panelHeight: number;
   panelFrontX: number;
+  /** Panel's back edge - flush with houseX when attached (tucks under the
+   *  hanger), or overhung past the rear beam by the same amount as the
+   *  front when freestanding (no house wall to tuck under). */
+  panelBackX: number;
   houseX: number;
   roofY: number;
   tailStartX: number;
@@ -145,6 +149,8 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
 
   if (!projection || !postHeight) return null;
 
+  const isFreestanding = mountStyle === "freestanding";
+
   const PAD = 44;
   const GROUND_MARGIN = 26;
   const TAIL_W = 16;
@@ -190,20 +196,26 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
     ? LATTICE_OVERHANG_FT * scale
     : hasPanel ? (panelOverhangInches / 12) * scale : 0;
 
-  const houseX = PAD;
-  const postX = PAD + projPx;
+  // Freestanding shifts the house-end reference point right by the overhang
+  // amount, leaving room on the diagram's left edge for the panel to overhang
+  // past the rear beam by the same amount as it already does past the front -
+  // "houseX" still marks where the rear beam itself sits either way.
+  const houseX = PAD + (isFreestanding ? overhangPx : 0);
+  const postX = houseX + projPx;
   const panelFrontX = postX + beamWidth / 2 + overhangPx;
+  const panelBackX = isFreestanding ? houseX - overhangPx : houseX;
   // Flush with the panel's own front edge - no gap, the rafter tail is
   // attached right there, not floating in front of the cover.
   const tailStartX = panelFrontX;
 
   // Lattice tube cross-sections - spaced along the rafter's full length
-  // (house to tip), same real pitch as the top-view diagram.
+  // (back to tip, including any rear overhang), same real pitch as the
+  // top-view diagram.
   const tubeSize = (tubeWidthIn / 12) * scale;
   const tubePitchPx = (tubePitchIn / 12) * scale;
   const tubeXs: number[] = [];
   if (isLattice && tubePitchPx > 0) {
-    for (let x = houseX + tubePitchPx / 2; x <= panelFrontX; x += tubePitchPx) {
+    for (let x = panelBackX + tubePitchPx / 2; x <= panelFrontX; x += tubePitchPx) {
       tubeXs.push(x);
     }
   }
@@ -236,7 +248,6 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
   // front's own values when not given). The panel rect above still keeps using
   // the front beam's panelTopY as a single flat rect either way - it isn't
   // re-sloped to meet a differently-heighted rear beam exactly.
-  const isFreestanding = mountStyle === "freestanding";
   let rear: SideProfileGeometry["rear"] = null;
   if (isFreestanding) {
     const rearHeight = rearPostHeight || postHeight;
@@ -288,7 +299,7 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
     svgW, svgH, groundY, surfaceY, deckY, deckHpx,
     postX, postWidth: 10, postTopY, postBottomY, embeddedBottomY,
     beamTopY, beamHeight, beamWidth,
-    panelTopY, panelBottomY, panelHeight, panelFrontX,
+    panelTopY, panelBottomY, panelHeight, panelFrontX, panelBackX,
     houseX, roofY, tailStartX, tailW: TAIL_W,
     footingX, footingWidth,
     scale, isDeck, isGroundMount,

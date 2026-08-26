@@ -3,12 +3,12 @@ import { calcNewport } from "./newport";
 import { calcWPan } from "./wpan";
 import { calcIRP } from "./irp";
 import { calcPergola } from "./pergola";
-import type { NewportInputs } from "./types";
+import type { NewportInputs, LineItem } from "./types";
 import type { WPanInputs } from "./wpan";
 import type { IRPInputs } from "./irp";
 import type { PergolaInputs } from "./pergola";
 
-function findItem(items: { name: string }[], name: string) {
+function findItem(items: LineItem[], name: string) {
   return items.find((i) => i.name === name);
 }
 

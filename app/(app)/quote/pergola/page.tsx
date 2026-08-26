@@ -149,13 +149,13 @@ function NumInput({ label, value, onChange, hint, span }: {
   );
 }
 
-function SelectInput({ label, value, onChange, options, span }: {
+function SelectInput({ label, value, onChange, options, span, hint }: {
   label: string; value: string; onChange: (v: string) => void;
-  options: { value: string; label: string }[]; span?: number;
+  options: { value: string; label: string }[]; span?: number; hint?: string;
 }) {
   return (
     <div className={span === 2 ? "col-span-2" : ""}>
-      <Field label={label}>
+      <Field label={label} hint={hint}>
         <div className="relative">
           <select className="select pr-8" value={value} onChange={(e) => onChange(e.target.value)}>
             {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -341,6 +341,27 @@ export default function PergolaQuotePage() {
     setInp((p) => ({ ...p, [key]: val }));
   }
 
+  // Freestanding splits one total post count evenly across the front and
+  // rear beams (e.g. 4 total -> 2 front + 2 rear), rather than making the
+  // rep enter both counts separately and risk leaving the rear at 0.
+  function splitPostsEvenly(total: number): { front: number; rear: number } {
+    return { front: Math.ceil(total / 2), rear: Math.floor(total / 2) };
+  }
+  function handleMountStyleChange(v: string) {
+    if (v === "freestanding" && inp.mountStyle !== "freestanding") {
+      const { front, rear } = splitPostsEvenly(inp.posts + inp.rearPosts);
+      setInp((p) => ({ ...p, mountStyle: v as never, posts: front, rearPosts: rear }));
+    } else if (v !== "freestanding" && inp.mountStyle === "freestanding") {
+      setInp((p) => ({ ...p, mountStyle: v as never, posts: p.posts + p.rearPosts, rearPosts: 0 }));
+    } else {
+      setField("mountStyle", v as never);
+    }
+  }
+  function handleTotalPostsChange(v: number) {
+    const { front, rear } = splitPostsEvenly(v);
+    setInp((p) => ({ ...p, posts: front, rearPosts: rear }));
+  }
+
   function handleWidthChange(v: number) {
     setInp((p) => ({ ...p, width: v, beamLength: v }));
   }
@@ -394,7 +415,7 @@ export default function PergolaQuotePage() {
               </SectionCard>
 
               <SectionCard id="attachment" title="Attachment" open={open.has("attachment")} onToggle={toggleSection}>
-                <SelectInput label="Mount Style" value={inp.mountStyle} onChange={(v) => setField("mountStyle", v as never)} options={MOUNT_STYLES} span={2} />
+                <SelectInput label="Mount Style" value={inp.mountStyle} onChange={handleMountStyleChange} options={MOUNT_STYLES} span={2} />
                 {inp.mountStyle !== "freestanding" && (
                   <SelectInput label="House Attachment" value={inp.houseAttachment} onChange={(v) => setField("houseAttachment", v as never)} options={HOUSE_ATTACHMENTS} />
                 )}
@@ -406,17 +427,20 @@ export default function PergolaQuotePage() {
               </SectionCard>
 
               <SectionCard id="posts" title="Posts" open={open.has("posts")} onToggle={toggleSection}>
-                <NumInput label="Posts (qty)" value={inp.posts} onChange={(v) => setField("posts", v)} />
-                <SelectInput label="Post Height (ft)" value={String(inp.postHeight)} onChange={(v) => setField("postHeight", Number(v))}
+                <NumInput label={inp.mountStyle === "freestanding" ? "Posts (Total, qty)" : "Posts (qty)"}
+                  value={inp.mountStyle === "freestanding" ? inp.posts + inp.rearPosts : inp.posts}
+                  onChange={inp.mountStyle === "freestanding" ? handleTotalPostsChange : (v) => setField("posts", v)}
+                  hint={inp.mountStyle === "freestanding" ? "Splits evenly - front beam + rear beam" : undefined} />
+                <SelectInput label={inp.mountStyle === "freestanding" ? "Front Post Height (ft)" : "Post Height (ft)"} value={String(inp.postHeight)} onChange={(v) => setField("postHeight", Number(v))}
                   options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))} />
                 {inp.mountStyle === "freestanding" && (
                   <>
                     <div className="col-span-2 text-xs font-bold text-gray-600 uppercase tracking-wide pt-2">Rear Beam &amp; Posts</div>
                     <SelectInput label="Rear Beam Type" value={inp.rearBeamType} onChange={(v) => setField("rearBeamType", v as never)} options={BEAM_TYPES} />
                     <NumInput label="Rear Beam Length (ft)" value={inp.rearBeamLength} onChange={(v) => setField("rearBeamLength", v)} />
-                    <NumInput label="Rear Posts (qty)" value={inp.rearPosts} onChange={(v) => setField("rearPosts", v)} />
                     <SelectInput label="Rear Post Height (ft)" value={String(inp.rearPostHeight)} onChange={(v) => setField("rearPostHeight", Number(v))}
-                      options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))} />
+                      options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))}
+                      hint={"Rear posts: " + inp.rearPosts} />
                   </>
                 )}
               </SectionCard>

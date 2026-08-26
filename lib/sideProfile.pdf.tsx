@@ -34,7 +34,7 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
     svgW, svgH, groundY, deckY, deckHpx, scale,
     postX, postWidth, postTopY, postBottomY, embeddedBottomY,
     beamTopY, beamHeight, beamWidth,
-    panelTopY, panelHeight, panelFrontX,
+    panelTopY, panelHeight, panelFrontX, panelBackX,
     houseX, roofY, tailStartX, tailW,
     footingX, footingWidth,
     isDeck, isGroundMount, houseAttachment, groundAttachment, deckHeight, postHeight, showRafterTail,
@@ -168,7 +168,7 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
 
           {/* Panel / wrap edge - sits on top of the beam and overhangs past its front face (18in default).
               A pergola's "panel" is its own 2x6 rafter (real 6in height, 1ft overhang) - same rect, different meaning. */}
-          <Rect x={houseX} y={panelTopY} width={panelFrontX - houseX} height={panelHeight} fill="#93c5fd" stroke="#3b82f6" strokeWidth={1.5} />
+          <Rect x={panelBackX} y={panelTopY} width={panelFrontX - panelBackX} height={panelHeight} fill="#93c5fd" stroke="#3b82f6" strokeWidth={1.5} />
 
           {/* Lattice tubes - 2x2 (or 2x3) cross-sections spaced along the rafter's full length */}
           {isLattice && tubeXs.map((tx, i) => (
