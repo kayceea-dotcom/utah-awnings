@@ -1,9 +1,10 @@
 import { RATES } from "./rates";
 import { CATALOG_BY_KEY } from "./catalog";
-import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType } from "./types";
+import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, EndCut } from "./types";
 import {
   li, nextStockLength, rollFormGutterStockLength, wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen,
   anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, beamTypeLabel,
+  END_CUT_LABELS,
 } from "./shared";
 
 export type WPanType = "wpan_032" | "duraking_025" | "duraking_032" | "duraking_040";
@@ -23,6 +24,8 @@ export interface WPanInputs {
   beamQty2: number;
   beamType1: string;
   beamType2: string;
+  beamEndCut1: EndCut;
+  beamEndCut2: EndCut | "";
   jogType: string;
   hangerType: string;
   gutterType: string;
@@ -84,6 +87,13 @@ function panelWidthFt(type: WPanType): number {
   return type === "wpan_032" ? 2 : 1;
 }
 
+// Only 3x8/double-3x8 beams take the selected end-cut treatment (3x3/I-beam don't).
+function beamLabel(type: string, endCut: string): string {
+  const takesEndCut = type === "3x8" || type === "3x8_no_insert";
+  if (!takesEndCut || !endCut) return beamTypeLabel(type);
+  return beamTypeLabel(type) + ", " + (END_CUT_LABELS[endCut] ?? endCut);
+}
+
 export function calcWPan(inp: WPanInputs): QuoteResult {
   const items: LineItem[] = [];
 
@@ -134,6 +144,7 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     items.push(...wrapKitRafterItems(wrapRates, {
       gutterType: inp.gutterType, width1: inp.width1, rafterTails: inp.rafterTails,
       colorGutterFascia: inp.colorGutterFascia, colorPostsBeam: inp.colorPostsBeam,
+      endCut: inp.beamEndCut1,
     }));
   }
 
@@ -150,7 +161,7 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
 
   if (inp.beamLength1 > 0) {
     const bq1 = inp.beamQty1 || 1;
-    items.push(li("Beam #1 (" + beamTypeLabel(inp.beamType1) + ")", bq1, inp.beamLength1, beamRate(inp.beamType1), "", inp.colorPostsBeam));
+    items.push(li("Beam #1 (" + beamLabel(inp.beamType1, inp.beamEndCut1) + ")", bq1, inp.beamLength1, beamRate(inp.beamType1), "", inp.colorPostsBeam));
     const steelRate1 = steelRate(inp.beamType1);
     if (steelRate1 > 0) {
       items.push(li("Steel Insert #1", bq1, nextStockLength(inp.beamLength1), steelRate1));
@@ -158,7 +169,7 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   }
   if (inp.beamLength2 > 0 && inp.beamType2) {
     const bq2 = inp.beamQty2 || 1;
-    items.push(li("Beam #2 (" + beamTypeLabel(inp.beamType2) + ")", bq2, inp.beamLength2, beamRate(inp.beamType2), "", inp.colorPostsBeam));
+    items.push(li("Beam #2 (" + beamLabel(inp.beamType2, inp.beamEndCut2) + ")", bq2, inp.beamLength2, beamRate(inp.beamType2), "", inp.colorPostsBeam));
     const steelRate2 = steelRate(inp.beamType2);
     if (steelRate2 > 0) {
       items.push(li("Steel Insert #2", bq2, nextStockLength(inp.beamLength2), steelRate2));
@@ -185,6 +196,7 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
       posts2: inp.posts2, postHeight2: inp.postHeight2,
       projection1: inp.projection1, width1: inp.width1, panelQty1: p1Qty,
       colorPostsBeam: inp.colorPostsBeam,
+      endCut: inp.beamEndCut1,
     }));
   }
 

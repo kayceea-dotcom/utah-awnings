@@ -43,6 +43,13 @@ const BEAM_TYPES = [
   { value: "7_i_beam", label: "7in I-Beam" },
 ];
 
+const END_CUTS = [
+  { value: "scallop", label: "Scallop" },
+  { value: "beveled", label: "Beveled" },
+  { value: "mitered", label: "Mitered" },
+  { value: "corbel",  label: "Corbel" },
+];
+
 const HANGERS = [
   { value: "roll_form", label: "Roll Form" },
   { value: "a_rail",    label: "A-Rail" },
@@ -91,6 +98,7 @@ const DEFAULT: WPanInputs = {
   beamLength1: 0, beamLength2: 0,
   beamQty1: 1, beamQty2: 1,
   beamType1: "3x3", beamType2: "",
+  beamEndCut1: "beveled", beamEndCut2: "",
   jogType: "none",
   hangerType: "roll_form", gutterType: "extruded",
   posts1: 0, postHeight1: 10,
@@ -413,10 +421,13 @@ export default function WPanQuotePage() {
               <SectionCard id="structure" title="Structure" open={open.has("structure")} onToggle={toggleSection}>
                 <SelectInput label="Jog Type" value={inp.jogType} onChange={(v) => setField("jogType", v)} options={JOG_TYPES} span={2} />
                 <SelectInput label="Beam Type #1" value={inp.beamType1} onChange={(v) => setField("beamType1", v)} options={BEAM_TYPES} />
+                <SelectInput label="End Cut #1" value={inp.beamEndCut1} onChange={(v) => setField("beamEndCut1", v as never)} options={END_CUTS} />
                 <NumInput label="Beam #1 Qty" value={inp.beamQty1} onChange={(v) => setField("beamQty1", v)} hint="2 for double beam" />
                 <NumInput label="Beam Length #1 (ft)" value={inp.beamLength1} onChange={(v) => setField("beamLength1", v)} hint="Auto from width" />
                 <SelectInput label="Beam Type #2" value={inp.beamType2} onChange={(v) => setField("beamType2", v)}
                   options={[{ value: "", label: "None" }, ...BEAM_TYPES]} />
+                <SelectInput label="End Cut #2" value={inp.beamEndCut2} onChange={(v) => setField("beamEndCut2", v as never)}
+                  options={[{ value: "", label: "N/A" }, ...END_CUTS]} />
                 <NumInput label="Beam #2 Qty" value={inp.beamQty2} onChange={(v) => setField("beamQty2", v)} hint="2 for double beam" />
                 <NumInput label="Beam Length #2 (ft)" value={inp.beamLength2} onChange={(v) => setField("beamLength2", v)} />
                 <SelectInput label="Hanger Type" value={inp.hangerType} onChange={(v) => setField("hangerType", v)} options={HANGERS} />
@@ -525,6 +536,7 @@ export default function WPanQuotePage() {
                 groundAttachment={inp.groundAttachment}
                 beamType={inp.beamType1}
                 wrapType={inp.wrapType}
+                endCut={inp.beamEndCut1}
                 showRafterTail={inp.wrapType !== "none" && inp.rafterTails}
               />
               <PriceSummaryPanel result={effectiveResult} />
