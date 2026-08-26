@@ -38,7 +38,8 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
     houseX, roofY, tailStartX, tailW,
     footingX, footingWidth,
     isDeck, isGroundMount, houseAttachment, groundAttachment, deckHeight, postHeight, showRafterTail,
-    isLattice, tubeXs, tubeSize, isEaveMount, eaveSoffit, eaveFascia, eaveRoofLine, wallStubTopY, eaveWallX,
+    isLattice, tubeXs, tubeSize, isFreestanding, rear,
+    isEaveMount, eaveSoffit, eaveFascia, eaveRoofLine, wallStubTopY, eaveWallX,
   } = geo;
 
   const MAX_PDF_W = maxWidth;
@@ -61,7 +62,27 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
               under the 2ft overhang, a fascia board capping its front (the
               6in face the awning attaches to), and a roof edge line off
               the fascia's top at a true 45deg */}
-          {isEaveMount ? (
+          {isFreestanding && rear ? (
+            <G>
+              {isGroundMount ? (
+                <Rect x={rear.postX - rear.footingWidth / 2} y={rear.postBottomY} width={rear.footingWidth}
+                  height={(rear.embeddedBottomY ?? rear.postBottomY) - rear.postBottomY}
+                  fill="#e2e8f0" stroke="#64748b" strokeWidth={1} strokeDasharray="3,2" />
+              ) : (
+                <Rect x={rear.footingX} y={groundY - 3} width={rear.footingWidth} height={10} fill="#94a3b8" stroke="#64748b" strokeWidth={1} />
+              )}
+              <Rect x={rear.postX - postWidth / 2} y={rear.postTopY} width={postWidth} height={rear.postBottomY - rear.postTopY} fill="#1e293b" stroke="#0f172a" strokeWidth={1} />
+              <Line x1={rear.postX - 22} y1={rear.postTopY} x2={rear.postX - 22} y2={rear.postBottomY} stroke="#CC2229" strokeWidth={1.5} />
+              <Line x1={rear.postX - 26} y1={rear.postTopY} x2={rear.postX - 18} y2={rear.postTopY} stroke="#CC2229" strokeWidth={1.5} />
+              <Line x1={rear.postX - 26} y1={rear.postBottomY} x2={rear.postX - 18} y2={rear.postBottomY} stroke="#CC2229" strokeWidth={1.5} />
+              <Text x={rear.postX - 34} y={(rear.postTopY + rear.postBottomY) / 2 + 4} textAnchor="middle" fill="#CC2229"
+                style={{ ...bold, fontSize: 10 }}
+                transform={"rotate(-90," + (rear.postX - 34) + "," + (rear.postTopY + rear.postBottomY) / 2 + ")"}>
+                {rear.postHeight}&apos;
+              </Text>
+              <Rect x={rear.postX - rear.beamWidth / 2} y={rear.beamTopY} width={rear.beamWidth} height={rear.beamHeight} fill="#1e40af" stroke="#1e3a8a" strokeWidth={1} />
+            </G>
+          ) : isEaveMount ? (
             <G>
               <Rect x={eaveWallX - 10} y={wallStubTopY} width={10} height={groundY - wallStubTopY} fill="#cbd5e1" stroke="#64748b" strokeWidth={1.5} />
               <Line x1={eaveRoofLine.x1} y1={eaveRoofLine.y1} x2={eaveRoofLine.x2} y2={eaveRoofLine.y2}
@@ -75,7 +96,7 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
             <Rect x={houseX - 10} y={10} width={10} height={groundY - 10} fill="#cbd5e1" stroke="#64748b" strokeWidth={1.5} />
           )}
           <Text x={houseX - 5} y={roofY + 42} textAnchor="middle" fill="#475569" style={{ ...bold, fontSize: 7 }}>
-            {HOUSE_ATTACHMENT_LABELS[houseAttachment] || houseAttachment.toUpperCase()}
+            {isFreestanding ? "FREESTANDING" : HOUSE_ATTACHMENT_LABELS[houseAttachment] || houseAttachment.toUpperCase()}
           </Text>
 
           {/* Ground line - starts past whichever sits further back, the

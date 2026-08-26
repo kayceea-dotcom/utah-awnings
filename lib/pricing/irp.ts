@@ -1,5 +1,5 @@
 import { RATES } from "./rates";
-import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType } from "./types";
+import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, MountStyle } from "./types";
 import {
   li, nextStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, beamTypeLabel, anchorQty,
   wrapKitRates, wrapKitFinishingItems, deckHeightSurcharge, postMaterialLength, groundMountSurcharge,
@@ -34,6 +34,11 @@ export interface IRPInputs {
   houseAttachment: HouseAttachmentType;
   groundAttachment: GroundAttachmentType;
   deckHeight: number;
+  mountStyle: MountStyle;
+  rearBeamType: string;
+  rearBeamLength: number;
+  rearPosts: number;
+  rearPostHeight: number;
   shadeBeamQty: number;
   shadeBeamLength: number;
   discount: number;
@@ -101,8 +106,11 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
   const splitHanger = hasSecondRun && inp.jogType === "house";
   const splitGutter = hasSecondRun && inp.jogType === "ground";
 
-  // ── HANGER ──
-  if (splitHanger) {
+  // ── HANGER — skipped when freestanding, replaced by a rear beam + posts below ──
+  const isFreestanding = inp.mountStyle === "freestanding";
+  if (isFreestanding) {
+    // No house tie-in - the back edge gets its own beam + posts below instead.
+  } else if (splitHanger) {
     if (inp.beamLength1 > 0) items.push(li("LRP Hanger #1", 1, 0, lrpHangerRate(inp.panelType, inp.beamLength1)));
     if (inp.beamLength2 > 0) items.push(li("LRP Hanger #2", 1, 0, lrpHangerRate(inp.panelType, inp.beamLength2)));
   } else if (inp.beamLength1 > 0 || inp.beamLength2 > 0) {
@@ -157,8 +165,19 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
     items.push(li("Beam End Caps #2", 2, 0, beamEndcapRate(inp.beamType2), "", inp.colorPostsBeam));
   }
 
+  // ── REAR BEAM — freestanding only, replaces the house-side LRP Hanger ──
+  if (isFreestanding && inp.rearBeamLength > 0) {
+    items.push(li("Beam Rear (" + beamTypeLabel(inp.rearBeamType) + ")", 1, inp.rearBeamLength, beamMaterialRate(inp.rearBeamType), "", inp.colorPostsBeam));
+    const steelRateRear = steelInsertRate(inp.rearBeamType);
+    if (steelRateRear > 0) {
+      items.push(li("Steel Insert Rear", 1, nextStockLength(inp.rearBeamLength), steelRateRear));
+    }
+    items.push(li("Beam End Caps Rear", 2, 0, beamEndcapRate(inp.rearBeamType), "", inp.colorPostsBeam));
+  }
+
   // ── POSTS ──
-  const totalPosts = inp.posts1 + inp.posts2;
+  const rearPosts = isFreestanding ? inp.rearPosts : 0;
+  const totalPosts = inp.posts1 + inp.posts2 + rearPosts;
   if (inp.posts1 > 0) {
     const len1 = postMaterialLength(inp.postHeight1, inp.groundAttachment);
     items.push(li("3x3 Post Sleeve #1", inp.posts1, len1, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
@@ -169,6 +188,11 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
     items.push(li("3x3 Post Sleeve #2", inp.posts2, len2, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
     items.push(li("3x3 Steel Post #2",  inp.posts2, len2, RATES.post_3x3_steel_ft));
   }
+  if (rearPosts > 0) {
+    const lenRear = postMaterialLength(inp.rearPostHeight, inp.groundAttachment);
+    items.push(li("3x3 Post Sleeve Rear", rearPosts, lenRear, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
+    items.push(li("3x3 Steel Post Rear",  rearPosts, lenRear, RATES.post_3x3_steel_ft));
+  }
 
   // ── WRAP KIT — post plates, sideplates, mitered caps, foam inserts, end caps, plugs.
   // IRP keeps its own dedicated LRP hanger/gutter/fascia regardless, so unlike Flat Panel
@@ -178,6 +202,7 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
     items.push(...wrapKitFinishingItems(wrapKitRates(inp.wrapType), {
       posts1: inp.posts1, postHeight1: inp.postHeight1,
       posts2: inp.posts2, postHeight2: inp.postHeight2,
+      postsRear: rearPosts, postHeightRear: inp.rearPostHeight,
       projection1: inp.projection1, width1: inp.width1, panelQty1: p1Qty,
       colorPostsBeam: inp.colorPostsBeam,
     }));

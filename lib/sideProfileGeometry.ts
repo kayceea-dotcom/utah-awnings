@@ -10,6 +10,13 @@ export interface SideProfileGeometryInput {
   panelOverhangInches?: number;
   endCut?: string;
   showRafterTail?: boolean;
+  /** "freestanding" draws a mirrored post+beam at the house end instead of a
+   *  wall/eave - fully self-supporting front and back, no house tie-in. */
+  mountStyle?: string;
+  /** Rear post's own height/beam type - falls back to the front post's own
+   *  values when not given. */
+  rearPostHeight?: number;
+  rearBeamType?: string;
   /** Pergola only - open lattice structure. Draws a real 6in-tall rafter
    *  (not a wrap-kit panel) running house-to-tip with a 1ft overhang past
    *  the beam, plus 2x2 tube cross-sections spaced along its length. */
@@ -58,6 +65,15 @@ export interface SideProfileGeometry {
   tubeXs: number[];
   /** Px size (both width and height) of each tube cross-section. */
   tubeSize: number;
+  isFreestanding: boolean;
+  /** Mirrored post+beam at the house end (freestanding only) - null when
+   *  attached (the house wall/eave is drawn there instead). */
+  rear: {
+    postX: number; postTopY: number; postBottomY: number; embeddedBottomY: number | null;
+    postHeight: number;
+    beamTopY: number; beamHeight: number; beamWidth: number;
+    footingX: number; footingWidth: number;
+  } | null;
   isEaveMount: boolean;
   /** Soffit board (eave/angled_eave only) - horizontal, wall to fascia,
    *  the eave's real 2ft projection. */
@@ -122,6 +138,9 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
     isLattice = false,
     latticeType = "2x2",
     latticeSpacing = "1x",
+    mountStyle = "attached",
+    rearPostHeight,
+    rearBeamType,
   } = input;
 
   if (!projection || !postHeight) return null;
@@ -211,6 +230,30 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
   const footingWidth = isGroundMount ? 14 : 26;
   const footingX = postX - footingWidth / 2;
 
+  // Freestanding - a mirrored post+beam at the house end instead of a wall/eave.
+  // Shares the same ground/surface reference and ground-mount treatment as the
+  // front post; only height and beam type are independent (falling back to the
+  // front's own values when not given). The panel rect above still keeps using
+  // the front beam's panelTopY as a single flat rect either way - it isn't
+  // re-sloped to meet a differently-heighted rear beam exactly.
+  const isFreestanding = mountStyle === "freestanding";
+  let rear: SideProfileGeometry["rear"] = null;
+  if (isFreestanding) {
+    const rearHeight = rearPostHeight || postHeight;
+    const rearHpx = rearHeight * scale;
+    const rearPostTopY = surfaceY - rearHpx;
+    const rearPostBottomY = surfaceY;
+    const rearEmbeddedBottomY = isGroundMount ? surfaceY + embedPx : null;
+    const rearBeamHeight = (beamHeightInches(rearBeamType || beamType) / 12) * scale;
+    const rearBeamTopY = rearPostTopY - rearBeamHeight;
+    rear = {
+      postX: houseX, postTopY: rearPostTopY, postBottomY: rearPostBottomY, embeddedBottomY: rearEmbeddedBottomY,
+      postHeight: rearHeight,
+      beamTopY: rearBeamTopY, beamHeight: rearBeamHeight, beamWidth,
+      footingX: houseX - footingWidth / 2, footingWidth,
+    };
+  }
+
   // Eave assembly, drawn as the actual boards rather than one abstract
   // outline: a soffit board under the overhang (real 2ft projection from
   // the wall), a fascia board capping the front (real 6in face - where the
@@ -218,7 +261,7 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
   // 45deg (run = rise, holds at any scale). The wall stub stops at the
   // bottom of the eave - the overhang above isn't backed by wall, same as
   // a real house.
-  const isEaveMount = houseAttachment === "eave" || houseAttachment === "angled_eave";
+  const isEaveMount = !isFreestanding && (houseAttachment === "eave" || houseAttachment === "angled_eave");
   const EAVE_H = (6 / 12) * scale;
   const EAVE_PROJECTION = 2 * scale;
   const EAVE_BOARD_T = 4;
@@ -251,6 +294,7 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
     scale, isDeck, isGroundMount,
     houseAttachment, groundAttachment, deckHeight, postHeight, projection, endCut, showRafterTail,
     isLattice, tubeXs, tubeSize,
+    isFreestanding, rear,
     isEaveMount, eaveSoffit, eaveFascia, eaveRoofLine, wallStubTopY, eaveWallX,
   };
 }

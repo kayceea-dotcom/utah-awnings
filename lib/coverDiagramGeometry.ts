@@ -24,6 +24,12 @@ export interface CoverDiagramGeometryInput {
   /** "1.5x" widens the gap; anything else (including unset) is the default
    *  2x-tube-width spacing. Matches PergolaInputs.latticeSpacing. */
   latticeSpacing?: string;
+  /** "freestanding" draws a rear beam + its own posts along the house-wall
+   *  edge instead of the house wall + dashed hanger line. */
+  mountStyle?: string;
+  /** Rear beam's own post count - spaced across the full combined width,
+   *  same rule as the front run's posts. */
+  rearPosts?: number;
 }
 
 export interface CoverDiagramGeometry {
@@ -70,6 +76,10 @@ export interface CoverDiagramGeometry {
   rafterXs: number[];
   /** Y positions of each lattice tube cross-line (spans the width), pergola only. */
   tubeYs: number[];
+  isFreestanding: boolean;
+  /** Rear beam's Y position and its own posts' X positions (freestanding only). */
+  rearBeamY: number;
+  rearPostPositions: number[];
 }
 
 // Post X positions evenly spaced across a run's width - 1.5ft inset from each
@@ -106,6 +116,8 @@ export function computeCoverDiagramGeometry(input: CoverDiagramGeometryInput): C
     isLattice = false,
     latticeType = "2x2",
     latticeSpacing = "1x",
+    mountStyle = "attached",
+    rearPosts = 0,
   } = input;
 
   if (!projection1 || !width1) return null;
@@ -166,6 +178,13 @@ export function computeCoverDiagramGeometry(input: CoverDiagramGeometryInput): C
   const postPositions = spacedPostXs(posts1, width1, ox, coverW1);
   const postPositions2 = hasRun2 ? spacedPostXs(posts2, width2, ox + coverW1, coverW2) : [];
 
+  // Freestanding - a rear beam + its own posts along the house-wall edge,
+  // spanning the full combined width as one straight run (a "house jog" is
+  // meaningless once there's no house wall to jog around).
+  const isFreestanding = mountStyle === "freestanding";
+  const rearBeamY = oy + 1.5 * scale;
+  const rearPostPositions = isFreestanding ? spacedPostXs(rearPosts, totalWidth, ox, totalW) : [];
+
   // Multi-span beams (Additional / Multi-Span Beams) - run 1 only. Y position is
   // measured from the house wall (0 = at the house), clamped inside the cover so
   // an out-of-range value doesn't draw off the diagram.
@@ -221,5 +240,6 @@ export function computeCoverDiagramGeometry(input: CoverDiagramGeometryInput): C
     downspoutPositions,
     beamType1, beamType2, width1, width2, projection1, showRafterTails,
     isLattice, rafterXs, tubeYs,
+    isFreestanding, rearBeamY, rearPostPositions,
   };
 }

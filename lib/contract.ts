@@ -79,6 +79,8 @@ export function buildContractData(proposal: Record<string, unknown>): ContractDa
           beams: (inputs.beams as BeamConfig[]) || [],
           beamType1: String(inputs.beamType1 || "3x8"),
           beamType2: String(inputs.beamType2 || "3x8"),
+          mountStyle: String(inputs.mountStyle || "attached"),
+          rearPosts: Number(inputs.rearPosts) || 0,
         }
       : null;
 
@@ -95,6 +97,9 @@ export function buildContractData(proposal: Record<string, unknown>): ContractDa
           hasPanel: productType !== "pergola",
           endCut: String(inputs.beamEndCut1 || "beveled"),
           showRafterTail: showRafterTails,
+          mountStyle: String(inputs.mountStyle || "attached"),
+          rearPostHeight: Number(inputs.rearPostHeight) || 0,
+          rearBeamType: String(inputs.rearBeamType || inputs.beamType1 || "3x8"),
         }
       : null;
 

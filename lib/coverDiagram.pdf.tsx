@@ -30,6 +30,7 @@ export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170
     tailCount, tailCount2, frontEdgeY, frontEdgeY2, tailTipY, tailTipY2,
     downspoutPositions, beamType1, beamType2, width1, width2, projection1,
     showRafterTails, isLattice, rafterXs, tubeYs,
+    isFreestanding, rearBeamY, rearPostPositions,
   } = geo;
 
   // Scale the whole diagram down to fit a comfortable box on the printed
@@ -45,19 +46,21 @@ export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170
       <Text style={styles.label}>Cover Diagram - Top View</Text>
       <View style={styles.svgBox}>
         <Svg viewBox={"0 0 " + svgW + " " + svgH} width={displayW} height={displayH}>
-          {/* House wall */}
-          {isHouseJog ? (
-            <G>
-              <Rect x={ox - 4} y={run1TopY - HOUSE_H} width={coverW1 + (hasRun2 ? 4 : 8)} height={HOUSE_H}
+          {/* House wall - freestanding has none, a rear beam + posts are drawn below instead */}
+          {!isFreestanding && (
+            isHouseJog ? (
+              <G>
+                <Rect x={ox - 4} y={run1TopY - HOUSE_H} width={coverW1 + (hasRun2 ? 4 : 8)} height={HOUSE_H}
+                  fill="#cbd5e1" stroke="#64748b" strokeWidth={1.5} />
+                <Rect x={ox + coverW1} y={run2TopY - HOUSE_H} width={coverW2 + 8} height={HOUSE_H}
+                  fill="#cbd5e1" stroke="#64748b" strokeWidth={1.5} />
+              </G>
+            ) : (
+              <Rect x={ox - 4} y={oy - HOUSE_H} width={totalW + 8} height={HOUSE_H}
                 fill="#cbd5e1" stroke="#64748b" strokeWidth={1.5} />
-              <Rect x={ox + coverW1} y={run2TopY - HOUSE_H} width={coverW2 + 8} height={HOUSE_H}
-                fill="#cbd5e1" stroke="#64748b" strokeWidth={1.5} />
-            </G>
-          ) : (
-            <Rect x={ox - 4} y={oy - HOUSE_H} width={totalW + 8} height={HOUSE_H}
-              fill="#cbd5e1" stroke="#64748b" strokeWidth={1.5} />
+            )
           )}
-          <Text x={ox + totalW / 2} y={oy - HOUSE_H / 2 + 4} textAnchor="middle" fill="#475569" style={{ ...bold, fontSize: 9 }}>HOUSE</Text>
+          <Text x={ox + totalW / 2} y={oy - HOUSE_H / 2 + 4} textAnchor="middle" fill="#475569" style={{ ...bold, fontSize: 9 }}>{isFreestanding ? "REAR BEAM" : "HOUSE"}</Text>
 
           {/* Cover rectangle run 1 - lattice pergola gets an outline only, rafters/tubes convey the cover */}
           <Rect x={ox} y={run1TopY} width={coverW1} height={coverH1} fill={isLattice ? "transparent" : "#eff6ff"} stroke="#3b82f6" strokeWidth={1.5} />
@@ -67,14 +70,33 @@ export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170
             <Rect x={ox + coverW1} y={run2TopY} width={coverW2} height={coverH2} fill="#f0fdf4" stroke="#22c55e" strokeWidth={1.5} />
           )}
 
-          {/* Hanger dashed line */}
-          {isHouseJog ? (
+          {/* Hanger dashed line - skipped when freestanding, the rear beam below takes its place */}
+          {!isFreestanding && (
+            isHouseJog ? (
+              <G>
+                <Line x1={ox} y1={run1TopY} x2={ox + coverW1} y2={run1TopY} stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="5,3" />
+                <Line x1={ox + coverW1} y1={run2TopY} x2={ox + coverW1 + coverW2} y2={run2TopY} stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="5,3" />
+              </G>
+            ) : (
+              <Line x1={ox} y1={oy} x2={ox + totalW} y2={oy} stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="5,3" />
+            )
+          )}
+
+          {/* Rear beam + its own posts (freestanding only) */}
+          {isFreestanding && (
             <G>
-              <Line x1={ox} y1={run1TopY} x2={ox + coverW1} y2={run1TopY} stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="5,3" />
-              <Line x1={ox + coverW1} y1={run2TopY} x2={ox + coverW1 + coverW2} y2={run2TopY} stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="5,3" />
+              <Line x1={ox} y1={rearBeamY} x2={ox + totalW} y2={rearBeamY} stroke="#1e40af" strokeWidth={3} />
+              {rearPostPositions.map((px, i) => {
+                const numberSoFar = postPositions.length + postPositions2.length
+                  + multiSpanBeams.reduce((s, b) => s + b.postXs.length, 0) + i + 1;
+                return (
+                  <G key={"rear-post-" + i}>
+                    <Rect x={px - 5} y={rearBeamY - 5} width={10} height={10} fill="#1e293b" rx={1} />
+                    <Text x={px} y={rearBeamY + 4} textAnchor="middle" fill="white" style={{ ...bold, fontSize: 7 }}>{String(numberSoFar)}</Text>
+                  </G>
+                );
+              })}
             </G>
-          ) : (
-            <Line x1={ox} y1={oy} x2={ox + totalW} y2={oy} stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="5,3" />
           )}
 
           {/* Beam line run 1 */}

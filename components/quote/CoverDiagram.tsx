@@ -20,6 +20,8 @@ interface CoverDiagramProps {
   isLattice?: boolean;
   latticeType?: string;
   latticeSpacing?: string;
+  mountStyle?: string;
+  rearPosts?: number;
   className?: string;
 }
 
@@ -38,12 +40,14 @@ export default function CoverDiagram({
   isLattice = false,
   latticeType = "2x2",
   latticeSpacing = "1x",
+  mountStyle = "attached",
+  rearPosts = 0,
   className = "",
 }: CoverDiagramProps) {
   const geo = computeCoverDiagramGeometry({
     projection1, width1, projection2, width2, posts1, posts2,
     downspouts, downspoutSide, showRafterTails, jogType, beams, beamType1, beamType2,
-    isLattice, latticeType, latticeSpacing,
+    isLattice, latticeType, latticeSpacing, mountStyle, rearPosts,
   });
 
   if (!geo) {
@@ -64,6 +68,7 @@ export default function CoverDiagram({
     postPositions, postPositions2, multiSpanBeams,
     tailCount, tailCount2, frontEdgeY, frontEdgeY2, tailTipY, tailTipY2,
     downspoutPositions, rafterXs, tubeYs,
+    isFreestanding, rearBeamY, rearPostPositions,
   } = geo;
 
   return (
@@ -81,20 +86,23 @@ export default function CoverDiagram({
           </defs>
 
           {/* House wall at top — one continuous piece on a ground jog (or single run),
-              or stepped to follow each run's own depth on a house jog */}
-          {isHouseJog ? (
-            <>
-              <rect x={ox - 4} y={run1TopY - HOUSE_H} width={coverW1 + (hasRun2 ? 4 : 8)} height={HOUSE_H}
+              or stepped to follow each run's own depth on a house jog. Freestanding has
+              no house wall at all - a rear beam + its own posts are drawn below instead. */}
+          {!isFreestanding && (
+            isHouseJog ? (
+              <>
+                <rect x={ox - 4} y={run1TopY - HOUSE_H} width={coverW1 + (hasRun2 ? 4 : 8)} height={HOUSE_H}
+                  fill="url(#hatch)" stroke="#64748b" strokeWidth="1.5" />
+                <rect x={ox + coverW1} y={run2TopY - HOUSE_H} width={coverW2 + 8} height={HOUSE_H}
+                  fill="url(#hatch)" stroke="#64748b" strokeWidth="1.5" />
+              </>
+            ) : (
+              <rect x={ox - 4} y={oy - HOUSE_H} width={totalW + 8} height={HOUSE_H}
                 fill="url(#hatch)" stroke="#64748b" strokeWidth="1.5" />
-              <rect x={ox + coverW1} y={run2TopY - HOUSE_H} width={coverW2 + 8} height={HOUSE_H}
-                fill="url(#hatch)" stroke="#64748b" strokeWidth="1.5" />
-            </>
-          ) : (
-            <rect x={ox - 4} y={oy - HOUSE_H} width={totalW + 8} height={HOUSE_H}
-              fill="url(#hatch)" stroke="#64748b" strokeWidth="1.5" />
+            )
           )}
           <text x={ox + totalW / 2} y={oy - HOUSE_H / 2 + 4}
-            textAnchor="middle" fontSize="9" fill="#475569" fontWeight="600">HOUSE</text>
+            textAnchor="middle" fontSize="9" fill="#475569" fontWeight="600">{isFreestanding ? "REAR BEAM" : "HOUSE"}</text>
 
           {/* Cover rectangle run 1 - a lattice pergola has nothing solid to
               fill (open structure), so it's just an outline; the rafters +
@@ -109,17 +117,38 @@ export default function CoverDiagram({
           )}
 
           {/* Hanger dashed line along house wall — one continuous piece on a ground jog,
-              or split in 2 (following the wall's own jog) on a house jog */}
-          {isHouseJog ? (
+              or split in 2 (following the wall's own jog) on a house jog. Skipped when
+              freestanding — the rear beam line below takes its place. */}
+          {!isFreestanding && (
+            isHouseJog ? (
+              <>
+                <line x1={ox} y1={run1TopY} x2={ox + coverW1} y2={run1TopY}
+                  stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="5,3" />
+                <line x1={ox + coverW1} y1={run2TopY} x2={ox + coverW1 + coverW2} y2={run2TopY}
+                  stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="5,3" />
+              </>
+            ) : (
+              <line x1={ox} y1={oy} x2={ox + totalW} y2={oy}
+                stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="5,3" />
+            )
+          )}
+
+          {/* Rear beam + its own posts (freestanding only) — spans the full combined
+              width as one straight run, numbered continuing from every other post group. */}
+          {isFreestanding && (
             <>
-              <line x1={ox} y1={run1TopY} x2={ox + coverW1} y2={run1TopY}
-                stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="5,3" />
-              <line x1={ox + coverW1} y1={run2TopY} x2={ox + coverW1 + coverW2} y2={run2TopY}
-                stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="5,3" />
+              <line x1={ox} y1={rearBeamY} x2={ox + totalW} y2={rearBeamY} stroke="#1e40af" strokeWidth="3" />
+              {rearPostPositions.map((px, i) => {
+                const numberSoFar = postPositions.length + postPositions2.length
+                  + multiSpanBeams.reduce((s, b) => s + b.postXs.length, 0) + i + 1;
+                return (
+                  <g key={"rear-post-" + i}>
+                    <rect x={px - 5} y={rearBeamY - 5} width={10} height={10} fill="#1e293b" rx="1" />
+                    <text x={px} y={rearBeamY + 4} textAnchor="middle" fontSize="7" fill="white" fontWeight="bold">{numberSoFar}</text>
+                  </g>
+                );
+              })}
             </>
-          ) : (
-            <line x1={ox} y1={oy} x2={ox + totalW} y2={oy}
-              stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="5,3" />
           )}
 
           {/* Beam line run 1 - horizontal, 1.5ft from front edge; flush with run 2 on a house jog.

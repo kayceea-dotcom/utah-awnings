@@ -289,6 +289,8 @@ export default function ProposalPage() {
                 beams={(inp.beams as BeamConfig[]) || []}
                 beamType1={String(inp.beamType1 || "3x8")}
                 beamType2={String(inp.beamType2 || "3x8")}
+                mountStyle={String(inp.mountStyle || "attached")}
+                rearPosts={Number(inp.rearPosts) || 0}
               />
               <div className="mt-4">
                 <SideProfileDiagram
@@ -302,6 +304,9 @@ export default function ProposalPage() {
                   hasPanel={productType !== "pergola"}
                   endCut={String(inp.beamEndCut1 || "beveled")}
                   showRafterTail={showRafterTails}
+                  mountStyle={String(inp.mountStyle || "attached")}
+                  rearPostHeight={Number(inp.rearPostHeight) || 0}
+                  rearBeamType={String(inp.rearBeamType || inp.beamType1 || "3x8")}
                 />
               </div>
             </div>

@@ -249,6 +249,10 @@ export function shadeBeamItems(qty: number, length: number, color = ""): LineIte
 export function wrapKitFinishingItems(rates: WrapKitRates, opts: {
   posts1: number; postHeight1: number;
   posts2: number; postHeight2: number;
+  // Freestanding jobs only - a third post group (rear beam's own posts) that
+  // needs its own Post Plates line (own height) but otherwise counts toward
+  // the same totals (Mitered Caps, Foam Inserts) as posts1/posts2.
+  postsRear?: number; postHeightRear?: number;
   projection1: number;
   width1: number;
   panelQty1: number;
@@ -256,7 +260,9 @@ export function wrapKitFinishingItems(rates: WrapKitRates, opts: {
   endCut?: string;
 }): LineItem[] {
   const items: LineItem[] = [];
-  const totalPosts = opts.posts1 + opts.posts2;
+  const postsRear = opts.postsRear ?? 0;
+  const postHeightRear = opts.postHeightRear ?? 0;
+  const totalPosts = opts.posts1 + opts.posts2 + postsRear;
   const dim = wrapDim(rates);
 
   if (opts.posts1 > 0) {
@@ -264,6 +270,9 @@ export function wrapKitFinishingItems(rates: WrapKitRates, opts: {
   }
   if (opts.posts2 > 0) {
     items.push(li("Post Plates #2 (" + dim + ", Mitered)", opts.posts2 * 2, opts.postHeight2 + 1, rates.wrapRate, "", opts.colorPostsBeam));
+  }
+  if (postsRear > 0) {
+    items.push(li("Post Plates Rear (" + dim + ", Mitered)", postsRear * 2, postHeightRear + 1, rates.wrapRate, "", opts.colorPostsBeam));
   }
   if (opts.projection1 > 0) {
     items.push(li("Sideplates Cut One Side (" + dim + endCutSuffix(opts.endCut) + ")", 2, opts.projection1 + 2, rates.sideRate, "", opts.colorPostsBeam));

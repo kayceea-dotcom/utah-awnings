@@ -58,7 +58,10 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     if (type === "elevated_roof_mount") return RATES.hanger_elevated_roof_mount;
     return RATES.hanger_roll_form_ft;
   }
-  if (inp.hangerType === "elevated_roof_mount") {
+  const isFreestanding = inp.mountStyle === "freestanding";
+  if (isFreestanding) {
+    // No house tie-in - the back edge gets its own beam + posts below instead.
+  } else if (inp.hangerType === "elevated_roof_mount") {
     if (combinedWidth > 0) items.push(li("Hanger", 1, 0, RATES.hanger_elevated_roof_mount, "", inp.colorPans));
   } else if (splitHanger) {
     if (inp.width1 > 0) items.push(li("Hanger #1", 1, inp.width1 + hangerAllowance, hangerRateFor(inp.hangerType), "", inp.colorPans));
@@ -128,9 +131,19 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     }
   }
 
+  // ── REAR BEAM — freestanding only, replaces the house-side Hanger ──
+  if (isFreestanding && inp.rearBeamLength > 0) {
+    items.push(li("Beam Rear (" + beamLabel(inp.rearBeamType, inp.rearBeamEndCut) + ")", 1, inp.rearBeamLength, beamMaterialRate(inp.rearBeamType), "", inp.colorPostsBeam));
+    const steelRateRear = steelInsertRate(inp.rearBeamType);
+    if (steelRateRear > 0) {
+      items.push(li("Steel Insert Rear", 1, nextStockLength(inp.rearBeamLength), steelRateRear));
+    }
+  }
+
   // ── POSTS ──
+  const rearPosts = isFreestanding ? inp.rearPosts : 0;
   const multiSpanPosts = (inp.beams || []).reduce((s, b) => s + (b.posts || 0), 0);
-  const totalPosts = inp.posts1 + inp.posts2 + multiSpanPosts;
+  const totalPosts = inp.posts1 + inp.posts2 + rearPosts + multiSpanPosts;
   if (inp.posts1 > 0) {
     const len1 = postMaterialLength(inp.postHeight1, inp.groundAttachment);
     items.push(li("3x3 Post Sleeve #1", inp.posts1, len1, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
@@ -140,6 +153,11 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     const len2 = postMaterialLength(inp.postHeight2, inp.groundAttachment);
     items.push(li("3x3 Post Sleeve #2", inp.posts2, len2, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
     items.push(li("3x3 Steel Post #2",  inp.posts2, len2, RATES.post_3x3_steel_ft));
+  }
+  if (rearPosts > 0) {
+    const lenRear = postMaterialLength(inp.rearPostHeight, inp.groundAttachment);
+    items.push(li("3x3 Post Sleeve Rear", rearPosts, lenRear, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
+    items.push(li("3x3 Steel Post Rear",  rearPosts, lenRear, RATES.post_3x3_steel_ft));
   }
 
   // ── MULTI-SPAN BEAMS — additional beams beyond the two primary runs (Additional /
@@ -167,6 +185,7 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(...wrapKitFinishingItems(wrapRates, {
       posts1: inp.posts1, postHeight1: inp.postHeight1,
       posts2: inp.posts2, postHeight2: inp.postHeight2,
+      postsRear: rearPosts, postHeightRear: inp.rearPostHeight,
       projection1: inp.projection1, width1: inp.width1, panelQty1: p1Qty,
       colorPostsBeam: inp.colorPostsBeam,
       endCut: inp.beamEndCut1,
@@ -243,6 +262,9 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   }
   if (inp.beamLength2 > 0 && inp.beamType2) {
     items.push(li("Beam End Caps #2", 2, 0, beamEndcapRate(inp.beamType2), "", inp.colorPostsBeam));
+  }
+  if (isFreestanding && inp.rearBeamLength > 0) {
+    items.push(li("Beam End Caps Rear", 2, 0, beamEndcapRate(inp.rearBeamType), "", inp.colorPostsBeam));
   }
 
   // ── SILICONE — combined width / 10, rounded up ──

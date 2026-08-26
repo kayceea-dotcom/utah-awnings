@@ -1,6 +1,6 @@
 import { RATES } from "./rates";
 import { CATALOG_BY_KEY } from "./catalog";
-import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, EndCut } from "./types";
+import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, EndCut, MountStyle } from "./types";
 import {
   li, nextStockLength, rollFormGutterStockLength, wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen,
   anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, beamTypeLabel,
@@ -44,6 +44,12 @@ export interface WPanInputs {
   houseAttachment: HouseAttachmentType;
   groundAttachment: GroundAttachmentType;
   deckHeight: number;
+  mountStyle: MountStyle;
+  rearBeamType: string;
+  rearBeamEndCut: EndCut | "";
+  rearBeamLength: number;
+  rearPosts: number;
+  rearPostHeight: number;
   fanBeamQty: number;
   fanBeamLength: number;
   shadeBeamQty: number;
@@ -112,12 +118,13 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     items.push(li("V-Panel #2 (" + panelLabel(inp.panelType) + ")", p2Qty, inp.projection2, rate, "sq ft", inp.colorPans));
   }
 
-  // ── HANGER ──
+  // ── HANGER — skipped when freestanding, replaced by a rear beam + posts below ──
+  const isFreestanding = inp.mountStyle === "freestanding";
   // For two-run jobs hanger spans combined width
   const totalWidth = inp.width1 + (inp.width2 > 0 ? inp.width2 : 0);
   const hangerLen = totalWidth > 0 ? totalWidth + 1.5 : 0;
   const hangerRate = inp.hangerType === "a_rail" ? RATES.hanger_a_rail_ft : RATES.hanger_roll_form_ft;
-  if (hangerLen > 0) {
+  if (!isFreestanding && hangerLen > 0) {
     items.push(li("Hanger 2.5in", 1, hangerLen, hangerRate, "", inp.colorPans));
   }
 
@@ -177,8 +184,18 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     }
   }
 
+  // ── REAR BEAM — freestanding only, replaces the house-side Hanger ──
+  if (isFreestanding && inp.rearBeamLength > 0) {
+    items.push(li("Beam Rear (" + beamLabel(inp.rearBeamType, inp.rearBeamEndCut) + ")", 1, inp.rearBeamLength, beamRate(inp.rearBeamType), "", inp.colorPostsBeam));
+    const steelRateRear = steelRate(inp.rearBeamType);
+    if (steelRateRear > 0) {
+      items.push(li("Steel Insert Rear", 1, nextStockLength(inp.rearBeamLength), steelRateRear));
+    }
+  }
+
   // ── POSTS ──
-  const totalPosts = inp.posts1 + inp.posts2;
+  const rearPosts = isFreestanding ? inp.rearPosts : 0;
+  const totalPosts = inp.posts1 + inp.posts2 + rearPosts;
   if (inp.posts1 > 0) {
     const len1 = postMaterialLength(inp.postHeight1, inp.groundAttachment);
     items.push(li("3x3 Post Sleeve #1", inp.posts1, len1, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
@@ -189,12 +206,18 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     items.push(li("3x3 Post Sleeve #2", inp.posts2, len2, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
     items.push(li("3x3 Steel Post #2",  inp.posts2, len2, RATES.post_3x3_steel_ft));
   }
+  if (rearPosts > 0) {
+    const lenRear = postMaterialLength(inp.rearPostHeight, inp.groundAttachment);
+    items.push(li("3x3 Post Sleeve Rear", rearPosts, lenRear, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
+    items.push(li("3x3 Steel Post Rear",  rearPosts, lenRear, RATES.post_3x3_steel_ft));
+  }
 
   // ── WRAP KIT — post plates, sideplates, mitered caps, foam inserts, end caps, plugs ──
   if (hasWrap) {
     items.push(...wrapKitFinishingItems(wrapRates, {
       posts1: inp.posts1, postHeight1: inp.postHeight1,
       posts2: inp.posts2, postHeight2: inp.postHeight2,
+      postsRear: rearPosts, postHeightRear: inp.rearPostHeight,
       projection1: inp.projection1, width1: inp.width1, panelQty1: p1Qty,
       colorPostsBeam: inp.colorPostsBeam,
       endCut: inp.beamEndCut1,
@@ -261,6 +284,9 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   }
   if (inp.beamLength2 > 0) {
     items.push(li("Beam End Caps #2", 2, 0, RATES.endcap_3x3, "", inp.colorPostsBeam));
+  }
+  if (isFreestanding && inp.rearBeamLength > 0) {
+    items.push(li("Beam End Caps Rear", 2, 0, RATES.endcap_3x3, "", inp.colorPostsBeam));
   }
 
   // ── SILICONE — based on combined beam length ──

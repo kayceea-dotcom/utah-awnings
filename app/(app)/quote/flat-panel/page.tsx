@@ -102,6 +102,10 @@ const GROUND_ATTACHMENTS = [
   { value: "deck",         label: "Deck" },
   { value: "ground_mount", label: "Ground Mount" },
 ];
+const MOUNT_STYLES = [
+  { value: "attached",     label: "Attached (house ledger)" },
+  { value: "freestanding", label: "Freestanding (posts front + back)" },
+];
 const DOWNSPOUT_SIDES = [
   { value: "left",  label: "Left" },
   { value: "right", label: "Right" },
@@ -123,6 +127,9 @@ const DEFAULT: NewportInputs = {
   rafterTails: true, bayWindowPopout: false,
   downspouts: 1, downspoutSide: "right", sprayPaint: true,
   houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
+  mountStyle: "attached",
+  rearBeamType: "3x8", rearBeamEndCut: "beveled", rearBeamLength: 0,
+  rearPosts: 0, rearPostHeight: 10,
   fanBeamQty: 0, fanBeamLength: 16,
   shadeBeamQty: 0, shadeBeamLength: 16,
   discount: 0, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
@@ -510,7 +517,10 @@ export default function FlatPanelQuotePage() {
               </SectionCard>
 
               <SectionCard id="attachment" title="Attachment" open={open.has("attachment")} onToggle={toggleSection}>
-                <SelectInput label="House Attachment" value={inp.houseAttachment} onChange={(v) => setField("houseAttachment", v as never)} options={HOUSE_ATTACHMENTS} />
+                <SelectInput label="Mount Style" value={inp.mountStyle} onChange={(v) => setField("mountStyle", v as never)} options={MOUNT_STYLES} span={2} />
+                {inp.mountStyle !== "freestanding" && (
+                  <SelectInput label="House Attachment" value={inp.houseAttachment} onChange={(v) => setField("houseAttachment", v as never)} options={HOUSE_ATTACHMENTS} />
+                )}
                 <SelectInput label="Ground Attachment" value={inp.groundAttachment} onChange={(v) => setField("groundAttachment", v as never)} options={GROUND_ATTACHMENTS} />
                 {inp.groundAttachment === "deck" && (
                   <NumInput label="Deck Height (ft)" value={inp.deckHeight} onChange={(v) => setField("deckHeight", v)}
@@ -525,6 +535,17 @@ export default function FlatPanelQuotePage() {
                 <NumInput label="Posts #2 (qty)" value={inp.posts2} onChange={(v) => setField("posts2", v)} />
                 <SelectInput label="Height #2 (ft)" value={String(inp.postHeight2)} onChange={(v) => setField("postHeight2", Number(v))}
                   options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))} />
+                {inp.mountStyle === "freestanding" && (
+                  <>
+                    <div className="col-span-2 text-xs font-bold text-gray-600 uppercase tracking-wide pt-2">Rear Beam &amp; Posts</div>
+                    <SelectInput label="Rear Beam Type" value={inp.rearBeamType} onChange={(v) => setField("rearBeamType", v as never)} options={BEAM_TYPES} />
+                    <NumInput label="Rear Beam Length (ft)" value={inp.rearBeamLength} onChange={(v) => setField("rearBeamLength", v)} />
+                    <SelectInput label="Rear Beam End Cut" value={inp.rearBeamEndCut} onChange={(v) => setField("rearBeamEndCut", v as never)} options={END_CUTS} />
+                    <NumInput label="Rear Posts (qty)" value={inp.rearPosts} onChange={(v) => setField("rearPosts", v)} />
+                    <SelectInput label="Rear Post Height (ft)" value={String(inp.rearPostHeight)} onChange={(v) => setField("rearPostHeight", Number(v))}
+                      options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))} />
+                  </>
+                )}
                 <NumInput label="Downspouts" value={inp.downspouts} onChange={(v) => setField("downspouts", v)}
                   hint={inp.jogType === "ground" && inp.projection2 > 0 && inp.width2 > 0 ? "Min 2 - one per gutter section" : undefined} />
                 {inp.downspouts === 1 && (
@@ -746,6 +767,8 @@ export default function FlatPanelQuotePage() {
                   beams={inp.beams}
                   beamType1={inp.beamType1}
                   beamType2={inp.beamType2}
+                  mountStyle={inp.mountStyle}
+                  rearPosts={inp.rearPosts}
                 />
               ) : (
                 <>
@@ -764,6 +787,9 @@ export default function FlatPanelQuotePage() {
                   wrapType={inp.wrapType}
                   endCut={inp.beamEndCut1}
                   showRafterTail={inp.wrapType !== "none" && inp.rafterTails}
+                  mountStyle={inp.mountStyle}
+                  rearPostHeight={inp.rearPostHeight}
+                  rearBeamType={inp.rearBeamType}
                 />
               )}
               <PriceSummaryPanel result={result} />

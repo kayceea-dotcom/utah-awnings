@@ -1,5 +1,5 @@
 import { RATES } from "./rates";
-import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType } from "./types";
+import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, MountStyle } from "./types";
 import { li, nextStockLength, anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, beamTypeLabel } from "./shared";
 
 export interface PergolaInputs {
@@ -25,6 +25,11 @@ export interface PergolaInputs {
   houseAttachment: HouseAttachmentType;
   groundAttachment: GroundAttachmentType;
   deckHeight: number;
+  mountStyle: MountStyle;
+  rearBeamType: string;
+  rearBeamLength: number;
+  rearPosts: number;
+  rearPostHeight: number;
   shadeBeamQty: number;
   shadeBeamLength: number;
   discount: number;
@@ -84,14 +89,30 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
     }
   }
 
+  // ── REAR BEAM — freestanding only, replaces the house-side ledger ──
+  const isFreestanding = inp.mountStyle === "freestanding";
+  if (isFreestanding && inp.rearBeamLength > 0) {
+    items.push(li("Beam Rear (" + beamTypeLabel(inp.rearBeamType) + ")", 1, inp.rearBeamLength, RATES.beam_3x8, "", inp.colorPergola));
+    if (inp.rearBeamType !== "3x8_no_insert") {
+      items.push(li("Steel Insert Rear", 1, nextStockLength(inp.rearBeamLength), RATES.steel_3x8_14ga_ft));
+    }
+  }
+
   // ── POSTS ──
-  const totalPosts = inp.posts;
-  if (totalPosts > 0) {
+  const rearPosts = isFreestanding ? inp.rearPosts : 0;
+  const totalPosts = inp.posts + rearPosts;
+  if (inp.posts > 0) {
     const postLen = postMaterialLength(inp.postHeight, inp.groundAttachment);
-    items.push(li("3x3 Post Sleeve", totalPosts, postLen, RATES.post_3x3_sleeve_ft, "", inp.colorPergola));
-    items.push(li("3x3 Steel Post", totalPosts, postLen, RATES.post_3x3_steel_ft));
+    items.push(li("3x3 Post Sleeve", inp.posts, postLen, RATES.post_3x3_sleeve_ft, "", inp.colorPergola));
+    items.push(li("3x3 Steel Post", inp.posts, postLen, RATES.post_3x3_steel_ft));
     // Post plates mitered one end
-    items.push(li("2x6 Post Plates (Mitered)", totalPosts * 2, inp.postHeight + 1, RATES.post_plate_2x6_ft, "", inp.colorPergola));
+    items.push(li("2x6 Post Plates (Mitered)", inp.posts * 2, inp.postHeight + 1, RATES.post_plate_2x6_ft, "", inp.colorPergola));
+  }
+  if (rearPosts > 0) {
+    const rearPostLen = postMaterialLength(inp.rearPostHeight, inp.groundAttachment);
+    items.push(li("3x3 Post Sleeve Rear", rearPosts, rearPostLen, RATES.post_3x3_sleeve_ft, "", inp.colorPergola));
+    items.push(li("3x3 Steel Post Rear", rearPosts, rearPostLen, RATES.post_3x3_steel_ft));
+    items.push(li("2x6 Post Plates Rear (Mitered)", rearPosts * 2, inp.rearPostHeight + 1, RATES.post_plate_2x6_ft, "", inp.colorPergola));
   }
 
   // ── MITERED CAPS ──
@@ -160,6 +181,9 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
   // ── BEAM END CAPS — 2 per beam ──
   if (inp.beamLength > 0 && inp.beamQty > 0) {
     items.push(li("3x8 Beam End Caps", inp.beamQty * 2, 0, RATES.endcap_3x8, "", inp.colorPergola));
+  }
+  if (isFreestanding && inp.rearBeamLength > 0) {
+    items.push(li("3x8 Beam End Caps Rear", 2, 0, RATES.endcap_3x8, "", inp.colorPergola));
   }
 
   // ── SILICONE ──

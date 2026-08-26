@@ -23,6 +23,9 @@ export type HouseAttachmentType = "stucco" | "siding" | "eave" | "angled_eave";
 // What the posts land on. Ground-mounted posts skip anchors entirely (set directly,
 // no surface to anchor into); concrete/deck both need wedge anchors.
 export type GroundAttachmentType = "concrete" | "deck" | "ground_mount";
+// "attached" ties the back edge to the house via a Hanger; "freestanding" replaces
+// that with a real rear beam + its own posts, fully self-supporting front and back.
+export type MountStyle = "attached" | "freestanding";
 
 export interface BeamConfig {
   type: string;
@@ -69,6 +72,12 @@ export interface NewportInputs {
   houseAttachment: HouseAttachmentType;
   groundAttachment: GroundAttachmentType;
   deckHeight: number;
+  mountStyle: MountStyle;
+  rearBeamType: BeamType;
+  rearBeamEndCut: EndCut | "";
+  rearBeamLength: number;
+  rearPosts: number;
+  rearPostHeight: number;
   fanBeamQty: number;
   fanBeamLength: number;
   shadeBeamQty: number;

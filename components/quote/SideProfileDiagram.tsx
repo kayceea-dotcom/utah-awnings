@@ -17,6 +17,9 @@ interface SideProfileDiagramProps {
   isLattice?: boolean;
   latticeType?: string;
   latticeSpacing?: string;
+  mountStyle?: string;
+  rearPostHeight?: number;
+  rearBeamType?: string;
   className?: string;
 }
 
@@ -46,11 +49,14 @@ export default function SideProfileDiagram({
   isLattice = false,
   latticeType = "2x2",
   latticeSpacing = "1x",
+  mountStyle = "attached",
+  rearPostHeight,
+  rearBeamType,
   className = "",
 }: SideProfileDiagramProps) {
   const geo = computeSideProfileGeometry({
     projection, postHeight, deckHeight, houseAttachment, groundAttachment, beamType, wrapType, hasPanel, endCut, showRafterTail,
-    isLattice, latticeType, latticeSpacing,
+    isLattice, latticeType, latticeSpacing, mountStyle, rearPostHeight, rearBeamType,
   });
 
   if (!geo) {
@@ -70,6 +76,7 @@ export default function SideProfileDiagram({
     houseX, roofY, tailStartX, tailW,
     footingX, footingWidth,
     isDeck, isGroundMount, tubeXs, tubeSize,
+    isFreestanding, rear,
     isEaveMount, eaveSoffit, eaveFascia, eaveRoofLine, wallStubTopY, eaveWallX,
   } = geo;
 
@@ -95,8 +102,30 @@ export default function SideProfileDiagram({
               6in face the awning attaches to), and a roof edge line off
               the fascia's top at a true 45deg. The wall stub stops at the
               bottom of the eave - it isn't backed by wall above that, same
-              as a real house - but still runs to the ground below it. */}
-          {isEaveMount ? (
+              as a real house - but still runs to the ground below it.
+              Freestanding replaces all of this with a mirrored post+beam -
+              no house tie-in at all. */}
+          {isFreestanding && rear ? (
+            <>
+              {isGroundMount ? (
+                <rect x={rear.postX - rear.footingWidth / 2} y={rear.postBottomY} width={rear.footingWidth}
+                  height={(rear.embeddedBottomY ?? rear.postBottomY) - rear.postBottomY}
+                  fill="#e2e8f0" stroke="#64748b" strokeWidth="1" strokeDasharray="3,2" />
+              ) : (
+                <rect x={rear.footingX} y={groundY - 3} width={rear.footingWidth} height={10} fill="#94a3b8" stroke="#64748b" strokeWidth="1" />
+              )}
+              <rect x={rear.postX - postWidth / 2} y={rear.postTopY} width={postWidth} height={rear.postBottomY - rear.postTopY}
+                fill="#1e293b" stroke="#0f172a" strokeWidth="1" />
+              <line x1={rear.postX - 22} y1={rear.postTopY} x2={rear.postX - 22} y2={rear.postBottomY} stroke="#CC2229" strokeWidth="1.5" />
+              <line x1={rear.postX - 26} y1={rear.postTopY} x2={rear.postX - 18} y2={rear.postTopY} stroke="#CC2229" strokeWidth="1.5" />
+              <line x1={rear.postX - 26} y1={rear.postBottomY} x2={rear.postX - 18} y2={rear.postBottomY} stroke="#CC2229" strokeWidth="1.5" />
+              <text x={rear.postX - 34} y={(rear.postTopY + rear.postBottomY) / 2 + 4} textAnchor="middle" fontSize="10" fontWeight="700" fill="#CC2229"
+                transform={"rotate(-90," + (rear.postX - 34) + "," + (rear.postTopY + rear.postBottomY) / 2 + ")"}>
+                {rear.postHeight}&apos;
+              </text>
+              <rect x={rear.postX - rear.beamWidth / 2} y={rear.beamTopY} width={rear.beamWidth} height={rear.beamHeight} fill="#1e40af" stroke="#1e3a8a" strokeWidth="1" />
+            </>
+          ) : isEaveMount ? (
             <>
               <rect x={eaveWallX - 10} y={wallStubTopY} width={10} height={groundY - wallStubTopY} fill="url(#sp-hatch)" stroke="#64748b" strokeWidth="1.5" />
               <line x1={eaveRoofLine.x1} y1={eaveRoofLine.y1} x2={eaveRoofLine.x2} y2={eaveRoofLine.y2}
@@ -110,7 +139,7 @@ export default function SideProfileDiagram({
             <rect x={houseX - 10} y={10} width={10} height={groundY - 10} fill="url(#sp-hatch)" stroke="#64748b" strokeWidth="1.5" />
           )}
           <text x={houseX - 5} y={roofY + 42} textAnchor="middle" fontSize="7" fill="#475569" fontWeight="600">
-            {HOUSE_ATTACHMENT_LABELS[houseAttachment] || houseAttachment.toUpperCase()}
+            {isFreestanding ? "FREESTANDING" : HOUSE_ATTACHMENT_LABELS[houseAttachment] || houseAttachment.toUpperCase()}
           </text>
 
           {/* Ground line - starts past whichever sits further back, the

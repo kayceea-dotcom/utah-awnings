@@ -75,6 +75,10 @@ const GROUND_ATTACHMENTS = [
   { value: "deck",         label: "Deck" },
   { value: "ground_mount", label: "Ground Mount" },
 ];
+const MOUNT_STYLES = [
+  { value: "attached",     label: "Attached (house ledger)" },
+  { value: "freestanding", label: "Freestanding (posts front + back)" },
+];
 
 const DEFAULT: PergolaInputs = {
   jobName: "", salesman: "", housePhotoUrl: "",
@@ -88,6 +92,9 @@ const DEFAULT: PergolaInputs = {
   endCut: "scallop", endCutSide: "one_end",
   sprayPaint: false,
   houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
+  mountStyle: "attached",
+  rearBeamType: "3x8", rearBeamLength: 0,
+  rearPosts: 0, rearPostHeight: 10,
   shadeBeamQty: 0, shadeBeamLength: 16,
   discount: 0, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
   markup: 1.8, taxRate: 0.0745,
@@ -387,7 +394,10 @@ export default function PergolaQuotePage() {
               </SectionCard>
 
               <SectionCard id="attachment" title="Attachment" open={open.has("attachment")} onToggle={toggleSection}>
-                <SelectInput label="House Attachment" value={inp.houseAttachment} onChange={(v) => setField("houseAttachment", v as never)} options={HOUSE_ATTACHMENTS} />
+                <SelectInput label="Mount Style" value={inp.mountStyle} onChange={(v) => setField("mountStyle", v as never)} options={MOUNT_STYLES} span={2} />
+                {inp.mountStyle !== "freestanding" && (
+                  <SelectInput label="House Attachment" value={inp.houseAttachment} onChange={(v) => setField("houseAttachment", v as never)} options={HOUSE_ATTACHMENTS} />
+                )}
                 <SelectInput label="Ground Attachment" value={inp.groundAttachment} onChange={(v) => setField("groundAttachment", v as never)} options={GROUND_ATTACHMENTS} />
                 {inp.groundAttachment === "deck" && (
                   <NumInput label="Deck Height (ft)" value={inp.deckHeight} onChange={(v) => setField("deckHeight", v)}
@@ -399,6 +409,16 @@ export default function PergolaQuotePage() {
                 <NumInput label="Posts (qty)" value={inp.posts} onChange={(v) => setField("posts", v)} />
                 <SelectInput label="Post Height (ft)" value={String(inp.postHeight)} onChange={(v) => setField("postHeight", Number(v))}
                   options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))} />
+                {inp.mountStyle === "freestanding" && (
+                  <>
+                    <div className="col-span-2 text-xs font-bold text-gray-600 uppercase tracking-wide pt-2">Rear Beam &amp; Posts</div>
+                    <SelectInput label="Rear Beam Type" value={inp.rearBeamType} onChange={(v) => setField("rearBeamType", v as never)} options={BEAM_TYPES} />
+                    <NumInput label="Rear Beam Length (ft)" value={inp.rearBeamLength} onChange={(v) => setField("rearBeamLength", v)} />
+                    <NumInput label="Rear Posts (qty)" value={inp.rearPosts} onChange={(v) => setField("rearPosts", v)} />
+                    <SelectInput label="Rear Post Height (ft)" value={String(inp.rearPostHeight)} onChange={(v) => setField("rearPostHeight", Number(v))}
+                      options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))} />
+                  </>
+                )}
               </SectionCard>
 
               <SectionCard id="colors" title="Colors" open={open.has("colors")} onToggle={toggleSection}>
@@ -436,6 +456,8 @@ export default function PergolaQuotePage() {
                   isLattice
                   latticeType={inp.latticeType}
                   latticeSpacing={inp.latticeSpacing}
+                  mountStyle={inp.mountStyle}
+                  rearPosts={inp.rearPosts}
                 />
                 <SideProfileDiagram
                   projection={inp.projection}
@@ -450,6 +472,9 @@ export default function PergolaQuotePage() {
                   isLattice
                   latticeType={inp.latticeType}
                   latticeSpacing={inp.latticeSpacing}
+                  mountStyle={inp.mountStyle}
+                  rearPostHeight={inp.rearPostHeight}
+                  rearBeamType={inp.rearBeamType}
                 />
               </div>
 
@@ -488,6 +513,8 @@ export default function PergolaQuotePage() {
                 isLattice
                 latticeType={inp.latticeType}
                 latticeSpacing={inp.latticeSpacing}
+                mountStyle={inp.mountStyle}
+                rearPosts={inp.rearPosts}
               />
               <SideProfileDiagram
                 projection={inp.projection}
@@ -502,6 +529,9 @@ export default function PergolaQuotePage() {
                 isLattice
                 latticeType={inp.latticeType}
                 latticeSpacing={inp.latticeSpacing}
+                mountStyle={inp.mountStyle}
+                rearPostHeight={inp.rearPostHeight}
+                rearBeamType={inp.rearBeamType}
               />
               <PriceSummaryPanel result={effectiveResult} />
               <CommissionPanel materialCost={effectiveResult.materialCost} price={commissionPrice} discount={inp.discount} isCashDiscount={isCashDiscount} tax={effectiveResult.taxes} />
