@@ -273,7 +273,7 @@ function PriceSummaryPanel({ result, onClose }: { result: ReturnType<typeof calc
             <span>Pricing Markup</span>
             <span className="font-mono text-gray-800">{result.markup}x</span>
           </div>
-          <p className="text-[10px] text-gray-400 mt-0.5">Applies to subtotal (materials + tax + add-ons) - always lower than Commission Markup below, which is price ÷ material cost only</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">Applies to the full subtotal (materials + tax + add-ons) - matches Commission Markup below exactly when there's no discount and no add-ons like footings/misc; the two can drift apart otherwise</p>
         </div>
         <div className="flex justify-between text-gray-600">
           <span>CC Fee (3.25%)</span>
@@ -330,7 +330,6 @@ export default function WPanQuotePage() {
   const editableList = useEditableMaterialList(result, inp);
   const effectiveResult = editableList.displayResult;
   const markupTier = useMarkupTier({
-    materialCost: effectiveResult.materialCost,
     materialsBase: effectiveResult.totalMaterials,
     markup: inp.markup,
     setMarkup: (m) => setField("markup", m),
@@ -542,7 +541,7 @@ export default function WPanQuotePage() {
                 showRafterTail={inp.wrapType !== "none" && inp.rafterTails}
               />
               <PriceSummaryPanel result={effectiveResult} />
-              <CommissionPanel materialCost={effectiveResult.materialCost} price={commissionPrice} discount={inp.discount} isCashDiscount={isCashDiscount} />
+              <CommissionPanel materialCost={effectiveResult.materialCost} price={commissionPrice} discount={inp.discount} isCashDiscount={isCashDiscount} tax={effectiveResult.taxes} />
             </div>
           </div>
         </div>
@@ -555,7 +554,7 @@ export default function WPanQuotePage() {
           <div className="bg-white w-full rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto">
             <PriceSummaryPanel result={effectiveResult} onClose={() => setShowPricePanel(false)} />
             <div className="mt-4">
-              <CommissionPanel materialCost={effectiveResult.materialCost} price={commissionPrice} discount={inp.discount} isCashDiscount={isCashDiscount} />
+              <CommissionPanel materialCost={effectiveResult.materialCost} price={commissionPrice} discount={inp.discount} isCashDiscount={isCashDiscount} tax={effectiveResult.taxes} />
             </div>
           </div>
         </div>

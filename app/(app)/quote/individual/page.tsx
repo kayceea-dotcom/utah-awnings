@@ -155,7 +155,7 @@ function PriceSummaryPanel({ result, onClose }: { result: ReturnType<typeof calc
             <span>Pricing Markup</span>
             <span className="font-mono text-gray-800">{result.markup}x</span>
           </div>
-          <p className="text-[10px] text-gray-400 mt-0.5">Applies to subtotal (materials + tax + add-ons) - always lower than Commission Markup below, which is price ÷ material cost only</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">Applies to the full subtotal (materials + tax + add-ons) - matches Commission Markup below exactly when there's no discount and no add-ons like footings/misc; the two can drift apart otherwise</p>
         </div>
         <div className="flex justify-between text-gray-600">
           <span>CC Fee (3.25%)</span>
@@ -206,7 +206,6 @@ export default function IndividualQuotePage() {
 
   const result = useMemo(() => calcIndividual(inp), [inp]);
   const markupTier = useMarkupTier({
-    materialCost: result.materialCost,
     materialsBase: result.totalMaterials,
     markup: inp.markup,
     setMarkup: (m) => setField("markup", m),
@@ -407,7 +406,7 @@ export default function IndividualQuotePage() {
 
             <div className="hidden lg:block w-80 flex-shrink-0 sticky top-20 space-y-4">
               <PriceSummaryPanel result={result} />
-              <CommissionPanel materialCost={result.materialCost} price={commissionPrice} discount={inp.discount} isCashDiscount={isCashDiscount} />
+              <CommissionPanel materialCost={result.materialCost} price={commissionPrice} discount={inp.discount} isCashDiscount={isCashDiscount} tax={result.taxes} />
             </div>
           </div>
         </div>
@@ -420,7 +419,7 @@ export default function IndividualQuotePage() {
           <div className="bg-white w-full rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto">
             <PriceSummaryPanel result={result} onClose={() => setShowPricePanel(false)} />
             <div className="mt-4">
-              <CommissionPanel materialCost={result.materialCost} price={commissionPrice} discount={inp.discount} isCashDiscount={isCashDiscount} />
+              <CommissionPanel materialCost={result.materialCost} price={commissionPrice} discount={inp.discount} isCashDiscount={isCashDiscount} tax={result.taxes} />
             </div>
           </div>
         </div>

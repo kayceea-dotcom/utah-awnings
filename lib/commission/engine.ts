@@ -11,8 +11,9 @@ import {
 export interface CommissionResult {
   materialCost: number;
   price: number;
-  /** price / materialCost (0 when materialCost is 0). Drives the rate
-   *  lookup directly - no floor, no discount exemption. */
+  /** price / (materialCost + tax) - the same cost basis the Commission
+   *  Markup dropdown targets. Drives the rate lookup directly - no floor,
+   *  no discount exemption. */
   markup: number;
   /** Looked up from markup against MARKUP_COMMISSION_SCHEDULE. */
   commissionRate: number;
@@ -73,14 +74,20 @@ export function computeBreakEven(materialCost: number | null | undefined): numbe
 
 export interface CommissionScheduleConfig {
   commissionSchedule?: MarkupCommissionBand[];
+  /** Tax already paid on the material - folded into the markup's cost basis
+   *  (material + tax), same basis the Commission Markup dropdown targets.
+   *  Omit/0 if not applicable. Does NOT affect gross profit or commission
+   *  dollars - those stay based on the real, raw material cost. */
+  tax?: number;
 }
 
 // Big jobs unlock the 1.7x/13% band (see schedule.ts) - everything else
 // uses the standard rate card. An explicit config.commissionSchedule (tests,
-// future admin override) always wins over this threshold check.
-function resolveSchedule(material: number, config: CommissionScheduleConfig): MarkupCommissionBand[] {
+// future admin override) always wins over this threshold check. Compared
+// against materialsBase (material + tax), same basis as the markup itself.
+function resolveSchedule(materialsBase: number, config: CommissionScheduleConfig): MarkupCommissionBand[] {
   if (config.commissionSchedule) return config.commissionSchedule;
-  return material > BIG_JOB_MATERIAL_THRESHOLD ? MARKUP_COMMISSION_SCHEDULE_BIG_JOB : MARKUP_COMMISSION_SCHEDULE;
+  return materialsBase > BIG_JOB_MATERIAL_THRESHOLD ? MARKUP_COMMISSION_SCHEDULE_BIG_JOB : MARKUP_COMMISSION_SCHEDULE;
 }
 
 export function computeCommission(
@@ -89,10 +96,12 @@ export function computeCommission(
   config: CommissionScheduleConfig = {}
 ): CommissionResult {
   const material = normalizeMaterialCost(materialCost);
-  const commissionSchedule = resolveSchedule(material, config);
-  const p = Number.isFinite(Number(price)) ? Number(price) : material * DEFAULT_MARKUP;
+  const tax = Math.max(0, Number(config.tax) || 0);
+  const materialsBase = material + tax;
+  const commissionSchedule = resolveSchedule(materialsBase, config);
+  const p = Number.isFinite(Number(price)) ? Number(price) : materialsBase * DEFAULT_MARKUP;
 
-  const markup = material > 0 ? round3(p / material) : 0;
+  const markup = materialsBase > 0 ? round3(p / materialsBase) : 0;
   const commissionRate = commissionRateForMarkup(markup, commissionSchedule);
 
   const grossProfit = round2(p - material);
@@ -121,7 +130,9 @@ export function nextTierPrompt(
 ): NextTierPrompt | null {
   const material = normalizeMaterialCost(materialCost);
   if (material <= 0) return null;
-  const commissionSchedule = resolveSchedule(material, config);
+  const tax = Math.max(0, Number(config.tax) || 0);
+  const materialsBase = material + tax;
+  const commissionSchedule = resolveSchedule(materialsBase, config);
   const current = computeCommission(material, price, config);
 
   const sorted = [...commissionSchedule].sort((a, b) => a.min - b.min);
@@ -129,7 +140,7 @@ export function nextTierPrompt(
   const nextBand = currentIndex >= 0 ? sorted[currentIndex + 1] : undefined;
   if (!nextBand) return null;
 
-  const targetPrice = round2(nextBand.min * material);
+  const targetPrice = round2(nextBand.min * materialsBase);
   const targetCommission = computeCommission(material, targetPrice, config);
 
   return {

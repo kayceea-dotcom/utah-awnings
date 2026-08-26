@@ -23,47 +23,44 @@ const TIER_MARKUPS: Record<Exclude<MarkupTier, "custom">, number> = {
 
 // Keeps the quote's price pinned to a chosen commission-tier markup
 // (matching the rate card in lib/commission/schedule.ts) as material cost
-// changes, by continuously solving for the raw markup multiplier (the one
-// fed into finalizePricing) that produces that exact commission-basis
-// markup (price / materialCost). Picking "Custom" freezes it so the rep can
-// type any multiplier by hand.
+// changes, by setting the raw markup multiplier (the one fed into
+// finalizePricing) to the tier value directly. Picking "Custom" freezes it
+// so the rep can type any multiplier by hand.
 //
-// Deliberately solves against a $0 discount (the pre-discount sticker
-// price) - if it re-targeted including the live discount, applying a
-// discount would just make this hook raise markup to cancel it back out,
-// and the customer's price would never actually move.
+// The raw markup applies to the full subtotal (materialsBase + footings/
+// roof mounts/misc/tear down), while the commission markup itself - see
+// lib/commission/engine.ts - is price / materialsBase (materialCost + tax,
+// no add-ons). Setting raw markup = the tier value directly means: with no
+// add-ons, the two markups come out identical, exactly hitting the tier;
+// with add-ons, the real commission markup ends up a little ABOVE the
+// tier, since those add-ons raise price but aren't in the denominator - a
+// deliberate choice so add-on costs move the price instead of being
+// silently absorbed into a lower markup to hold the target exactly.
 //
-// Solves against materialsBase (materialCost + tax) rather than the full
-// subtotal - the full subtotal also includes footings/roof mounts/misc,
-// and solving against that would do the exact same silent cancel-out for
-// THOSE: adding $500 of footings would just make this hook lower markup by
-// enough to hold the same target price, quietly eating the $500 out of
-// margin instead of passing it through to the customer. Add-on costs need
-// to move the price; only the true materials markup should stay pinned.
+// Deliberately ignores any live discount (the pre-discount sticker price)
+// - if it re-targeted including the discount, applying one would just make
+// this hook raise markup to cancel it back out, and the customer's price
+// would never actually move.
 export function useMarkupTier(opts: {
-  materialCost: number;
   materialsBase: number;
   markup: number;
   setMarkup: (markup: number) => void;
 }) {
   const [tier, setTier] = useState<MarkupTier>("r19");
-  const { materialCost, materialsBase, markup, setMarkup } = opts;
+  const { materialsBase, markup, setMarkup } = opts;
 
   useEffect(() => {
     if (tier === "custom") return;
-    if (materialCost <= 0 || materialsBase <= 0) return;
-    const targetPrice = TIER_MARKUPS[tier] * materialCost;
-    const required = targetPrice / materialsBase;
-    if (!Number.isFinite(required) || required <= 0) return;
+    if (materialsBase <= 0) return;
     // Round UP (never down) at high precision - rounding down, even by a
     // fraction of a cent, can land the price a cent under the tier's
     // markup threshold.
-    const rounded = Math.ceil(required * 1e6) / 1e6;
+    const rounded = Math.ceil(TIER_MARKUPS[tier] * 1e6) / 1e6;
     if (Math.abs(rounded - markup) > 0.000001) {
       setMarkup(rounded);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tier, materialCost, materialsBase]);
+  }, [tier, materialsBase]);
 
   return {
     tier,

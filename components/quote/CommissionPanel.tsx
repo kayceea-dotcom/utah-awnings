@@ -13,8 +13,8 @@ function Row({ label, value, warn }: { label: string; value: string; warn?: bool
   );
 }
 
-export default function CommissionPanel({ materialCost, price, discount = 0, isCashDiscount = false }: {
-  materialCost: number; price: number; discount?: number; isCashDiscount?: boolean;
+export default function CommissionPanel({ materialCost, price, discount = 0, isCashDiscount = false, tax = 0 }: {
+  materialCost: number; price: number; discount?: number; isCashDiscount?: boolean; tax?: number;
 }) {
   if (materialCost <= 0) {
     return (
@@ -25,8 +25,8 @@ export default function CommissionPanel({ materialCost, price, discount = 0, isC
     );
   }
 
-  const c = computeCommission(materialCost, price);
-  const next = nextTierPrompt(materialCost, price);
+  const c = computeCommission(materialCost, price, { tax });
+  const next = nextTierPrompt(materialCost, price, { tax });
   // Bottom two rate-card tiers (4%/8%, markup under 1.8x) get flagged red -
   // there's no hard floor anymore, just a low-tier warning.
   const warn = c.commissionRate < 0.14;

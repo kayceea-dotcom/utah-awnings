@@ -158,6 +158,36 @@ describe("big job unlock - material over $11,500 opens a 1.7x/13% band", () => {
   });
 });
 
+describe("markup includes material + tax when config.tax is given", () => {
+  // material $10,000, tax $745 (7.45%) -> materialsBase $10,745.
+
+  it("markup divides by material + tax, not material alone", () => {
+    const r = computeCommission(10000, 21490, { tax: 745 }); // 21490 / 10745 = 2.0x
+    expect(r.markup).toBeCloseTo(2.0, 3);
+    expect(r.commissionRate).toBeCloseTo(0.19);
+  });
+
+  it("omitting tax (or defaulting to 0) matches the pre-existing material-only behavior", () => {
+    const withZeroTax = computeCommission(10000, 20000, { tax: 0 });
+    const withoutTaxAtAll = computeCommission(10000, 20000);
+    expect(withZeroTax.markup).toBe(withoutTaxAtAll.markup);
+    expect(withZeroTax.commissionRate).toBe(withoutTaxAtAll.commissionRate);
+  });
+
+  it("gross profit and commission dollars stay based on the real material cost, not material + tax", () => {
+    const r = computeCommission(10000, 21490, { tax: 745 });
+    expect(r.grossProfit).toBe(11490); // 21490 - 10000 (real material cost), not minus 10745
+    expect(r.commissionDollars).toBeCloseTo(0.19 * 11490, 2);
+  });
+
+  it("the $11,500 big-job threshold is checked against material + tax too", () => {
+    // $11,000 material + $600 tax = $11,600 materialsBase - over the threshold
+    // even though material cost alone is under it.
+    const r = computeCommission(11000, 11000 * 1.7 + 600 * 1.7, { tax: 600 });
+    expect(r.commissionRate).toBeCloseTo(0.13);
+  });
+});
+
 describe("nextTierPrompt", () => {
   it("gives the minimum price to enter the next tier and the commission delta at that exact price", () => {
     // At 2.0x (19%), the next tier (20%) starts at 2.1x = $21,000.
