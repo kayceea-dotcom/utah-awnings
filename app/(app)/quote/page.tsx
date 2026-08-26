@@ -7,7 +7,7 @@ const products = [
   { slug: "flat-panel", label: "Flat Panel", desc: "T6 flat pan cover, with or without a decorative wrap kit" },
   { slug: "irp", label: "IRP Insulated Roof", desc: "3in / 4in / 6in insulated roof panel" },
   { slug: "pergola", label: "Pergola", desc: "2x6 rafters, 2x2 lattice tubing" },
-  { slug: "w-pan", label: "W-Pan Cover", desc: "Tri-V W-Pan, DuraKing options" },
+  { slug: "w-pan", label: "V-Panel", desc: "Tri-V, DuraKing options" },
   { slug: "metal-wall", label: "Metal Wall System", desc: "29g tuf-rib horizontal / vertical" },
   { slug: "individual", label: "Individual Items", desc: "Custom line-item / mixed job" },
 ];

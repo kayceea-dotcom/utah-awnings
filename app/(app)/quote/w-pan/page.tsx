@@ -29,7 +29,7 @@ const COLORS = ["White","Siennawood","Slate","Driftwood","Beechwood","Maplewood"
 const COLOR_OPTS = COLORS.map((c) => ({ value: c, label: c }));
 
 const PANEL_TYPES = [
-  { value: "wpan_032",     label: "Tri-V W-Pan 2.5in .032" },
+  { value: "wpan_032",     label: "Tri-V 2.5in .032" },
   { value: "duraking_025", label: "DuraKing 4x12 .025" },
   { value: "duraking_032", label: "DuraKing 4x12 .032" },
   { value: "duraking_040", label: "DuraKing 4x12 .040" },
@@ -381,7 +381,7 @@ export default function WPanQuotePage() {
 
   return (
     <>
-      <TopBar title="W-Pan Cover" subtitle="V-panel and DuraKing roof systems - live pricing" titleNode={<ProductSwitcher current="w-pan" />}>
+      <TopBar title="V-Panel" subtitle="Tri-V and DuraKing roof systems - live pricing" titleNode={<ProductSwitcher current="w-pan" />}>
         <button onClick={() => { setInp(DEFAULT); markupTier.reset(); discountOption.reset(); editableList.resetToCalculated(); }} className="btn-secondary text-xs px-3 py-2">
           <RefreshCw size={13} /> Reset
         </button>

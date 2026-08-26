@@ -49,7 +49,7 @@ export const CATALOG: CatalogEntry[] = [
   { key: "gutter_roll_form_ft", label: "Gutter - Roll Form", category: "Gutters", unit: "ft" },
   { key: "gutter_extruded_ft", label: "Gutter - Extruded", category: "Gutters", unit: "ft" },
   { key: "fascia_extruded_ft", label: "Fascia - Extruded", category: "Gutters", unit: "ft" },
-  { key: "fascia_extruded_2x6_ft", label: "Fascia - Extruded 2x6 (W-Pan)", category: "Gutters", unit: "ft" },
+  { key: "fascia_extruded_2x6_ft", label: "Fascia - Extruded 2x6 (V-Panel)", category: "Gutters", unit: "ft" },
   { key: "fascia_extruded_3x8_ft", label: "Fascia - Extruded 3x8", category: "Gutters", unit: "ft" },
 
   // Post Plates / Brackets / Caps
@@ -109,11 +109,11 @@ export const CATALOG: CatalogEntry[] = [
   { key: "endcap_2x3", label: "End Cap 2x3 (Lattice)", category: "Pergola", unit: "ea" },
   { key: "foam_insert_pergola", label: "Foam Insert (Pergola)", category: "Pergola", unit: "ea" },
 
-  // W-Pan
-  { key: "wpan_sqft", label: "W-Pan Tri-V .032 Panel", category: "W-Pan", unit: "sq ft" },
-  { key: "duraking_025_ft", label: "DuraKing 4x12 .025 Panel", category: "W-Pan", unit: "ft" },
-  { key: "duraking_032_ft", label: "DuraKing 4x12 .032 Panel", category: "W-Pan", unit: "ft" },
-  { key: "duraking_040_ft", label: "DuraKing 4x12 .040 Panel", category: "W-Pan", unit: "ft" },
+  // V-Panel
+  { key: "wpan_sqft", label: "Tri-V .032 Panel", category: "V-Panel", unit: "sq ft" },
+  { key: "duraking_025_ft", label: "DuraKing 4x12 .025 Panel", category: "V-Panel", unit: "ft" },
+  { key: "duraking_032_ft", label: "DuraKing 4x12 .032 Panel", category: "V-Panel", unit: "ft" },
+  { key: "duraking_040_ft", label: "DuraKing 4x12 .040 Panel", category: "V-Panel", unit: "ft" },
 
   // Metal Wall
   { key: "ls_tubing_ft", label: "Tuf-Rib Tubing (Metal Wall)", category: "Metal Wall", unit: "ft" },

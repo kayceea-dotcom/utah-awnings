@@ -7,7 +7,7 @@ const PRODUCTS = [
   { slug: "flat-panel", label: "Flat Panel" },
   { slug: "irp", label: "IRP Insulated Roof" },
   { slug: "pergola", label: "Pergola" },
-  { slug: "w-pan", label: "W-Pan Cover" },
+  { slug: "w-pan", label: "V-Panel" },
   { slug: "metal-wall", label: "Metal Wall System" },
   { slug: "individual", label: "Individual Items" },
 ];

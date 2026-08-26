@@ -77,21 +77,28 @@ function panelLabel(type: WPanType): string {
   return CATALOG_BY_KEY[panelCatalogKey(type)]?.label ?? type;
 }
 
+// Tri-V panels are 2ft wide; DuraKing panels are 1ft wide regardless of
+// gauge - quantity must divide by the real panel width, not a fixed 2ft
+// assumption, or DuraKing comes out at half the panels actually needed.
+function panelWidthFt(type: WPanType): number {
+  return type === "wpan_032" ? 2 : 1;
+}
+
 export function calcWPan(inp: WPanInputs): QuoteResult {
   const items: LineItem[] = [];
 
   // ── PANELS ──
-  // W-Pan: 2ft wide panels, priced per sq ft
-  // qty = ceil(width/2), amount = qty * projection * rate
-  const p1Qty = inp.projection1 > 0 ? Math.ceil(inp.width1 / 2) : 0;
-  const p2Qty = inp.projection2 > 0 ? Math.ceil(inp.width2 / 2) : 0;
+  // Priced per sq ft - qty = ceil(width / real panel width), amount = qty * projection * rate
+  const panelWidth = panelWidthFt(inp.panelType);
+  const p1Qty = inp.projection1 > 0 ? Math.ceil(inp.width1 / panelWidth) : 0;
+  const p2Qty = inp.projection2 > 0 ? Math.ceil(inp.width2 / panelWidth) : 0;
   const rate = panelRate(inp.panelType);
 
   if (p1Qty > 0) {
-    items.push(li("W-Pan Panel #1 (" + panelLabel(inp.panelType) + ")", p1Qty, inp.projection1, rate, "sq ft", inp.colorPans));
+    items.push(li("V-Panel #1 (" + panelLabel(inp.panelType) + ")", p1Qty, inp.projection1, rate, "sq ft", inp.colorPans));
   }
   if (p2Qty > 0) {
-    items.push(li("W-Pan Panel #2 (" + panelLabel(inp.panelType) + ")", p2Qty, inp.projection2, rate, "sq ft", inp.colorPans));
+    items.push(li("V-Panel #2 (" + panelLabel(inp.panelType) + ")", p2Qty, inp.projection2, rate, "sq ft", inp.colorPans));
   }
 
   // ── HANGER ──
