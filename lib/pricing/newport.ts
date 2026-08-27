@@ -86,6 +86,11 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   } else if (combinedWidth > 0) {
     items.push(li(gutterName, gutterMultiplier, gutterStockLength(combinedWidth), gutterRate, "", inp.colorGutterFascia));
   }
+  // Freestanding - the rear beam is now a real finished edge (no house wall to
+  // tuck under), so it gets its own gutter too, matching the front.
+  if (isFreestanding && combinedWidth > 0) {
+    items.push(li(gutterName + " Rear", gutterMultiplier, gutterStockLength(combinedWidth), gutterRate, "", inp.colorGutterFascia));
+  }
 
   // ── SIDE FASCIA — extruded gutter uses a generic extruded profile; roll form gutter
   // uses a 2x6 board as its side fascia instead, independent of wrap kit selection (a
@@ -113,6 +118,15 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
       colorGutterFascia: inp.colorGutterFascia, colorPostsBeam: inp.colorPostsBeam,
       endCut: inp.beamEndCut1,
     }));
+    // Freestanding - same finishing set again on the rear beam, since it now
+    // looks the same as the front (no house wall to tuck under).
+    if (isFreestanding) {
+      items.push(...wrapKitRafterItems(wrapRates, {
+        gutterType: inp.gutterType, width1: inp.width1, rafterTails: inp.rafterTails,
+        colorGutterFascia: inp.colorGutterFascia, colorPostsBeam: inp.colorPostsBeam,
+        endCut: inp.rearBeamEndCut, variant: "Rear",
+      }));
+    }
   }
 
   // ── BEAMS — rate depends on selected beam type ──
@@ -189,6 +203,7 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
       projection1: inp.projection1, width1: inp.width1, panelQty1: p1Qty,
       colorPostsBeam: inp.colorPostsBeam,
       endCut: inp.beamEndCut1,
+      isFreestanding,
     }));
   }
 

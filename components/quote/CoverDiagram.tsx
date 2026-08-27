@@ -66,7 +66,7 @@ export default function CoverDiagram({
     run1TopY, run2TopY, run1FrontY,
     beamY1, beamY2,
     postPositions, postPositions2, multiSpanBeams,
-    tailCount, tailCount2, frontEdgeY, frontEdgeY2, tailTipY, tailTipY2,
+    tailCount, tailCount2, frontEdgeY, frontEdgeY2, tailTipY, tailTipY2, backTailTipY,
     downspoutPositions, rafterXs, tubeYs,
     isFreestanding, rearBeamY, rearPostPositions,
   } = geo;
@@ -184,10 +184,12 @@ export default function CoverDiagram({
               stroke="#7c3aed" strokeWidth="3" strokeDasharray="8,3" />
           ))}
 
-          {/* Side plates - full height + tail (run 1) */}
-          <line x1={ox} y1={run1TopY} x2={ox} y2={tailTipY}
+          {/* Side plates - full height + tail (run 1). Freestanding extends the
+              back end past backTailTipY too, mirroring the front - it's now a
+              real finished edge, not a house wall to sit flush against. */}
+          <line x1={ox} y1={backTailTipY} x2={ox} y2={tailTipY}
             stroke="#1e40af" strokeWidth="2.5" />
-          <line x1={ox + coverW1} y1={run1TopY} x2={ox + coverW1} y2={tailTipY}
+          <line x1={ox + coverW1} y1={backTailTipY} x2={ox + coverW1} y2={tailTipY}
             stroke="#1e40af" strokeWidth="2.5" />
 
           {/* Rafter tails - short stubs below front edge (run 1) - lattice
@@ -196,6 +198,16 @@ export default function CoverDiagram({
             const rx = ox + (width1 / (tailCount + 1)) * (i + 1) * geo.scale;
             return (
               <line key={i} x1={rx} y1={frontEdgeY} x2={rx} y2={tailTipY}
+                stroke="#1e40af" strokeWidth="2" />
+            );
+          })}
+
+          {/* Rear rafter tails - freestanding only, mirrors the front's stubs
+              past the rear edge */}
+          {isFreestanding && !isLattice && showRafterTails && Array.from({ length: tailCount }).map((_, i) => {
+            const rx = ox + (width1 / (tailCount + 1)) * (i + 1) * geo.scale;
+            return (
+              <line key={"rear-tail-" + i} x1={rx} y1={run1TopY} x2={rx} y2={backTailTipY}
                 stroke="#1e40af" strokeWidth="2" />
             );
           })}

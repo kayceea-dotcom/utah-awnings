@@ -64,6 +64,10 @@ export interface CoverDiagramGeometry {
   frontEdgeY2: number;
   tailTipY: number;
   tailTipY2: number;
+  /** Rear rafter-tail tip (freestanding only) - mirrors tailTipY at the back
+   *  edge, since it's now a real finished edge that looks the same as the
+   *  front. Equals run1TopY (no stub) when attached or not showing tails. */
+  backTailTipY: number;
   downspoutPositions: { x: number; y: number }[];
   beamType1: string;
   beamType2: string;
@@ -198,6 +202,9 @@ export function computeCoverDiagramGeometry(input: CoverDiagramGeometryInput): C
   // A lattice's rafters already run the full length to the front edge - no
   // extra stub past it like the generic rafter-tail flourish other products get.
   const tailTipY = isLattice ? frontEdgeY : showRafterTails ? frontEdgeY + TAIL_LEN : frontEdgeY;
+  // Freestanding mirrors that same stub past the rear edge - the rear beam is
+  // now a real finished edge too, not a house wall to sit flush against.
+  const backTailTipY = isFreestanding && !isLattice && showRafterTails ? run1TopY - TAIL_LEN : run1TopY;
 
   const tailCount2 = hasRun2 ? Math.round(width2 / 2) : 0;
   const frontEdgeY2 = run2FrontY;
@@ -236,7 +243,7 @@ export function computeCoverDiagramGeometry(input: CoverDiagramGeometryInput): C
     run1TopY, run2TopY, run1FrontY, run2FrontY,
     beamY1, beamY2,
     postPositions, postPositions2, multiSpanBeams,
-    tailCount, tailCount2, frontEdgeY, frontEdgeY2, tailTipY, tailTipY2,
+    tailCount, tailCount2, frontEdgeY, frontEdgeY2, tailTipY, tailTipY2, backTailTipY,
     downspoutPositions,
     beamType1, beamType2, width1, width2, projection1, showRafterTails,
     isLattice, rafterXs, tubeYs,

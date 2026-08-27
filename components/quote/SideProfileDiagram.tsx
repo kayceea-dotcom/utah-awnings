@@ -20,6 +20,7 @@ interface SideProfileDiagramProps {
   mountStyle?: string;
   rearPostHeight?: number;
   rearBeamType?: string;
+  rearEndCut?: string;
   className?: string;
 }
 
@@ -52,11 +53,12 @@ export default function SideProfileDiagram({
   mountStyle = "attached",
   rearPostHeight,
   rearBeamType,
+  rearEndCut,
   className = "",
 }: SideProfileDiagramProps) {
   const geo = computeSideProfileGeometry({
     projection, postHeight, deckHeight, houseAttachment, groundAttachment, beamType, wrapType, hasPanel, endCut, showRafterTail,
-    isLattice, latticeType, latticeSpacing, mountStyle, rearPostHeight, rearBeamType,
+    isLattice, latticeType, latticeSpacing, mountStyle, rearPostHeight, rearBeamType, rearEndCut,
   });
 
   if (!geo) {
@@ -78,9 +80,11 @@ export default function SideProfileDiagram({
     isDeck, isGroundMount, tubeXs, tubeSize,
     isFreestanding, rear,
     isEaveMount, eaveSoffit, eaveFascia, eaveRoofLine, wallStubTopY, eaveWallX,
+    rearEndCut: resolvedRearEndCut,
   } = geo;
 
   const tailPath = endCutProfilePath(endCut);
+  const rearTailPath = endCutProfilePath(resolvedRearEndCut);
 
   return (
     <div className={"bg-white rounded-xl border border-gray-200 overflow-hidden " + className}>
@@ -232,6 +236,15 @@ export default function SideProfileDiagram({
           {!isLattice && showRafterTail && (
             <g transform={"translate(" + tailStartX + "," + panelTopY + ") scale(" + (tailW / 44) + "," + (panelHeight / 24) + ")"}>
               <path d={tailPath} fill="#3b82f6" stroke="#1e3a8a" strokeWidth="1" />
+            </g>
+          )}
+
+          {/* Rear rafter tail - freestanding only, a horizontally mirrored copy
+              of the front tail (negative x-scale) anchored at the panel's own
+              back edge, using the rear beam's own end-cut style. */}
+          {isFreestanding && !isLattice && showRafterTail && (
+            <g transform={"translate(" + panelBackX + "," + panelTopY + ") scale(" + (-(tailW / 44)) + "," + (panelHeight / 24) + ")"}>
+              <path d={rearTailPath} fill="#3b82f6" stroke="#1e3a8a" strokeWidth="1" />
             </g>
           )}
 

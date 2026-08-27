@@ -258,6 +258,10 @@ export function wrapKitFinishingItems(rates: WrapKitRates, opts: {
   panelQty1: number;
   colorPostsBeam: string;
   endCut?: string;
+  // Freestanding only - the roof now overhangs the rear beam by the same
+  // amount it already overhangs the front, so the sideplate has to span
+  // 2ft further to actually reach both ends.
+  isFreestanding?: boolean;
 }): LineItem[] {
   const items: LineItem[] = [];
   const postsRear = opts.postsRear ?? 0;
@@ -275,7 +279,8 @@ export function wrapKitFinishingItems(rates: WrapKitRates, opts: {
     items.push(li("Post Plates Rear (" + dim + ", Mitered)", postsRear * 2, postHeightRear + 1, rates.wrapRate, "", opts.colorPostsBeam));
   }
   if (opts.projection1 > 0) {
-    items.push(li("Sideplates Cut One Side (" + dim + endCutSuffix(opts.endCut) + ")", 2, opts.projection1 + 2, rates.sideRate, "", opts.colorPostsBeam));
+    const sideplateLen = opts.projection1 + 2 + (opts.isFreestanding ? 2 : 0);
+    items.push(li("Sideplates Cut One Side (" + dim + endCutSuffix(opts.endCut) + ")", 2, sideplateLen, rates.sideRate, "", opts.colorPostsBeam));
   }
   if (totalPosts > 0) {
     items.push(li("Mitered Caps (" + dim + ")", totalPosts * 2, 0, rates.miterCapRate, "", opts.colorPostsBeam));
@@ -302,21 +307,26 @@ export function wrapKitRafterItems(rates: WrapKitRates, opts: {
   colorGutterFascia: string;
   colorPostsBeam: string;
   endCut?: string;
+  // Freestanding only - a second call with variant "Rear" doubles this same
+  // finishing set onto the rear beam, since it's now a real finished edge
+  // (no house wall to tuck under) that looks the same as the front.
+  variant?: string;
 }): LineItem[] {
   const items: LineItem[] = [];
   const dim = wrapDim(rates);
+  const suffix = opts.variant ? " " + opts.variant : "";
 
   if (opts.gutterType === "extruded" && opts.width1 > 0) {
-    items.push(li("Front Plate Gutter (" + dim + ")", 1, opts.width1 + 1, rates.wrapRate, "", opts.colorGutterFascia));
+    items.push(li("Front Plate Gutter" + suffix + " (" + dim + ")", 1, opts.width1 + 1, rates.wrapRate, "", opts.colorGutterFascia));
   }
   if (opts.width1 > 0) {
     const spacingQty = Math.round(opts.width1 / 2);
     if (opts.rafterTails) {
-      items.push(li("Rafter Tails (" + dim + endCutSuffix(opts.endCut) + ")", spacingQty, 0, rates.rafterRate, "", opts.colorPostsBeam));
+      items.push(li("Rafter Tails" + suffix + " (" + dim + endCutSuffix(opts.endCut) + ")", spacingQty, 0, rates.rafterRate, "", opts.colorPostsBeam));
     }
     const bracketQty = spacingQty + 2;
-    items.push(li("Inside Brackets (" + dim + ")", bracketQty, 0, rates.insideBrktRate));
-    items.push(li("Outside Brackets (" + dim + ")", bracketQty, 0, rates.outsideBrktRate, "", opts.colorPostsBeam));
+    items.push(li("Inside Brackets" + suffix + " (" + dim + ")", bracketQty, 0, rates.insideBrktRate));
+    items.push(li("Outside Brackets" + suffix + " (" + dim + ")", bracketQty, 0, rates.outsideBrktRate, "", opts.colorPostsBeam));
   }
 
   return items;

@@ -180,6 +180,76 @@ describe("Freestanding mount style", () => {
     expect(freeCaps).toBe(attachedCaps * 2);
   });
 
+  it("Newport: freestanding doubles gutter/front plate/rafter tails/brackets and extends sideplates by 2ft", () => {
+    const attachedInp = newportBase();
+    const inp = newportBase();
+    inp.mountStyle = "freestanding";
+    inp.rearBeamLength = 20;
+    inp.rearPosts = 2;
+    inp.rearBeamEndCut = "mitered";
+    const attached = calcNewport(attachedInp);
+    const free = calcNewport(inp);
+
+    expect(findItem(attached.lineItems, "Extruded Gutter Rear")).toBeUndefined();
+    expect(findItem(free.lineItems, "Extruded Gutter Rear")).toBeTruthy();
+    expect(findItem(free.lineItems, "Front Plate Gutter Rear (2x6)")).toBeTruthy();
+    expect(findItem(free.lineItems, "Rafter Tails Rear (2x6, Mitered)")).toBeTruthy();
+    expect(findItem(free.lineItems, "Inside Brackets Rear (2x6)")).toBeTruthy();
+    expect(findItem(free.lineItems, "Outside Brackets Rear (2x6)")).toBeTruthy();
+
+    // Sideplates: attached is projection1+2 (14ft); freestanding adds another 2ft (16ft).
+    expect(findItem(attached.lineItems, "Sideplates Cut One Side (2x6, Beveled)")?.length).toBe(14);
+    expect(findItem(free.lineItems, "Sideplates Cut One Side (2x6, Beveled)")?.length).toBe(16);
+  });
+
+  it("WPan: freestanding doubles gutter/front plate/rafter tails/brackets and extends sideplates by 2ft", () => {
+    const inp = wpanBase();
+    inp.mountStyle = "freestanding";
+    inp.rearBeamLength = 20;
+    inp.rearPosts = 2;
+    inp.wrapType = "2x6";
+    const attached = wpanBase();
+    attached.wrapType = "2x6";
+    const attachedResult = calcWPan(attached);
+    const free = calcWPan(inp);
+
+    expect(findItem(free.lineItems, "Extruded Gutter 2.5in Rear")).toBeTruthy();
+    expect(findItem(free.lineItems, "Front Plate Gutter Rear (2x6)")).toBeTruthy();
+    expect(findItem(free.lineItems, "Rafter Tails Rear (2x6, Beveled)")).toBeTruthy();
+    expect(findItem(free.lineItems, "Inside Brackets Rear (2x6)")).toBeTruthy();
+    expect(findItem(free.lineItems, "Outside Brackets Rear (2x6)")).toBeTruthy();
+    expect(findItem(attachedResult.lineItems, "Sideplates Cut One Side (2x6, Beveled)")?.length).toBe(14);
+    expect(findItem(free.lineItems, "Sideplates Cut One Side (2x6, Beveled)")?.length).toBe(16);
+  });
+
+  it("IRP: freestanding doubles the LRP Gutter and extends sideplates by 2ft (no front-plate/rafter-tail/bracket concept)", () => {
+    const inp = irpBase();
+    inp.mountStyle = "freestanding";
+    inp.rearBeamLength = 18;
+    inp.rearPosts = 2;
+    inp.wrapType = "2x6";
+    const attached = irpBase();
+    attached.wrapType = "2x6";
+    const attachedResult = calcIRP(attached);
+    const free = calcIRP(inp);
+
+    expect(findItem(free.lineItems, "LRP Gutter Rear")).toBeTruthy();
+    expect(findItem(attachedResult.lineItems, "Sideplates Cut One Side (2x6)")?.length).toBe(14);
+    expect(findItem(free.lineItems, "Sideplates Cut One Side (2x6)")?.length).toBe(16);
+  });
+
+  it("Pergola: freestanding doubles Inside/Outside Brackets and End Caps (its analog of rafter tails)", () => {
+    const inp = pergolaBase();
+    inp.mountStyle = "freestanding";
+    inp.rearBeamLength = 20;
+    inp.rearPosts = 2;
+    const free = calcPergola(inp);
+
+    expect(findItem(free.lineItems, "2x6 Inside Brackets Rear")?.qty).toBe(10);
+    expect(findItem(free.lineItems, "2x6 Outside Brackets Rear")?.qty).toBe(10);
+    expect(findItem(free.lineItems, "2x6 End Caps Rear")?.qty).toBe(10);
+  });
+
   it("defaulting mountStyle/rear fields to 0 on every product matches pre-existing attached behavior exactly", () => {
     // Sanity check that the new optional-looking fields don't change materialCost
     // for a plain attached job when rear* fields are just left at 0.

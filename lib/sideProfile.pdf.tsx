@@ -38,7 +38,7 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
     houseX, roofY, tailStartX, tailW,
     footingX, footingWidth,
     isDeck, isGroundMount, houseAttachment, groundAttachment, deckHeight, postHeight, showRafterTail,
-    isLattice, tubeXs, tubeSize, isFreestanding, rear,
+    isLattice, tubeXs, tubeSize, isFreestanding, rear, rearEndCut,
     isEaveMount, eaveSoffit, eaveFascia, eaveRoofLine, wallStubTopY, eaveWallX,
   } = geo;
 
@@ -49,6 +49,7 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
   const displayH = svgH * pdfScale;
 
   const tailPath = endCutProfilePath(geo.endCut);
+  const rearTailPath = endCutProfilePath(rearEndCut);
   const tailScaleX = tailW / 44;
   const tailScaleY = panelHeight / 24;
 
@@ -181,6 +182,15 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
           {!isLattice && showRafterTail && (
             <G transform={"translate(" + tailStartX + "," + panelTopY + ") scale(" + tailScaleX + "," + tailScaleY + ")"}>
               <Path d={tailPath} fill="#3b82f6" stroke="#1e3a8a" strokeWidth={1} />
+            </G>
+          )}
+
+          {/* Rear rafter tail - freestanding only, a horizontally mirrored copy
+              of the front tail anchored at the panel's own back edge, using the
+              rear beam's own end-cut style. */}
+          {isFreestanding && !isLattice && showRafterTail && (
+            <G transform={"translate(" + panelBackX + "," + panelTopY + ") scale(" + (-tailScaleX) + "," + tailScaleY + ")"}>
+              <Path d={rearTailPath} fill="#3b82f6" stroke="#1e3a8a" strokeWidth={1} />
             </G>
           )}
 

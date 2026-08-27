@@ -814,6 +814,7 @@ export default function FlatPanelQuotePage() {
                   mountStyle={inp.mountStyle}
                   rearPostHeight={inp.rearPostHeight}
                   rearBeamType={inp.rearBeamType}
+                  rearEndCut={inp.rearBeamEndCut}
                 />
               )}
               <PriceSummaryPanel result={result} />

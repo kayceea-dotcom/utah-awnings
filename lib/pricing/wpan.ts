@@ -139,10 +139,16 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     // Gets an extra 1ft past the projection to cut to fit on site.
     const { qty: rollFasciaQty, length: rollFasciaStockLen } = fasciaQtyLen(maxProjection, 1);
     items.push(li("Side Fascia (2x6)", rollFasciaQty, rollFasciaStockLen, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
+    if (isFreestanding) {
+      items.push(li("Roll Form Gutter Rear", 1, rollFormGutterStockLength(totalWidth + 1.5), RATES.gutter_roll_form_ft, "", inp.colorGutterFascia));
+    }
   } else {
     items.push(li("Extruded Gutter 2.5in", 1, gutterStockLen, RATES.gutter_extruded_ft, "", inp.colorGutterFascia));
     const { qty: fasciaQty, length: fasciaStockLen } = fasciaQtyLen(maxProjection);
     items.push(li("Extruded Side Fascia", fasciaQty, fasciaStockLen, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
+    if (isFreestanding) {
+      items.push(li("Extruded Gutter 2.5in Rear", 1, gutterStockLen, RATES.gutter_extruded_ft, "", inp.colorGutterFascia));
+    }
   }
 
   // ── WRAP KIT — front plate gutter, rafter tails, inside/outside brackets ──
@@ -154,6 +160,15 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
       colorGutterFascia: inp.colorGutterFascia, colorPostsBeam: inp.colorPostsBeam,
       endCut: inp.beamEndCut1,
     }));
+    // Freestanding - same finishing set again on the rear beam, since it now
+    // looks the same as the front (no house wall to tuck under).
+    if (isFreestanding) {
+      items.push(...wrapKitRafterItems(wrapRates, {
+        gutterType: inp.gutterType, width1: inp.width1, rafterTails: inp.rafterTails,
+        colorGutterFascia: inp.colorGutterFascia, colorPostsBeam: inp.colorPostsBeam,
+        endCut: inp.rearBeamEndCut, variant: "Rear",
+      }));
+    }
   }
 
   // ── BEAMS ──
@@ -221,6 +236,7 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
       projection1: inp.projection1, width1: inp.width1, panelQty1: p1Qty,
       colorPostsBeam: inp.colorPostsBeam,
       endCut: inp.beamEndCut1,
+      isFreestanding,
     }));
   }
 

@@ -589,6 +589,7 @@ export default function WPanQuotePage() {
                 mountStyle={inp.mountStyle}
                 rearPostHeight={inp.rearPostHeight}
                 rearBeamType={inp.rearBeamType}
+                rearEndCut={inp.rearBeamEndCut}
               />
               <PriceSummaryPanel result={effectiveResult} />
               <CommissionPanel materialCost={effectiveResult.materialCost} price={commissionPrice} discount={inp.discount} isCashDiscount={isCashDiscount} tax={effectiveResult.taxes} />

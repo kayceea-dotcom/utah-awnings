@@ -124,6 +124,11 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
   } else if (inp.beamLength1 > 0 || inp.beamLength2 > 0) {
     items.push(li("LRP Gutter", 1, 0, lrpGutterRate(inp.panelType, combinedBeamLength)));
   }
+  // Freestanding - the rear beam is now a real finished edge (no house wall
+  // to tuck under), so it gets its own gutter too, matching the front.
+  if (isFreestanding && inp.rearBeamLength > 0) {
+    items.push(li("LRP Gutter Rear", 1, 0, lrpGutterRate(inp.panelType, inp.rearBeamLength)));
+  }
 
   // ── SIDE FASCIA — 2 sides per run ──
   if (splitGutter) {
@@ -205,6 +210,7 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
       postsRear: rearPosts, postHeightRear: inp.rearPostHeight,
       projection1: inp.projection1, width1: inp.width1, panelQty1: p1Qty,
       colorPostsBeam: inp.colorPostsBeam,
+      isFreestanding,
     }));
   }
 

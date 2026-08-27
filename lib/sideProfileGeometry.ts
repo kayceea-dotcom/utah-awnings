@@ -17,6 +17,9 @@ export interface SideProfileGeometryInput {
    *  values when not given. */
   rearPostHeight?: number;
   rearBeamType?: string;
+  /** Rear beam's own end-cut style - falls back to the front's endCut when
+   *  not given. */
+  rearEndCut?: string;
   /** Pergola only - open lattice structure. Draws a real 6in-tall rafter
    *  (not a wrap-kit panel) running house-to-tip with a 1ft overhang past
    *  the beam, plus 2x2 tube cross-sections spaced along its length. */
@@ -63,6 +66,9 @@ export interface SideProfileGeometry {
   postHeight: number;
   projection: number;
   endCut: string;
+  /** Rear beam's resolved end-cut style (freestanding only) - falls back to
+   *  endCut when rearEndCut isn't given. */
+  rearEndCut: string;
   showRafterTail: boolean;
   isLattice: boolean;
   /** X positions of each lattice tube cross-section along the rafter, pergola only. */
@@ -145,6 +151,7 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
     mountStyle = "attached",
     rearPostHeight,
     rearBeamType,
+    rearEndCut,
   } = input;
 
   if (!projection || !postHeight) return null;
@@ -303,7 +310,7 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
     houseX, roofY, tailStartX, tailW: TAIL_W,
     footingX, footingWidth,
     scale, isDeck, isGroundMount,
-    houseAttachment, groundAttachment, deckHeight, postHeight, projection, endCut, showRafterTail,
+    houseAttachment, groundAttachment, deckHeight, postHeight, projection, endCut, rearEndCut: rearEndCut || endCut, showRafterTail,
     isLattice, tubeXs, tubeSize,
     isFreestanding, rear,
     isEaveMount, eaveSoffit, eaveFascia, eaveRoofLine, wallStubTopY, eaveWallX,

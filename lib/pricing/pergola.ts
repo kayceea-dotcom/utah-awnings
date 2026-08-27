@@ -130,6 +130,15 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
     items.push(li("2x6 Outside Brackets", rafterQty, 0, RATES.outside_brkt_2x6, "", inp.colorPergola));
   }
 
+  // Freestanding - each rafter now connects to a real rear beam too (no house
+  // ledger), so it needs a second set of brackets and its own end cap there,
+  // same as the front.
+  if (isFreestanding && rafterQty > 0) {
+    items.push(li("2x6 Inside Brackets Rear", rafterQty, 0, RATES.inside_brkt_2x6));
+    items.push(li("2x6 Outside Brackets Rear", rafterQty, 0, RATES.outside_brkt_2x6, "", inp.colorPergola));
+    items.push(li("2x6 End Caps Rear", rafterQty, 0, RATES.endcap_2x6, "", inp.colorPergola));
+  }
+
   // ── PLUGS ──
   if (rafterQty > 0) {
     items.push(li("Plugs", rafterQty + 6, 0, RATES.plug_5_8));

@@ -100,6 +100,7 @@ export function buildContractData(proposal: Record<string, unknown>): ContractDa
           mountStyle: String(inputs.mountStyle || "attached"),
           rearPostHeight: Number(inputs.rearPostHeight) || 0,
           rearBeamType: String(inputs.rearBeamType || inputs.beamType1 || "3x8"),
+          rearEndCut: String(inputs.rearBeamEndCut || inputs.beamEndCut1 || "beveled"),
         }
       : null;
 
