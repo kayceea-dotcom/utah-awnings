@@ -112,7 +112,7 @@ const DOWNSPOUT_SIDES = [
 ];
 
 const DEFAULT: NewportInputs = {
-  jobName: "", salesman: "", housePhotoUrl: "",
+  jobName: "", salesman: "", salesmanPhone: "", housePhotoUrl: "",
   projection1: 0, width1: 0,
   projection2: 0, width2: 0, jogType: "ground",
   panelType1: "T6_040", panelType2: "",
@@ -431,7 +431,7 @@ export default function FlatPanelQuotePage() {
 
   useEffect(() => {
     if (profile?.full_name) {
-      setInp((p) => ({ ...p, salesman: profile.full_name }));
+      setInp((p) => ({ ...p, salesman: profile.full_name, salesmanPhone: profile.phone || "" }));
     }
   }, [profile]);
 

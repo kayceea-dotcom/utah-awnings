@@ -95,7 +95,7 @@ const DOWNSPOUT_SIDES = [
 ];
 
 const DEFAULT: WPanInputs = {
-  jobName: "", salesman: "", housePhotoUrl: "",
+  jobName: "", salesman: "", salesmanPhone: "", housePhotoUrl: "",
   projection1: 0, width1: 0,
   projection2: 0, width2: 0,
   panelType: "wpan_032",
@@ -351,7 +351,7 @@ export default function WPanQuotePage() {
 
   useEffect(() => {
     if (profile?.full_name) {
-      setInp((p) => ({ ...p, salesman: profile.full_name }));
+      setInp((p) => ({ ...p, salesman: profile.full_name, salesmanPhone: profile.phone || "" }));
     }
   }, [profile]);
 

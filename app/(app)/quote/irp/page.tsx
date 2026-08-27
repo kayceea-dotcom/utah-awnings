@@ -75,7 +75,7 @@ const DOWNSPOUT_SIDES = [
 ];
 
 const DEFAULT: IRPInputs = {
-  jobName: "", salesman: "", housePhotoUrl: "",
+  jobName: "", salesman: "", salesmanPhone: "", housePhotoUrl: "",
   projection1: 0, width1: 0,
   projection2: 0, width2: 0, jogType: "ground",
   panelType: "lrp_3_032",
@@ -326,7 +326,7 @@ export default function IRPQuotePage() {
 
   useEffect(() => {
     if (profile?.full_name) {
-      setInp((p) => ({ ...p, salesman: profile.full_name }));
+      setInp((p) => ({ ...p, salesman: profile.full_name, salesmanPhone: profile.phone || "" }));
     }
   }, [profile]);
 

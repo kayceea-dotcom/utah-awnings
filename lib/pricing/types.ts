@@ -39,6 +39,7 @@ export interface BeamConfig {
 export interface NewportInputs {
   jobName: string;
   salesman: string;
+  salesmanPhone: string;
   housePhotoUrl: string;
   projection1: number;
   width1: number;

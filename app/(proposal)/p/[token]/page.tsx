@@ -225,6 +225,22 @@ export default function ProposalPage() {
             <div><span className="text-gray-500">City:</span> <span className="font-medium">{c.city as string}</span></div>
             <div><span className="text-gray-500">Zip:</span> <span className="font-medium">{c.zip as string}</span></div>
           </div>
+
+          {/* Your sales rep */}
+          {!!((q.inputs as Record<string, unknown>)?.salesman as string) && (
+            <div className="text-sm border-t border-gray-100 pt-4 mt-4">
+              <span className="text-gray-500">Your Sales Rep:</span>{" "}
+              <span className="font-medium">{(q.inputs as Record<string, unknown>).salesman as string}</span>
+              {!!((q.inputs as Record<string, unknown>)?.salesmanPhone as string) && (
+                <>
+                  {" "}&middot;{" "}
+                  <a href={"tel:" + ((q.inputs as Record<string, unknown>).salesmanPhone as string)} className="font-medium text-red-600">
+                    {(q.inputs as Record<string, unknown>).salesmanPhone as string}
+                  </a>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Job Details */}

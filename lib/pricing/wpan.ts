@@ -12,6 +12,7 @@ export type WPanType = "wpan_032" | "duraking_025" | "duraking_032" | "duraking_
 export interface WPanInputs {
   jobName: string;
   salesman: string;
+  salesmanPhone: string;
   housePhotoUrl: string;
   projection1: number;
   width1: number;

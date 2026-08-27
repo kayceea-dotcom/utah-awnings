@@ -12,6 +12,7 @@ interface TeamMember {
   id: string;
   full_name: string;
   email?: string;
+  phone?: string | null;
   role: string;
   created_at: string;
 }
@@ -21,6 +22,7 @@ export default function TeamPage() {
   const [loading, setLoading] = useState(true);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteName, setInviteName] = useState("");
+  const [invitePhone, setInvitePhone] = useState("");
   const [inviteRole, setInviteRole] = useState("sales_rep");
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -59,7 +61,7 @@ export default function TeamPage() {
   useEffect(() => { loadMembers(); }, []);
 
   async function handleInvite() {
-    if (!inviteEmail || !inviteName) return;
+    if (!inviteEmail || !inviteName || !invitePhone) return;
     setSending(true);
     setMessage(null);
 
@@ -69,6 +71,7 @@ export default function TeamPage() {
       body: JSON.stringify({
         email: inviteEmail,
         full_name: inviteName,
+        phone: invitePhone,
         role: inviteRole,
       }),
     });
@@ -81,6 +84,7 @@ export default function TeamPage() {
       setMessage({ type: "success", text: inviteName + " has been invited! They will receive an email to set up their account." });
       setInviteEmail("");
       setInviteName("");
+      setInvitePhone("");
       setInviteRole("sales_rep");
       loadMembers();
     }
@@ -153,6 +157,17 @@ export default function TeamPage() {
               </div>
 
               <div>
+                <label className="label">Phone</label>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="(801) 555-1234"
+                  value={invitePhone}
+                  onChange={(e) => setInvitePhone(e.target.value)}
+                />
+              </div>
+
+              <div>
                 <label className="label">Role</label>
                 <div className="relative">
                   <select
@@ -180,7 +195,7 @@ export default function TeamPage() {
 
               <button
                 onClick={handleInvite}
-                disabled={sending || !inviteEmail || !inviteName}
+                disabled={sending || !inviteEmail || !inviteName || !invitePhone}
                 className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Mail size={16} />
@@ -224,6 +239,7 @@ export default function TeamPage() {
                       </p>
                       <p className="text-xs text-gray-500 truncate">
                         {new Date(member.created_at).toLocaleDateString()}
+                        {member.phone ? " · " + member.phone : " · no phone on file"}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">

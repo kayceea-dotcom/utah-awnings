@@ -81,7 +81,7 @@ const MOUNT_STYLES = [
 ];
 
 const DEFAULT: PergolaInputs = {
-  jobName: "", salesman: "", housePhotoUrl: "",
+  jobName: "", salesman: "", salesmanPhone: "", housePhotoUrl: "",
   projection: 0, width: 0,
   beamLength: 0, beamType: "3x8", beamEndCut: "beveled", beamQty: 1,
   rafterGauge: "032",
@@ -333,7 +333,7 @@ export default function PergolaQuotePage() {
 
   useEffect(() => {
     if (profile?.full_name) {
-      setInp((p) => ({ ...p, salesman: profile.full_name }));
+      setInp((p) => ({ ...p, salesman: profile.full_name, salesmanPhone: profile.phone || "" }));
     }
   }, [profile]);
 

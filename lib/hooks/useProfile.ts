@@ -6,6 +6,7 @@ export interface Profile {
   full_name: string;
   role: "admin" | "manager" | "sales_rep";
   company_id: string;
+  phone: string | null;
 }
 
 export function useProfile() {

@@ -29,14 +29,14 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    const { email, full_name, role } = await request.json();
+    const { email, full_name, phone, role } = await request.json();
 
-    if (!email || !full_name) {
-      return NextResponse.json({ error: "Email and name are required" }, { status: 400 });
+    if (!email || !full_name || !phone) {
+      return NextResponse.json({ error: "Email, name, and phone are required" }, { status: 400 });
     }
 
     // Create user directly without triggering Supabase email
-    const { error } = await adminClient.auth.admin.createUser({
+    const { data: created, error } = await adminClient.auth.admin.createUser({
       email,
       email_confirm: false,
       user_metadata: { full_name, role: role || "sales_rep" },
@@ -44,6 +44,13 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    // The profiles row is populated by a DB trigger on auth.users insert
+    // (full_name/role from user_metadata) - it doesn't carry phone, so set
+    // it here as a follow-up update once the row exists.
+    if (created.user) {
+      await adminClient.from("profiles").update({ phone }).eq("id", created.user.id);
     }
 
     // Generate invite link manually

@@ -45,7 +45,9 @@ export function buildOrderSheetData(proposal: Record<string, unknown>): OrderShe
     poNumber,
     jobName,
     salesman,
-    salesmanPhone: "801-979-5423",
+    // Falls back to the company's own number for quotes saved before each
+    // rep had a phone number on their profile.
+    salesmanPhone: (inputs?.salesmanPhone as string) || "801-979-5423",
     customerName: (customer.name as string) || "",
     installAddress: ((customer.address as string) || "") + " " + ((customer.city as string) || "") + ", UT " + ((customer.zip as string) || ""),
     installDate,

@@ -4,9 +4,10 @@ export const dynamic = "force-dynamic";
 
 import TopBar from "@/components/TopBar";
 import Link from "next/link";
-import { Users, DollarSign, Building2 } from "lucide-react";
+import { Users, DollarSign, Building2, User } from "lucide-react";
 
 const sections = [
+  { href: "/settings/profile", icon: User, label: "My Profile", desc: "Your name and phone number" },
   { href: "/settings/team", icon: Users, label: "Team", desc: "Invite and manage salespeople" },
   { href: "/settings/pricing", icon: DollarSign, label: "Pricing", desc: "Update material price list" },
   { href: "/settings/company", icon: Building2, label: "Company", desc: "Logo, name, contact info" },

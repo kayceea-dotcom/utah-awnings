@@ -18,6 +18,8 @@ export interface ContractData {
   customerCity: string;
   customerZip: string;
   jobName: string;
+  salesmanName: string;
+  salesmanPhone: string;
   productType: string;
   panelType: string;
   panelColor: string;
@@ -118,6 +120,8 @@ export function buildContractData(proposal: Record<string, unknown>): ContractDa
     customerCity: (customer.city as string) || "",
     customerZip: (customer.zip as string) || "",
     jobName: (inputs.jobName as string) || (customer.name as string) || "Unknown Job",
+    salesmanName: (inputs.salesman as string) || "",
+    salesmanPhone: (inputs.salesmanPhone as string) || "",
     productType: String(quote.style || quote.product_type || ""),
     panelType: (quote.panel_type as string) || "",
     panelColor: (quote.color as string) || "",

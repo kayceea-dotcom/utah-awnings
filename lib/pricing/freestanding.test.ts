@@ -14,7 +14,7 @@ function findItem(items: LineItem[], name: string) {
 
 function newportBase(): NewportInputs {
   return {
-    jobName: "Test", salesman: "Rep", housePhotoUrl: "",
+    jobName: "Test", salesman: "Rep", salesmanPhone: "", housePhotoUrl: "",
     projection1: 12, width1: 20, projection2: 0, width2: 0, jogType: "ground",
     panelType1: "T6_040", panelType2: "",
     beamLength1: 20, beamLength2: 0,
@@ -38,7 +38,7 @@ function newportBase(): NewportInputs {
 
 function wpanBase(): WPanInputs {
   return {
-    jobName: "Test", salesman: "Rep", housePhotoUrl: "",
+    jobName: "Test", salesman: "Rep", salesmanPhone: "", housePhotoUrl: "",
     projection1: 12, width1: 20, projection2: 0, width2: 0,
     panelType: "wpan_032",
     beamLength1: 20, beamLength2: 0, beamQty1: 1, beamQty2: 1,
@@ -61,7 +61,7 @@ function wpanBase(): WPanInputs {
 
 function irpBase(): IRPInputs {
   return {
-    jobName: "Test", salesman: "Rep", housePhotoUrl: "",
+    jobName: "Test", salesman: "Rep", salesmanPhone: "", housePhotoUrl: "",
     projection1: 12, width1: 20, projection2: 0, width2: 0, jogType: "ground",
     panelType: "lrp_3_032",
     beamLength1: 20, beamLength2: 0,
@@ -82,7 +82,7 @@ function irpBase(): IRPInputs {
 
 function pergolaBase(): PergolaInputs {
   return {
-    jobName: "Test", salesman: "Rep", housePhotoUrl: "",
+    jobName: "Test", salesman: "Rep", salesmanPhone: "", housePhotoUrl: "",
     projection: 12, width: 20,
     beamLength: 20, beamType: "3x8", beamEndCut: "beveled", beamQty: 1,
     rafterGauge: "032",

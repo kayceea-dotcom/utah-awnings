@@ -26,7 +26,7 @@ const COLORS = ["White","Siennawood","Slate","Driftwood","Beechwood","Maplewood"
 const COLOR_OPTS = [{ value: "", label: "None" }, ...COLORS.map((c) => ({ value: c, label: c }))];
 
 const DEFAULT: IndividualInputs = {
-  jobName: "", salesman: "", housePhotoUrl: "",
+  jobName: "", salesman: "", salesmanPhone: "", housePhotoUrl: "",
   items: [],
   discount: 0, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
   markup: 1.8, taxRate: 0.0745,
@@ -222,7 +222,7 @@ export default function IndividualQuotePage() {
 
   useEffect(() => {
     if (profile?.full_name) {
-      setInp((p) => ({ ...p, salesman: profile.full_name }));
+      setInp((p) => ({ ...p, salesman: profile.full_name, salesmanPhone: profile.phone || "" }));
     }
   }, [profile]);
 

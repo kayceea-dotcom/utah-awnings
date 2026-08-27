@@ -84,6 +84,10 @@ export default function ContractPdf({ data }: { data: ContractData }) {
             <Text style={styles.infoCell}><Text style={styles.infoLabel}>Style: </Text>{data.productType}</Text>
           </View>
           <View style={styles.infoRow}>
+            <Text style={styles.infoCell}><Text style={styles.infoLabel}>Salesman: </Text>{data.salesmanName || "-"}</Text>
+            <Text style={styles.infoCell}><Text style={styles.infoLabel}>Salesman Phone: </Text>{data.salesmanPhone || "-"}</Text>
+          </View>
+          <View style={styles.infoRow}>
             <Text style={styles.infoCell}><Text style={styles.infoLabel}>Panel Type: </Text>{data.panelType}</Text>
             <Text style={styles.infoCell}><Text style={styles.infoLabel}>Panel Color: </Text>{data.panelColor}</Text>
           </View>

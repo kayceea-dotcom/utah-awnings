@@ -93,7 +93,8 @@ export default function ProposalsPage() {
       list = list.filter((r) => {
         const jobName = (r.quotes?.inputs?.jobName as string) || "";
         const custName = r.quotes?.customers?.name || "";
-        return jobName.toLowerCase().includes(q) || custName.toLowerCase().includes(q);
+        const salesman = (r.quotes?.inputs?.salesman as string) || "";
+        return jobName.toLowerCase().includes(q) || custName.toLowerCase().includes(q) || salesman.toLowerCase().includes(q);
       });
     }
     return list;
@@ -150,10 +151,10 @@ export default function ProposalsPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[850px] text-sm">
+                <table className="w-full min-w-[950px] text-sm">
                   <thead>
                     <tr className="bg-gray-50 text-left">
-                      {["Job Name","Customer","Product","Status","Follow-up","Total","Created"].map((h) => (
+                      {["Job Name","Customer","Salesman","Product","Status","Follow-up","Total","Created"].map((h) => (
                         <th key={h} className="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
                       ))}
                     </tr>
@@ -166,6 +167,7 @@ export default function ProposalsPage() {
                           {(r.quotes?.inputs?.jobName as string) || "Untitled"}
                         </td>
                         <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{r.quotes?.customers?.name || "-"}</td>
+                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{(r.quotes?.inputs?.salesman as string) || "-"}</td>
                         <td className="px-4 py-3 text-gray-600 whitespace-nowrap capitalize">{(r.quotes?.product_type || "").replace("_", " ")}</td>
                         <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
                         <td className="px-4 py-3"><FollowUpBadge status={r.followUp} /></td>
