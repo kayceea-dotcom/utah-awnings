@@ -25,7 +25,7 @@ export const MARKUP_COMMISSION_SCHEDULE: MarkupCommissionBand[] = [
 // still earns a real commission instead of falling into the 8% band - the
 // dollar profit at 1.7x is already substantial when material cost is this
 // high, even though the ratio alone looks low.
-export const BIG_JOB_MATERIAL_THRESHOLD = 11500;
+export const BIG_JOB_MATERIAL_THRESHOLD = 10000;
 export const MARKUP_COMMISSION_SCHEDULE_BIG_JOB: MarkupCommissionBand[] = [
   { min: 0,    rate: 0.04 }, // 0 - 1.4x
   { min: 1.41, rate: 0.08 }, // 1.41 - 1.69x

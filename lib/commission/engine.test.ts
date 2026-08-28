@@ -119,14 +119,14 @@ describe("discounts count fully against commission", () => {
   });
 });
 
-describe("big job unlock - material over $11,500 opens a 1.7x/13% band", () => {
-  const BIG_MATERIAL = 12000; // > $11,500 threshold
+describe("big job unlock - material over $10,000 opens a 1.7x/13% band", () => {
+  const BIG_MATERIAL = 12000; // > $10,000 threshold
   const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
-  it("at or below the $11,500 threshold, 1.7x markup still only pays 8%", () => {
-    const atThreshold = computeCommission(11500, 11500 * 1.7);
+  it("at or below the $10,000 threshold, 1.7x markup still only pays 8%", () => {
+    const atThreshold = computeCommission(10000, 10000 * 1.7);
     expect(atThreshold.commissionRate).toBeCloseTo(0.08);
-    const belowThreshold = computeCommission(10000, 10000 * 1.7);
+    const belowThreshold = computeCommission(9000, 9000 * 1.7);
     expect(belowThreshold.commissionRate).toBeCloseTo(0.08);
   });
 
@@ -180,10 +180,10 @@ describe("markup includes material + tax when config.tax is given", () => {
     expect(r.commissionDollars).toBeCloseTo(0.19 * 11490, 2);
   });
 
-  it("the $11,500 big-job threshold is checked against material + tax too", () => {
-    // $11,000 material + $600 tax = $11,600 materialsBase - over the threshold
+  it("the $10,000 big-job threshold is checked against material + tax too", () => {
+    // $9,500 material + $600 tax = $10,100 materialsBase - over the threshold
     // even though material cost alone is under it.
-    const r = computeCommission(11000, 11000 * 1.7 + 600 * 1.7, { tax: 600 });
+    const r = computeCommission(9500, 9500 * 1.7 + 600 * 1.7, { tax: 600 });
     expect(r.commissionRate).toBeCloseTo(0.13);
   });
 });
