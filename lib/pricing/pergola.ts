@@ -76,8 +76,9 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
     items.push(li("Lattice Splices", latticeQty, 0, latticeSpliceRate));
   }
 
-  // ── HEADER BOARD ──
-  if (inp.headerBoard && inp.beamLength > 0) {
+  // ── HEADER BOARD — a house-side ledger board; freestanding has a real rear
+  // beam there instead, so it never needs one regardless of the toggle. ──
+  if (inp.headerBoard && inp.beamLength > 0 && inp.mountStyle !== "freestanding") {
     items.push(li("2x6 Header Board", 1, inp.beamLength, rafterRate, "", inp.colorPergola));
   }
 

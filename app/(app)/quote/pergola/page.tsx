@@ -410,7 +410,9 @@ export default function PergolaQuotePage() {
                 <SelectInput label="End Cut Side" value={inp.endCutSide} onChange={(v) => setField("endCutSide", v)} options={END_CUT_SIDES} />
                 <SelectInput label="Lattice Type" value={inp.latticeType} onChange={(v) => setField("latticeType", v as never)} options={LATTICE_TYPES} />
                 <SelectInput label="Lattice Spacing" value={inp.latticeSpacing} onChange={(v) => setField("latticeSpacing", v as never)} options={LATTICE_SPACING} />
-                <ToggleInput label="Header Board" value={inp.headerBoard} onChange={(v) => setField("headerBoard", v)} yesLabel="include" />
+                {inp.mountStyle !== "freestanding" && (
+                  <ToggleInput label="Header Board" value={inp.headerBoard} onChange={(v) => setField("headerBoard", v)} yesLabel="include" />
+                )}
                 <ToggleInput label="Spray Paint" value={inp.sprayPaint} onChange={(v) => setField("sprayPaint", v)} yesLabel="include" />
               </SectionCard>
 

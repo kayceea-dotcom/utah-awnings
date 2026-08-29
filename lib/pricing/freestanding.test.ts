@@ -250,6 +250,21 @@ describe("Freestanding mount style", () => {
     expect(findItem(free.lineItems, "2x6 End Caps Rear")?.qty).toBe(10);
   });
 
+  it("Pergola: freestanding never adds a Header Board, even with the toggle on - the rear beam takes its place", () => {
+    const attachedInp = pergolaBase();
+    attachedInp.headerBoard = true;
+    const attached = calcPergola(attachedInp);
+    expect(findItem(attached.lineItems, "2x6 Header Board")).toBeTruthy();
+
+    const freeInp = pergolaBase();
+    freeInp.headerBoard = true;
+    freeInp.mountStyle = "freestanding";
+    freeInp.rearBeamLength = 20;
+    freeInp.rearPosts = 2;
+    const free = calcPergola(freeInp);
+    expect(findItem(free.lineItems, "2x6 Header Board")).toBeUndefined();
+  });
+
   it("defaulting mountStyle/rear fields to 0 on every product matches pre-existing attached behavior exactly", () => {
     // Sanity check that the new optional-looking fields don't change materialCost
     // for a plain attached job when rear* fields are just left at 0.
