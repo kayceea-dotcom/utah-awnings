@@ -123,7 +123,7 @@ export default function SideProfileDiagram({
               <line x1={rear.postX - 22} y1={rear.postTopY} x2={rear.postX - 22} y2={rear.postBottomY} stroke="#CC2229" strokeWidth="1.5" />
               <line x1={rear.postX - 26} y1={rear.postTopY} x2={rear.postX - 18} y2={rear.postTopY} stroke="#CC2229" strokeWidth="1.5" />
               <line x1={rear.postX - 26} y1={rear.postBottomY} x2={rear.postX - 18} y2={rear.postBottomY} stroke="#CC2229" strokeWidth="1.5" />
-              <text x={rear.postX - 34} y={(rear.postTopY + rear.postBottomY) / 2 + 4} textAnchor="middle" fontSize="10" fontWeight="700" fill="#CC2229"
+              <text x={rear.postX - 34} y={(rear.postTopY + rear.postBottomY) / 2 + 4} textAnchor="middle" fontSize="12" fontWeight="700" fill="#CC2229"
                 transform={"rotate(-90," + (rear.postX - 34) + "," + (rear.postTopY + rear.postBottomY) / 2 + ")"}>
                 {rear.postHeight}&apos;
               </text>
@@ -184,7 +184,7 @@ export default function SideProfileDiagram({
                 <line x1={deckDimX} y1={deckY} x2={deckDimX} y2={groundY} stroke="#d97706" strokeWidth="1" />
                 <line x1={deckDimX - 4} y1={deckY} x2={deckDimX + 4} y2={deckY} stroke="#d97706" strokeWidth="1" />
                 <line x1={deckDimX - 4} y1={groundY} x2={deckDimX + 4} y2={groundY} stroke="#d97706" strokeWidth="1" />
-                <text x={deckDimX} y={(deckY + groundY) / 2 + 3} textAnchor="middle" fontSize="7" fontWeight="700" fill="#d97706"
+                <text x={deckDimX} y={(deckY + groundY) / 2 + 3} textAnchor="middle" fontSize="9" fontWeight="700" fill="#d97706"
                   transform={"rotate(-90," + deckDimX + "," + (deckY + groundY) / 2 + ")"}>
                   {deckHeight}&apos; deck
                 </text>
@@ -210,7 +210,7 @@ export default function SideProfileDiagram({
           <line x1={postX + 22} y1={postTopY} x2={postX + 22} y2={postBottomY} stroke="#CC2229" strokeWidth="1.5" />
           <line x1={postX + 18} y1={postTopY} x2={postX + 26} y2={postTopY} stroke="#CC2229" strokeWidth="1.5" />
           <line x1={postX + 18} y1={postBottomY} x2={postX + 26} y2={postBottomY} stroke="#CC2229" strokeWidth="1.5" />
-          <text x={postX + 34} y={(postTopY + postBottomY) / 2 + 4} textAnchor="middle" fontSize="10" fontWeight="700" fill="#CC2229"
+          <text x={postX + 34} y={(postTopY + postBottomY) / 2 + 4} textAnchor="middle" fontSize="12" fontWeight="700" fill="#CC2229"
             transform={"rotate(90," + (postX + 34) + "," + (postTopY + postBottomY) / 2 + ")"}>
             {postHeight}&apos;
           </text>

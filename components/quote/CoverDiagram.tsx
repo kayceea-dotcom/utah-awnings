@@ -291,7 +291,7 @@ export default function CoverDiagram({
           <line x1={ox + coverW1} y1={oy - HOUSE_H - 12} x2={ox + coverW1} y2={oy - HOUSE_H - 4}
             stroke="#64748b" strokeWidth="1" />
           <text x={ox + coverW1 / 2} y={oy - HOUSE_H - 12}
-            textAnchor="middle" fontSize="11" fontWeight="700" fill="#1e293b">
+            textAnchor="middle" fontSize="13" fontWeight="700" fill="#1e293b">
             {width1}{"'"}
           </text>
 
@@ -303,7 +303,7 @@ export default function CoverDiagram({
           <line x1={ox + coverW1 + 6} y1={run1FrontY} x2={ox + coverW1 + 14} y2={run1FrontY}
             stroke="#CC2229" strokeWidth="1.5" />
           <text x={ox + coverW1 + 22} y={(run1TopY + run1FrontY) / 2 + 4}
-            textAnchor="middle" fontSize="11" fontWeight="700" fill="#CC2229"
+            textAnchor="middle" fontSize="13" fontWeight="700" fill="#CC2229"
             transform={"rotate(90," + (ox + coverW1 + 22) + "," + (run1TopY + run1FrontY) / 2 + ")"}>
             {projection1}{"'"}
           </text>

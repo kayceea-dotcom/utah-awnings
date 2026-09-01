@@ -77,7 +77,7 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
               <Line x1={rear.postX - 26} y1={rear.postTopY} x2={rear.postX - 18} y2={rear.postTopY} stroke="#CC2229" strokeWidth={1.5} />
               <Line x1={rear.postX - 26} y1={rear.postBottomY} x2={rear.postX - 18} y2={rear.postBottomY} stroke="#CC2229" strokeWidth={1.5} />
               <Text x={rear.postX - 34} y={(rear.postTopY + rear.postBottomY) / 2 + 4} textAnchor="middle" fill="#CC2229"
-                style={{ ...bold, fontSize: 10 }}
+                style={{ ...bold, fontSize: 12 }}
                 transform={"rotate(-90," + (rear.postX - 34) + "," + (rear.postTopY + rear.postBottomY) / 2 + ")"}>
                 {rear.postHeight}&apos;
               </Text>
@@ -135,7 +135,7 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
                 <Line x1={deckDimX} y1={deckY} x2={deckDimX} y2={groundY} stroke="#d97706" strokeWidth={1} />
                 <Line x1={deckDimX - 4} y1={deckY} x2={deckDimX + 4} y2={deckY} stroke="#d97706" strokeWidth={1} />
                 <Line x1={deckDimX - 4} y1={groundY} x2={deckDimX + 4} y2={groundY} stroke="#d97706" strokeWidth={1} />
-                <Text x={deckDimX} y={(deckY + groundY) / 2 + 3} textAnchor="middle" fill="#d97706" style={{ ...bold, fontSize: 7 }}
+                <Text x={deckDimX} y={(deckY + groundY) / 2 + 3} textAnchor="middle" fill="#d97706" style={{ ...bold, fontSize: 9 }}
                   transform={"rotate(-90," + deckDimX + "," + (deckY + groundY) / 2 + ")"}>
                   {deckHeight}&apos; deck
                 </Text>
@@ -159,7 +159,7 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
           <Line x1={postX + 18} y1={postTopY} x2={postX + 26} y2={postTopY} stroke="#CC2229" strokeWidth={1.5} />
           <Line x1={postX + 18} y1={postBottomY} x2={postX + 26} y2={postBottomY} stroke="#CC2229" strokeWidth={1.5} />
           <Text x={postX + 34} y={(postTopY + postBottomY) / 2 + 4} textAnchor="middle" fill="#CC2229"
-            style={{ ...bold, fontSize: 10 }}
+            style={{ ...bold, fontSize: 12 }}
             transform={"rotate(90," + (postX + 34) + "," + (postTopY + postBottomY) / 2 + ")"}>
             {postHeight}&apos;
           </Text>

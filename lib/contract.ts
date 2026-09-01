@@ -21,6 +21,8 @@ export interface ContractData {
   salesmanName: string;
   salesmanPhone: string;
   productType: string;
+  dimensions: string;
+  postHeight: string;
   panelType: string;
   panelColor: string;
   gutterFasciaColor: string;
@@ -106,6 +108,23 @@ export function buildContractData(proposal: Record<string, unknown>): ContractDa
         }
       : null;
 
+  // Same "does this job have a second run" rule as coverDiagramGeometry.ts's
+  // hasRun2, so the text summary here always agrees with the diagram below it.
+  const hasRun2 = Number(inputs.projection2) > 0 && Number(inputs.width2) > 0;
+  const dimensions =
+    inputs.width1 && inputs.projection1
+      ? hasRun2
+        ? Number(inputs.width1) + "' x " + Number(inputs.projection1) + "' + " + Number(inputs.width2) + "' x " + Number(inputs.projection2) + "'"
+        : Number(inputs.width1) + "' x " + Number(inputs.projection1) + "'"
+      : "";
+
+  const mountStyle = String(inputs.mountStyle || "attached");
+  const postHeight = inputs.postHeight1
+    ? mountStyle === "freestanding" && inputs.rearPostHeight
+      ? Number(inputs.postHeight1) + "' Front / " + Number(inputs.rearPostHeight) + "' Rear"
+      : Number(inputs.postHeight1) + "'"
+    : "";
+
   return {
     companyName: (company.name as string) || "Utah Awnings",
     companyAddress1: (company.address as string) || "",
@@ -123,6 +142,8 @@ export function buildContractData(proposal: Record<string, unknown>): ContractDa
     salesmanName: (inputs.salesman as string) || "",
     salesmanPhone: (inputs.salesmanPhone as string) || "",
     productType: String(quote.style || quote.product_type || ""),
+    dimensions,
+    postHeight,
     panelType: (quote.panel_type as string) || "",
     panelColor: (quote.color as string) || "",
     gutterFasciaColor: (inputs.colorGutterFascia as string) || "",
