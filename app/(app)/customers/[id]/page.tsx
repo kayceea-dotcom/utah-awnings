@@ -8,7 +8,8 @@ import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/hooks/useProfile";
 import TopBar from "@/components/TopBar";
 import StatusBadge from "@/components/StatusBadge";
-import { ArrowLeft, Phone, Mail, MapPin } from "lucide-react";
+import { ArrowLeft, Phone, Mail, MapPin, Trash2 } from "lucide-react";
+import { trashCustomer } from "@/lib/trash";
 
 const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
@@ -29,19 +30,24 @@ export default function CustomerDetailPage() {
   const [customer, setCustomer] = useState<Record<string, unknown> | null>(null);
   const [quotes, setQuotes] = useState<QuoteRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showTrashConfirm, setShowTrashConfirm] = useState(false);
+  const [trashing, setTrashing] = useState(false);
+  const [trashError, setTrashError] = useState("");
   const supabase = createClient();
+  const isAdminOrManager = profile?.role === "admin" || profile?.role === "manager";
 
   useEffect(() => {
     if (profileLoading || !profile) return;
 
     async function load() {
-      const { data: cust } = await supabase.from("customers").select("*").eq("id", id).single();
+      const { data: cust } = await supabase.from("customers").select("*").eq("id", id).is("deleted_at", null).single();
       setCustomer(cust);
 
       let query = supabase
         .from("quotes")
         .select("id, created_at, total_job_sale, product_type, inputs, proposals(token, status)")
         .eq("customer_id", id)
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
 
       if (profile!.role === "sales_rep") {
@@ -54,6 +60,18 @@ export default function CustomerDetailPage() {
     }
     load();
   }, [id, profile, profileLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleConfirmTrash() {
+    setTrashing(true);
+    setTrashError("");
+    try {
+      await trashCustomer(id);
+      router.push("/customers");
+    } catch (err) {
+      setTrashError(err instanceof Error ? err.message : "Failed to move to trash");
+      setTrashing(false);
+    }
+  }
 
   function proposalToken(q: QuoteRow): string | null {
     const p = q.proposals;
@@ -94,6 +112,11 @@ export default function CustomerDetailPage() {
   return (
     <>
       <TopBar title={c.name as string} subtitle={quotes.length + " quote" + (quotes.length === 1 ? "" : "s") + " - " + fmt(totalValue) + " total"}>
+        {isAdminOrManager && (
+          <button onClick={() => setShowTrashConfirm(true)} className="btn-secondary text-xs px-3 py-2 text-red-600 hover:text-red-700">
+            <Trash2 size={13} /> Trash Customer
+          </button>
+        )}
         <button onClick={() => router.push("/customers")} className="btn-secondary text-xs px-3 py-2">
           <ArrowLeft size={13} /> Back
         </button>
@@ -149,6 +172,33 @@ export default function CustomerDetailPage() {
           </div>
         </div>
       </main>
+
+      {showTrashConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
+            <div className="p-5">
+              <p className="font-bold text-gray-800 text-sm mb-1">Move to Trash?</p>
+              <p className="text-sm text-gray-600">
+                {c.name as string} will be moved to trash, along with {quotes.length} quote{quotes.length === 1 ? "" : "s"}/proposal{quotes.length === 1 ? "" : "s"} for them. You can restore all of it later from Trash.
+              </p>
+              {trashError && (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mt-3">
+                  <p className="text-red-600 text-sm">{trashError}</p>
+                </div>
+              )}
+            </div>
+            <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
+              <button onClick={() => setShowTrashConfirm(false)} disabled={trashing} className="btn-secondary flex-1 justify-center disabled:opacity-50">
+                Cancel
+              </button>
+              <button onClick={handleConfirmTrash} disabled={trashing} className="btn-primary flex-1 justify-center disabled:opacity-50">
+                <Trash2 size={15} />
+                {trashing ? "Moving..." : "Move to Trash"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

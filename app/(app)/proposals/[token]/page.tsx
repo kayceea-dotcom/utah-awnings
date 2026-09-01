@@ -6,10 +6,12 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import TopBar from "@/components/TopBar";
-import { Send, ExternalLink, CheckCircle, Clock, Eye, X, FileDown, Pencil, Save, Upload } from "lucide-react";
+import { Send, ExternalLink, CheckCircle, Clock, Eye, X, FileDown, Pencil, Save, Upload, Trash2 } from "lucide-react";
 import { getFollowUpStatus } from "@/lib/followups/engine";
 import type { ProposalFollowUpTimestamps } from "@/lib/followups/types";
 import FollowUpBadge from "@/components/FollowUpBadge";
+import { useProfile } from "@/lib/hooks/useProfile";
+import { canTrash, trashProposal } from "@/lib/trash";
 
 const fmt = (n: number) => n?.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
@@ -54,6 +56,10 @@ export default function ProposalPreviewPage() {
   const [draftZip, setDraftZip] = useState("");
   const [draftJobName, setDraftJobName] = useState("");
   const [draftInstallDate, setDraftInstallDate] = useState("");
+  const [showTrashConfirm, setShowTrashConfirm] = useState(false);
+  const [trashing, setTrashing] = useState(false);
+  const [trashError, setTrashError] = useState("");
+  const { profile } = useProfile();
   const supabase = createClient();
 
   const load = useCallback(async () => {
@@ -122,6 +128,20 @@ export default function ProposalPreviewPage() {
       setPreviewHtml(null);
     }
     setOrdering(false);
+  }
+
+  async function handleConfirmTrash() {
+    const quoteId = quote?.id as string | undefined;
+    if (!quoteId) return;
+    setTrashing(true);
+    setTrashError("");
+    try {
+      await trashProposal(token, quoteId);
+      router.push("/proposals");
+    } catch (err) {
+      setTrashError(err instanceof Error ? err.message : "Failed to move to trash");
+      setTrashing(false);
+    }
   }
 
   async function handleSend() {
@@ -588,6 +608,13 @@ export default function ProposalPreviewPage() {
             )}
           </div>
 
+          {canTrash(profile, (quote?.created_by as string) || null) && (
+            <button onClick={() => setShowTrashConfirm(true)} className="btn-secondary w-full justify-center text-red-600 hover:text-red-700">
+              <Trash2 size={15} />
+              Move to Trash
+            </button>
+          )}
+
           <button onClick={() => router.push("/proposals")} className="btn-secondary w-full justify-center">
             Back to All Proposals
           </button>
@@ -671,6 +698,33 @@ export default function ProposalPreviewPage() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {showTrashConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
+            <div className="p-5">
+              <p className="font-bold text-gray-800 text-sm mb-1">Move to Trash?</p>
+              <p className="text-sm text-gray-600">
+                This proposal will be moved to trash. You can restore it later from the Trash page.
+              </p>
+              {trashError && (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mt-3">
+                  <p className="text-red-600 text-sm">{trashError}</p>
+                </div>
+              )}
+            </div>
+            <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
+              <button onClick={() => setShowTrashConfirm(false)} disabled={trashing} className="btn-secondary flex-1 justify-center disabled:opacity-50">
+                Cancel
+              </button>
+              <button onClick={handleConfirmTrash} disabled={trashing} className="btn-primary flex-1 justify-center disabled:opacity-50">
+                <Trash2 size={15} />
+                {trashing ? "Moving..." : "Move to Trash"}
+              </button>
+            </div>
           </div>
         </div>
       )}

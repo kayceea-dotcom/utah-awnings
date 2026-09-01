@@ -8,7 +8,9 @@ import { useProfile } from "@/lib/hooks/useProfile";
 import { useRouter } from "next/navigation";
 import TopBar from "@/components/TopBar";
 import StatusBadge, { isWonStatus } from "@/components/StatusBadge";
-import { Search, Briefcase } from "lucide-react";
+import { Search, Briefcase, Trash2 } from "lucide-react";
+import { canTrash, trashProposal } from "@/lib/trash";
+import Link from "next/link";
 
 interface JobRow {
   token: string;
@@ -31,6 +33,8 @@ export default function JobsPage() {
   const [rows, setRows] = useState<JobRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [trashing, setTrashing] = useState<JobRow | null>(null);
+  const [trashError, setTrashError] = useState("");
   const { profile, loading: profileLoading } = useProfile();
   const router = useRouter();
   const supabase = createClient();
@@ -43,6 +47,8 @@ export default function JobsPage() {
         .from("proposals")
         .select("token, status, created_at, quote_id, quotes!inner(total_job_sale, product_type, inputs, created_by, company_id, estimated_install_date, customers(name, city))")
         .eq("quotes.company_id", profile!.company_id)
+        .is("deleted_at", null)
+        .is("quotes.deleted_at", null)
         .order("created_at", { ascending: false });
 
       let list = ((data as unknown as JobRow[]) || []).filter((r) => isWonStatus(r.status));
@@ -64,6 +70,18 @@ export default function JobsPage() {
     load();
   }, [profile, profileLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  async function handleConfirmTrash() {
+    if (!trashing) return;
+    setTrashError("");
+    try {
+      await trashProposal(trashing.token, trashing.quote_id);
+      setRows((prev) => prev.filter((r) => r.token !== trashing.token));
+      setTrashing(null);
+    } catch (err) {
+      setTrashError(err instanceof Error ? err.message : "Failed to move to trash");
+    }
+  }
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return rows;
@@ -77,7 +95,11 @@ export default function JobsPage() {
 
   return (
     <>
-      <TopBar title="Jobs" subtitle={profile?.role === "sales_rep" ? "Your won jobs" : "All company jobs"} />
+      <TopBar title="Jobs" subtitle={profile?.role === "sales_rep" ? "Your won jobs" : "All company jobs"}>
+        <Link href="/proposals/trash" className="btn-secondary text-xs px-3 py-2">
+          <Trash2 size={13} /> Trash
+        </Link>
+      </TopBar>
       <main className="flex-1 p-4 lg:p-6 pb-24 lg:pb-6">
         <div className="max-w-5xl mx-auto space-y-4">
 
@@ -106,10 +128,10 @@ export default function JobsPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[760px] text-sm">
+                <table className="w-full min-w-[800px] text-sm">
                   <thead>
                     <tr className="bg-gray-50 text-left">
-                      {["Job Name","Customer","City","Salesman","Install Date","Status","Total"].map((h) => (
+                      {["Job Name","Customer","City","Salesman","Install Date","Status","Total",""].map((h) => (
                         <th key={h} className="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
                       ))}
                     </tr>
@@ -129,6 +151,17 @@ export default function JobsPage() {
                         </td>
                         <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
                         <td className="px-4 py-3 text-gray-900 font-mono font-semibold whitespace-nowrap">{fmt(r.quotes?.total_job_sale || 0)}</td>
+                        <td className="px-4 py-3">
+                          {canTrash(profile, r.quotes?.created_by) && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setTrashError(""); setTrashing(r); }}
+                              className="text-gray-400 hover:text-red-600 transition"
+                              title="Move to trash"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -138,6 +171,33 @@ export default function JobsPage() {
           </div>
         </div>
       </main>
+
+      {trashing && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
+            <div className="p-5">
+              <p className="font-bold text-gray-800 text-sm mb-1">Move to Trash?</p>
+              <p className="text-sm text-gray-600">
+                {(trashing.quotes?.inputs?.jobName as string) || "Untitled"} will be moved to trash. You can restore it later, or a manager can restore it if needed.
+              </p>
+              {trashError && (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mt-3">
+                  <p className="text-red-600 text-sm">{trashError}</p>
+                </div>
+              )}
+            </div>
+            <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
+              <button onClick={() => setTrashing(null)} className="btn-secondary flex-1 justify-center">
+                Cancel
+              </button>
+              <button onClick={handleConfirmTrash} className="btn-primary flex-1 justify-center">
+                <Trash2 size={15} />
+                Move to Trash
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
