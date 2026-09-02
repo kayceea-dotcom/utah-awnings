@@ -114,8 +114,8 @@ export function buildContractData(proposal: Record<string, unknown>): ContractDa
   const dimensions =
     inputs.width1 && inputs.projection1
       ? hasRun2
-        ? Number(inputs.width1) + "' x " + Number(inputs.projection1) + "' + " + Number(inputs.width2) + "' x " + Number(inputs.projection2) + "'"
-        : Number(inputs.width1) + "' x " + Number(inputs.projection1) + "'"
+        ? Number(inputs.projection1) + "' x " + Number(inputs.width1) + "' + " + Number(inputs.projection2) + "' x " + Number(inputs.width2) + "'"
+        : Number(inputs.projection1) + "' x " + Number(inputs.width1) + "'"
       : "";
 
   const mountStyle = String(inputs.mountStyle || "attached");
