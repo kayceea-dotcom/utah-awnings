@@ -15,6 +15,7 @@ import Field from "@/components/quote/Field";
 import CommissionPanel from "@/components/quote/CommissionPanel";
 import MarkupTierSelect from "@/components/quote/MarkupTierSelect";
 import DiscountOptionSelect from "@/components/quote/DiscountOptionSelect";
+import CustomTotalOverride from "@/components/quote/CustomTotalOverride";
 import HousePhotoUpload from "@/components/quote/HousePhotoUpload";
 import { ChevronDown, ChevronUp, RefreshCw, Plus, Trash2, Send } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useProfile";
@@ -28,7 +29,7 @@ const COLOR_OPTS = [{ value: "", label: "None" }, ...COLORS.map((c) => ({ value:
 const DEFAULT: IndividualInputs = {
   jobName: "", salesman: "", salesmanPhone: "", housePhotoUrl: "",
   items: [],
-  discount: 0, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
+  discount: 0, customTotal: null, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
   markup: 1.8, taxRate: 0.0745,
 };
 
@@ -392,6 +393,8 @@ export default function IndividualQuotePage() {
                   <NumInput label="Tax Rate" value={inp.taxRate} onChange={(v) => setField("taxRate", v)} hint="e.g. 0.0745" />
                   <DiscountOptionSelect option={discountOption.option} onOptionChange={discountOption.setOption}
                     discount={inp.discount} onDiscountChange={(v) => setField("discount", v)} />
+                  <CustomTotalOverride value={inp.customTotal} onChange={(v) => setField("customTotal", v)}
+                    autoTotal={result.totalJobSale - result.customTotalAdjustment} />
                   <NumInput label="Footings ($)" value={inp.footings} onChange={(v) => setField("footings", v)} />
                   <NumInput label="Roof Mounts ($)" value={inp.roofMounts} onChange={(v) => setField("roofMounts", v)} />
                   <NumInput label="Misc ($)" value={inp.misc} onChange={(v) => setField("misc", v)} />

@@ -56,6 +56,7 @@ export interface WPanInputs {
   shadeBeamQty: number;
   shadeBeamLength: number;
   discount: number;
+  customTotal: number | null;
   footings: number;
   roofMounts: number;
   misc: number;
@@ -331,7 +332,7 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
              + groundMountSurcharge(inp.groundAttachment, totalPosts);
   const materialCost = items.reduce((s, i) => s + i.amount, 0);
   const pricing = finalizePricing(materialCost, {
-    taxRate: inp.taxRate, discount: inp.discount,
+    taxRate: inp.taxRate, discount: inp.discount, customTotal: inp.customTotal,
     footings: inp.footings, roofMounts: inp.roofMounts, misc, tearDown: inp.tearDown, markup: inp.markup,
   });
   const totalSqFt =

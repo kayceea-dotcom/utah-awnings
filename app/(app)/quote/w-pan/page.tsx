@@ -19,6 +19,7 @@ import SideProfileDiagram from "@/components/quote/SideProfileDiagram";
 import CommissionPanel from "@/components/quote/CommissionPanel";
 import MarkupTierSelect from "@/components/quote/MarkupTierSelect";
 import DiscountOptionSelect from "@/components/quote/DiscountOptionSelect";
+import CustomTotalOverride from "@/components/quote/CustomTotalOverride";
 import HousePhotoUpload from "@/components/quote/HousePhotoUpload";
 import { ChevronDown, ChevronUp, RefreshCw, DollarSign, Send } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useProfile";
@@ -116,7 +117,7 @@ const DEFAULT: WPanInputs = {
   rearPosts: 0, rearPostHeight: 10,
   fanBeamQty: 0, fanBeamLength: 16,
   shadeBeamQty: 0, shadeBeamLength: 16,
-  discount: 0, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
+  discount: 0, customTotal: null, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
   markup: 1.9, taxRate: 0.0745,
 };
 
@@ -524,6 +525,8 @@ export default function WPanQuotePage() {
                 <NumInput label="Tax Rate" value={inp.taxRate} onChange={(v) => setField("taxRate", v)} hint="e.g. 0.0745" />
                 <DiscountOptionSelect option={discountOption.option} onOptionChange={discountOption.setOption}
                   discount={inp.discount} onDiscountChange={(v) => setField("discount", v)} />
+                <CustomTotalOverride value={inp.customTotal} onChange={(v) => setField("customTotal", v)}
+                  autoTotal={effectiveResult.totalJobSale - effectiveResult.customTotalAdjustment} />
                 <NumInput label="Footings ($)" value={inp.footings} onChange={(v) => setField("footings", v)} />
                 <NumInput label="Roof Mounts ($)" value={inp.roofMounts} onChange={(v) => setField("roofMounts", v)} />
                 <NumInput label="Misc ($)" value={inp.misc} onChange={(v) => setField("misc", v)}

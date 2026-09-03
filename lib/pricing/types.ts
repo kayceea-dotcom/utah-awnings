@@ -84,6 +84,7 @@ export interface NewportInputs {
   shadeBeamQty: number;
   shadeBeamLength: number;
   discount: number;
+  customTotal: number | null;
   footings: number;
   roofMounts: number;
   misc: number;
@@ -121,6 +122,7 @@ export interface QuoteResult {
   discount: number;
   totalJobSale: number;
   totalProfit: number;
+  customTotalAdjustment: number;
   costPerSqFt: number;
   pricePerSqFt: number;
   totalSqFt: number;

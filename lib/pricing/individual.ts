@@ -18,6 +18,7 @@ export interface IndividualInputs {
   housePhotoUrl: string;
   items: IndividualLineInput[];
   discount: number;
+  customTotal: number | null;
   footings: number;
   roofMounts: number;
   misc: number;
@@ -37,7 +38,7 @@ export function calcIndividual(inp: IndividualInputs): QuoteResult {
 
   const materialCost = items.reduce((s, i) => s + i.amount, 0);
   const pricing = finalizePricing(materialCost, {
-    taxRate: inp.taxRate, discount: inp.discount,
+    taxRate: inp.taxRate, discount: inp.discount, customTotal: inp.customTotal,
     footings: inp.footings, roofMounts: inp.roofMounts, misc: inp.misc, tearDown: inp.tearDown, markup: inp.markup,
   });
 

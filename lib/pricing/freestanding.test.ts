@@ -31,7 +31,7 @@ function newportBase(): NewportInputs {
     rearBeamType: "3x8", rearBeamEndCut: "beveled", rearBeamLength: 0,
     rearPosts: 0, rearPostHeight: 10,
     fanBeamQty: 0, fanBeamLength: 16, shadeBeamQty: 0, shadeBeamLength: 16,
-    discount: 0, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
+    discount: 0, customTotal: null, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
     markup: 2.0, taxRate: 0.0745,
   };
 }
@@ -54,7 +54,7 @@ function wpanBase(): WPanInputs {
     rearBeamType: "3x3", rearBeamEndCut: "beveled", rearBeamLength: 0,
     rearPosts: 0, rearPostHeight: 10,
     fanBeamQty: 0, fanBeamLength: 16, shadeBeamQty: 0, shadeBeamLength: 16,
-    discount: 0, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
+    discount: 0, customTotal: null, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
     markup: 2.0, taxRate: 0.0745,
   };
 }
@@ -75,7 +75,7 @@ function irpBase(): IRPInputs {
     rearBeamType: "3x8", rearBeamLength: 0,
     rearPosts: 0, rearPostHeight: 10,
     shadeBeamQty: 0, shadeBeamLength: 16,
-    discount: 0, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
+    discount: 0, customTotal: null, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
     markup: 2.0, taxRate: 0.0745,
   };
 }
@@ -97,7 +97,7 @@ function pergolaBase(): PergolaInputs {
     rearBeamType: "3x8", rearBeamLength: 0,
     rearPosts: 0, rearPostHeight: 10,
     shadeBeamQty: 0, shadeBeamLength: 16,
-    discount: 0, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
+    discount: 0, customTotal: null, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
     markup: 2.0, taxRate: 0.0745,
   };
 }

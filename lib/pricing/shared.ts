@@ -21,6 +21,11 @@ export interface PricingSummaryOpts {
   misc: number;
   tearDown: number;
   markup: number;
+  // A rep-typed override for the final Total Job Sale (e.g. to land on a
+  // round number for a cash job) - null means "use the auto-calculated
+  // total". See customTotalAdjustment below for how this stays consistent
+  // with commission.
+  customTotal: number | null;
 }
 
 export interface PricingSummary {
@@ -37,6 +42,12 @@ export interface PricingSummary {
   discount: number;
   totalJobSale: number;
   totalProfit: number;
+  // totalJobSale minus what the auto-calculated (rounded) total would have
+  // been without a customTotal override - 0 when no override is set. Added
+  // to the commission basis in commissionBasisPrice so overriding the final
+  // price shifts commission by the same real dollar amount, whichever way
+  // the rep rounded.
+  customTotalAdjustment: number;
 }
 
 // Turns a material cost total into the rest of the pricing breakdown (taxes,
@@ -54,7 +65,11 @@ export function finalizePricing(materialCost: number, opts: PricingSummaryOpts):
   const subtotal = totalMaterials + opts.footings + opts.roofMounts + opts.misc + opts.tearDown;
   const preSaleTotal = subtotal * opts.markup;
   const ccFee = preSaleTotal * RATES.CC_FEE_RATE / (1 - RATES.CC_FEE_RATE);
-  const totalJobSale = preSaleTotal + ccFee - opts.discount;
+  // Rounded up to a whole dollar so cash/check jobs land on a clean number
+  // by default - a customTotal override (if set) replaces this outright.
+  const autoTotalJobSale = Math.ceil(preSaleTotal + ccFee - opts.discount);
+  const totalJobSale = opts.customTotal ?? autoTotalJobSale;
+  const customTotalAdjustment = totalJobSale - autoTotalJobSale;
   const totalProfit = totalJobSale - subtotal;
   return {
     materialCost, taxes,
@@ -65,7 +80,7 @@ export function finalizePricing(materialCost: number, opts: PricingSummaryOpts):
     tearDown: opts.tearDown,
     subtotal, markup: opts.markup, ccFee,
     discount: opts.discount,
-    totalJobSale, totalProfit,
+    totalJobSale, totalProfit, customTotalAdjustment,
   };
 }
 
@@ -75,10 +90,13 @@ export function finalizePricing(materialCost: number, opts: PricingSummaryOpts):
 // out) is subtracted. This makes commission identical whether the customer
 // pays by card or check/cash - the fee (and waiving it) never touches it.
 // A real discount ($200/$600/Custom) DOES reduce it, dollar for dollar,
-// since that's an actual price concession.
+// since that's an actual price concession - and so does a customTotal
+// override, which is really just a discount (or premium) expressed as
+// "make the total exactly $X" instead of "take off $Y".
 export function commissionBasisPrice(result: PricingSummary, isCashDiscount: boolean): number {
   const preSaleTotal = result.subtotal * result.markup;
-  return isCashDiscount ? preSaleTotal : preSaleTotal - result.discount;
+  const base = isCashDiscount ? preSaleTotal : preSaleTotal - result.discount;
+  return base + result.customTotalAdjustment;
 }
 
 // Real supplier stock lengths (not a uniform step) — smallest one that fits. 4/8ft

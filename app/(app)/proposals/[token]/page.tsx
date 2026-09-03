@@ -12,6 +12,7 @@ import type { ProposalFollowUpTimestamps } from "@/lib/followups/types";
 import FollowUpBadge from "@/components/FollowUpBadge";
 import { useProfile } from "@/lib/hooks/useProfile";
 import { canTrash, trashProposal } from "@/lib/trash";
+import PaymentsPanel from "@/components/quote/PaymentsPanel";
 
 const fmt = (n: number) => n?.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
@@ -59,6 +60,11 @@ export default function ProposalPreviewPage() {
   const [showTrashConfirm, setShowTrashConfirm] = useState(false);
   const [trashing, setTrashing] = useState(false);
   const [trashError, setTrashError] = useState("");
+  const [editingTotal, setEditingTotal] = useState(false);
+  const [savingTotal, setSavingTotal] = useState(false);
+  const [totalError, setTotalError] = useState("");
+  const [draftTotal, setDraftTotal] = useState(0);
+  const [draftDepositPct, setDraftDepositPct] = useState(0);
   const { profile } = useProfile();
   const supabase = createClient();
 
@@ -351,6 +357,43 @@ export default function ProposalPreviewPage() {
     setSavingInfo(false);
   }
 
+  function startEditingTotal() {
+    if (!quote) return;
+    setDraftTotal((quote.total_job_sale as number) || 0);
+    setDraftDepositPct((quote.deposit_pct as number) || 0);
+    setTotalError("");
+    setEditingTotal(true);
+  }
+
+  async function handleSaveTotal() {
+    if (!quote) return;
+    setSavingTotal(true);
+    setTotalError("");
+
+    const depositAmount = draftTotal * draftDepositPct / 100;
+    const balanceDue = draftTotal - depositAmount;
+
+    const { error: quoteErr } = await supabase
+      .from("quotes")
+      .update({
+        total_job_sale: draftTotal,
+        deposit_pct: draftDepositPct,
+        deposit_amount: depositAmount,
+        balance_due: balanceDue,
+      })
+      .eq("id", quote.id as string);
+
+    if (quoteErr) {
+      setTotalError(quoteErr.message || "Failed to save changes");
+      setSavingTotal(false);
+      return;
+    }
+
+    await load();
+    setEditingTotal(false);
+    setSavingTotal(false);
+  }
+
   if (loading) {
     return (
       <>
@@ -485,28 +528,83 @@ export default function ProposalPreviewPage() {
           </div>
 
           <div className="card p-5">
-            <p className="section-heading">Contract Summary</p>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Contract Total</span>
-                <span className="font-bold text-lg" style={{ color: "#CC2229" }}>{fmt(q.total_job_sale as number)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Deposit ({q.deposit_pct as number}%)</span>
-                <span className="font-semibold">{fmt(q.deposit_amount as number)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Due on Completion</span>
-                <span className="font-semibold">{fmt(q.balance_due as number)}</span>
-              </div>
-              {q.estimated_install_date ? (
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Est. Install Date</span>
-                  <span className="font-semibold">{new Date(String(q.estimated_install_date)).toLocaleDateString()}</span>
-                </div>
-              ) : null}
+            <div className="flex items-center justify-between mb-1">
+              <p className="section-heading mb-0">Contract Summary</p>
+              {!editingTotal && canTrash(profile, (quote?.created_by as string) || null) && (
+                <button onClick={startEditingTotal} className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                  <Pencil size={12} /> Edit
+                </button>
+              )}
             </div>
+            {editingTotal ? (
+              <div className="space-y-3 mt-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-gray-500">Total Job Sale</label>
+                    <input type="number" className="input text-sm py-1.5" value={draftTotal}
+                      onChange={(e) => setDraftTotal(parseFloat(e.target.value) || 0)} />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500">Deposit %</label>
+                    <input type="number" className="input text-sm py-1.5" value={draftDepositPct}
+                      onChange={(e) => setDraftDepositPct(parseFloat(e.target.value) || 0)} />
+                  </div>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-3 text-sm">
+                  <div className="flex justify-between text-gray-600 mb-1">
+                    <span>Deposit</span>
+                    <span className="font-semibold">{fmt(draftTotal * draftDepositPct / 100)}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-gray-900">
+                    <span>Due on Completion</span>
+                    <span>{fmt(draftTotal - (draftTotal * draftDepositPct / 100))}</span>
+                  </div>
+                </div>
+                {totalError && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                    <p className="text-red-600 text-sm">{totalError}</p>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <button onClick={() => setEditingTotal(false)} disabled={savingTotal} className="btn-secondary flex-1 justify-center text-sm disabled:opacity-50">
+                    Cancel
+                  </button>
+                  <button onClick={handleSaveTotal} disabled={savingTotal} className="btn-primary flex-1 justify-center text-sm disabled:opacity-50">
+                    <Save size={14} /> {savingTotal ? "Saving..." : "Save Changes"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2 text-sm mt-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Contract Total</span>
+                  <span className="font-bold text-lg" style={{ color: "#CC2229" }}>{fmt(q.total_job_sale as number)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Deposit ({q.deposit_pct as number}%)</span>
+                  <span className="font-semibold">{fmt(q.deposit_amount as number)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Due on Completion</span>
+                  <span className="font-semibold">{fmt(q.balance_due as number)}</span>
+                </div>
+                {q.estimated_install_date ? (
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Est. Install Date</span>
+                    <span className="font-semibold">{new Date(String(q.estimated_install_date)).toLocaleDateString()}</span>
+                  </div>
+                ) : null}
+              </div>
+            )}
           </div>
+
+          <PaymentsPanel
+            quoteId={quote.id as string}
+            companyId={quote.company_id as string}
+            totalJobSale={q.total_job_sale as number}
+            canManage={canTrash(profile, (quote?.created_by as string) || null)}
+            recordedBy={profile?.id}
+          />
 
           {(status === "signed" || status === "accepted") && (
             <div className="card p-5 border-green-200 bg-green-50">
