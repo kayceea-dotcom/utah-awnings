@@ -56,7 +56,7 @@ export default function ContractPdf({ data }: { data: ContractData }) {
             {data.companyPhone ? <Text style={styles.companyLine}>{data.companyPhone}</Text> : null}
           </View>
           <View>
-            <Text style={styles.docTitle}>CONTRACT & INVOICE</Text>
+            <Text style={styles.docTitle}>{isSigned ? "CONTRACT & INVOICE" : "QUOTE"}</Text>
             <Text style={styles.docDate}>Date: {data.contractDate}</Text>
           </View>
         </View>

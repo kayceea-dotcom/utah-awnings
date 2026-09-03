@@ -664,7 +664,7 @@ export default function ProposalPreviewPage() {
             </a>
             <a href={"/api/contract?token=" + token} target="_blank" rel="noopener noreferrer" className="btn-secondary w-full justify-center">
               <FileDown size={15} />
-              Download Contract PDF
+              {status === "signed" || status === "accepted" || status === "pending_payment" || status === "ordered" ? "Download Contract PDF" : "Download Quote PDF"}
             </a>
             <button onClick={handleSend} disabled={sending} className={sent ? "btn-secondary w-full disabled:opacity-50" : "btn-primary w-full disabled:opacity-50"}>
               <Send size={15} />
@@ -729,14 +729,20 @@ export default function ProposalPreviewPage() {
               </button>
             </div>
             <iframe srcDoc={previewHtml} sandbox="" className="flex-1 w-full" style={{ minHeight: "60vh" }} />
-            <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
-              <button onClick={() => setPreviewHtml(null)} className="btn-secondary flex-1 justify-center">
-                Cancel
-              </button>
-              <button onClick={handleConfirmSendOrder} disabled={ordering} className="btn-primary flex-1 disabled:opacity-50">
-                <Send size={15} />
-                {ordering ? "Sending..." : "Send to Supplier"}
-              </button>
+            <div className="px-5 py-4 border-t border-gray-100 space-y-2">
+              <a href={"/api/order-sheet?token=" + token} target="_blank" rel="noopener noreferrer" className="btn-secondary w-full justify-center">
+                <FileDown size={15} />
+                Download PDF
+              </a>
+              <div className="flex gap-3">
+                <button onClick={() => setPreviewHtml(null)} className="btn-secondary flex-1 justify-center">
+                  Cancel
+                </button>
+                <button onClick={handleConfirmSendOrder} disabled={ordering} className="btn-primary flex-1 disabled:opacity-50">
+                  <Send size={15} />
+                  {ordering ? "Sending..." : "Send to Supplier"}
+                </button>
+              </div>
             </div>
             {error && (
               <div className="px-5 pb-4">

@@ -7,6 +7,45 @@ import OrderSheetPdf from "@/lib/orderSheet.pdf";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// Lets a rep download/print the exact same order-sheet PDF that POST emails
+// to the supplier, without sending anything or touching the proposal's
+// status - previously the only way to see this PDF at all was in the
+// supplier's inbox. Mirrors /api/contract's GET (same renderToBuffer +
+// inline Content-Disposition pattern) so it opens/prints the same way on
+// any device, including mobile.
+export async function GET(request: NextRequest) {
+  try {
+    const token = request.nextUrl.searchParams.get("token");
+    if (!token) {
+      return NextResponse.json({ error: "Missing token" }, { status: 400 });
+    }
+
+    const supabase = await createServerClient();
+    const { data: proposal } = await supabase
+      .from("proposals")
+      .select("*, quotes(*, customers(*), companies(*))")
+      .eq("token", token)
+      .single();
+
+    if (!proposal) {
+      return NextResponse.json({ error: "Proposal not found" }, { status: 404 });
+    }
+
+    const data = buildOrderSheetData(proposal);
+    const pdfBuffer = await renderToBuffer(<OrderSheetPdf data={data} />);
+
+    return new NextResponse(new Uint8Array(pdfBuffer), {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `inline; filename="Order-${data.poNumber}.pdf"`,
+      },
+    });
+  } catch (err) {
+    console.error("Order sheet PDF error:", err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { proposalToken } = await request.json();

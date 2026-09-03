@@ -24,7 +24,10 @@ export async function GET(request: NextRequest) {
 
     const data = buildContractData(proposal);
     const pdfBuffer = await renderToBuffer(<ContractPdf data={data} />);
-    const filename = "Contract-" + data.jobName.replace(/\s+/g, "-") + ".pdf";
+    // Same PDF serves as the pre-signature quote and the post-signature
+    // contract - matches the docTitle switch inside ContractPdf itself.
+    const isSigned = data.status === "signed" || data.status === "accepted" || data.status === "pending_payment" || data.status === "ordered";
+    const filename = (isSigned ? "Contract-" : "Quote-") + data.jobName.replace(/\s+/g, "-") + ".pdf";
 
     return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {
