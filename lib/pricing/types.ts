@@ -1,7 +1,7 @@
 export type ProductType =
   | "flat_panel" | "irp" | "pergola" | "w_pan" | "metal_wall" | "individual";
 
-export type BeamType = "3x3" | "3x8" | "double_3x8" | "4_i_beam" | "7_i_beam" | "none" | "gutter";
+export type BeamType = "3x3" | "3x8" | "double_3x8" | "4_i_beam" | "7_i_beam" | "none";
 export type EndCut = "scallop" | "beveled" | "mitered" | "corbel";
 export type GutterType = "roll_form" | "extruded";
 export type HangerType = "roll_form" | "extruded" | "a_rail" | "elevated_roof_mount";

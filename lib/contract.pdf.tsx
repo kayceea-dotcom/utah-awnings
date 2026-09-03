@@ -91,6 +91,12 @@ export default function ContractPdf({ data }: { data: ContractData }) {
               ) : <Text style={styles.infoCell} />}
             </View>
           ) : null}
+          {data.deckHeight ? (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoCell}><Text style={styles.infoLabel}>Deck Height: </Text>{data.deckHeight}</Text>
+              <Text style={styles.infoCell} />
+            </View>
+          ) : null}
           <View style={styles.infoRow}>
             <Text style={styles.infoCell}><Text style={styles.infoLabel}>Salesman: </Text>{data.salesmanName || "-"}</Text>
             <Text style={styles.infoCell}><Text style={styles.infoLabel}>Salesman Phone: </Text>{data.salesmanPhone || "-"}</Text>

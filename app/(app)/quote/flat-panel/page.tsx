@@ -60,14 +60,14 @@ const BEAM_TYPES = [
   { value: "7_i_beam",   label: "7in I-Beam" },
 ];
 
-// Primary beam only (#1) - no beam at all, or the front gutter itself acts
-// as the structural beam (posts move up to the gutter/front edge instead of
-// the usual inset beam row). Beam #2 and the rear beam keep the plain
-// BEAM_TYPES list - #2 already has its own "None" for skipping a second
-// beam entirely, and freestanding's rear beam is what makes it freestanding.
+// Primary beam only (#1) - no separate beam member; the front gutter itself
+// is what's structural, and posts move up to sit right at that gutter/front
+// edge instead of the usual inset beam row. Beam #2 and the rear beam keep
+// the plain BEAM_TYPES list - #2 already has its own "None" for skipping a
+// second beam entirely, and freestanding's rear beam is what makes it
+// freestanding.
 const BEAM_TYPES_1 = [
   { value: "none",   label: "No Beam" },
-  { value: "gutter", label: "Gutter as Beam" },
   ...BEAM_TYPES,
 ];
 
@@ -535,7 +535,7 @@ export default function FlatPanelQuotePage() {
               <SectionCard id="structure" title="Structure" open={open.has("structure")} onToggle={toggleSection}>
                 <SelectInput label="Beam Type #1" value={inp.beamType1} onChange={(v) => setField("beamType1", v as never)} options={BEAM_TYPES_1}
                   hint={inp.beamType1 === "double_3x8" ? "Mounted front + back of posts for greater span"
-                    : inp.beamType1 === "gutter" ? "Posts move to the front/gutter edge - no separate beam"
+                    : inp.beamType1 === "none" ? "Posts move to the front/gutter edge - no separate beam"
                     : undefined} />
                 <SelectInput label="End Cut #1" value={inp.beamEndCut1} onChange={(v) => setField("beamEndCut1", v as never)} options={END_CUTS} />
                 <SelectInput label="Beam Type #2" value={inp.beamType2} onChange={(v) => setField("beamType2", v as never)}

@@ -55,13 +55,12 @@ export interface CoverDiagramGeometry {
   run2FrontY: number;
   beamY1: number;
   beamY2: number;
-  /** Whether a beam line should actually be drawn for each run - false for
-   *  "none" (no beam) and "gutter" (the front gutter itself is structural,
-   *  no separate beam member). */
+  /** Whether a beam line should actually be drawn for each run - false when
+   *  there's no beam (the front gutter itself is structural instead). */
   showBeam1: boolean;
   showBeam2: boolean;
-  /** Y row the posts are drawn at - the usual inset beam row, except
-   *  "gutter" moves them up to the front/gutter edge itself. */
+  /** Y row the posts are drawn at - the usual inset beam row, except with no
+   *  beam, where they move up to the front/gutter edge itself. */
   postRowY1: number;
   postRowY2: number;
   postPositions: number[];
@@ -187,13 +186,17 @@ export function computeCoverDiagramGeometry(input: CoverDiagramGeometryInput): C
   const beamY1 = run1FrontY - (isLattice ? LATTICE_OVERHANG_FT : 1.5) * scale;
   const beamY2 = run2FrontY - 1.5 * scale;
 
-  // "none"/"gutter" both skip drawing an actual beam line; "gutter" also
-  // pulls the posts up to sit right at the front/gutter edge instead of the
-  // usual inset beam row, since the gutter itself is what's structural.
-  const showBeam1 = beamType1 !== "none" && beamType1 !== "gutter";
-  const showBeam2 = beamType2 !== "none" && beamType2 !== "gutter";
-  const postRowY1 = beamType1 === "gutter" ? run1FrontY : beamY1;
-  const postRowY2 = beamType2 === "gutter" ? run2FrontY : beamY2;
+  // No beam means no separate member to draw, and the posts move up to sit
+  // right at the front/gutter edge instead of the usual inset beam row -
+  // the gutter is what's actually structural once there's no beam. Beam #2's
+  // existing blank "no second beam" value gets the same treatment for
+  // consistency.
+  const hasNoBeam1 = beamType1 === "none";
+  const hasNoBeam2 = beamType2 === "none" || beamType2 === "";
+  const showBeam1 = !hasNoBeam1;
+  const showBeam2 = !hasNoBeam2;
+  const postRowY1 = hasNoBeam1 ? run1FrontY : beamY1;
+  const postRowY2 = hasNoBeam2 ? run2FrontY : beamY2;
 
   // Post X positions along beam - 1.5ft from each end, evenly spaced
   const postPositions = spacedPostXs(posts1, width1, ox, coverW1);

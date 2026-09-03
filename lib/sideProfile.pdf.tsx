@@ -124,7 +124,11 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
             // mount that's set back behind the overhang (eaveWallX), not
             // the fascia/awning attachment point (houseX).
             const deckStartX = eaveWallX;
-            const deckDimX = Math.min(houseX - 30, eaveWallX - 10);
+            // Just inside the deck's own footprint (right of the wall) -
+            // the old spot squeezed into the empty margin left of the wall
+            // had no room to spare, so the label sat directly on top of the
+            // dimension line instead of beside it.
+            const deckDimX = houseX + 30;
             return (
               <G>
                 <Rect x={deckStartX} y={deckY} width={deckEdgeX - deckStartX} height={Math.max(deckSkirtPx, 4)} fill="#fef3c7" stroke="#d97706" strokeWidth={1} />
@@ -132,11 +136,13 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
                   <Rect x={deckPostX - deckPostW / 2} y={skirtBottomY} width={deckPostW} height={groundY - skirtBottomY}
                     fill="#92400e" stroke="#78350f" strokeWidth={1} />
                 )}
+                {/* Label sits below the line's own bottom tick (not rotated
+                    alongside it) so the line reads clean instead of running
+                    straight through the text. */}
                 <Line x1={deckDimX} y1={deckY} x2={deckDimX} y2={groundY} stroke="#d97706" strokeWidth={1} />
                 <Line x1={deckDimX - 4} y1={deckY} x2={deckDimX + 4} y2={deckY} stroke="#d97706" strokeWidth={1} />
                 <Line x1={deckDimX - 4} y1={groundY} x2={deckDimX + 4} y2={groundY} stroke="#d97706" strokeWidth={1} />
-                <Text x={deckDimX} y={(deckY + groundY) / 2 + 3} textAnchor="middle" fill="#d97706" style={{ ...bold, fontSize: 9 }}
-                  transform={"rotate(-90," + deckDimX + "," + (deckY + groundY) / 2 + ")"}>
+                <Text x={deckDimX} y={groundY + 20} textAnchor="middle" fill="#d97706" style={{ ...bold, fontSize: 10 }}>
                   {deckHeight}&apos; deck
                 </Text>
               </G>

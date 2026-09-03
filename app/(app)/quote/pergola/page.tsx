@@ -37,8 +37,8 @@ const BEAM_TYPES = [
   { value: "7_i_beam", label: "7in I-Beam" },
 ];
 
-// Primary beam only - no gutter concept exists for a pergola (open lattice,
-// no wrap kit), so "no beam" is the only new option here.
+// Primary beam only - no separate beam member; posts move up to the front
+// edge in the diagram, same as every other product.
 const BEAM_TYPES_1 = [
   { value: "none", label: "No Beam" },
   ...BEAM_TYPES,

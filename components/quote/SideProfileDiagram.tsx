@@ -170,7 +170,11 @@ export default function SideProfileDiagram({
             // mount that's set back behind the overhang (eaveWallX), not
             // the fascia/awning attachment point (houseX).
             const deckStartX = eaveWallX;
-            const deckDimX = Math.min(houseX - 30, eaveWallX - 10);
+            // Just inside the deck's own footprint (right of the wall) -
+            // the old spot squeezed into the empty margin left of the wall
+            // had no room to spare, so the label sat directly on top of the
+            // dimension line instead of beside it.
+            const deckDimX = houseX + 30;
             return (
               <>
                 <rect x={deckStartX} y={deckY} width={deckEdgeX - deckStartX} height={Math.max(deckSkirtPx, 4)}
@@ -180,12 +184,14 @@ export default function SideProfileDiagram({
                     fill="#92400e" stroke="#78350f" strokeWidth="1" />
                 )}
                 {/* Deck height dimension - still measures the real (full)
-                    deck height, only the drawing above is simplified */}
+                    deck height, only the drawing above is simplified. Label
+                    sits below the line's own bottom tick (not rotated
+                    alongside it) so the line reads clean instead of running
+                    straight through the text. */}
                 <line x1={deckDimX} y1={deckY} x2={deckDimX} y2={groundY} stroke="#d97706" strokeWidth="1" />
                 <line x1={deckDimX - 4} y1={deckY} x2={deckDimX + 4} y2={deckY} stroke="#d97706" strokeWidth="1" />
                 <line x1={deckDimX - 4} y1={groundY} x2={deckDimX + 4} y2={groundY} stroke="#d97706" strokeWidth="1" />
-                <text x={deckDimX} y={(deckY + groundY) / 2 + 3} textAnchor="middle" fontSize="9" fontWeight="700" fill="#d97706"
-                  transform={"rotate(-90," + deckDimX + "," + (deckY + groundY) / 2 + ")"}>
+                <text x={deckDimX} y={groundY + 20} textAnchor="middle" fontSize="10" fontWeight="700" fill="#d97706">
                   {deckHeight}&apos; deck
                 </text>
               </>

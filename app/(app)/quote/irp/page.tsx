@@ -42,9 +42,8 @@ const BEAM_TYPES = [
   { value: "7_i_beam", label: "7in I-Beam" },
 ];
 
-// Primary beam only (#1) - IRP has its own dedicated LRP hanger/gutter/fascia
-// system (not the generic gutterType flat-panel/w-pan share), so there's no
-// "gutter as beam" equivalent here - just "no beam".
+// Primary beam only (#1) - no separate beam member; the gutter/front edge
+// is what's structural instead (posts move up to it in the diagram).
 const BEAM_TYPES_1 = [
   { value: "none", label: "No Beam" },
   ...BEAM_TYPES,

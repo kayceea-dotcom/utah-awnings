@@ -48,7 +48,6 @@ const BEAM_TYPES = [
 // #2/rear keep the plain list.
 const BEAM_TYPES_1 = [
   { value: "none",   label: "No Beam" },
-  { value: "gutter", label: "Gutter as Beam" },
   ...BEAM_TYPES,
 ];
 
@@ -458,7 +457,7 @@ export default function WPanQuotePage() {
               <SectionCard id="structure" title="Structure" open={open.has("structure")} onToggle={toggleSection}>
                 <SelectInput label="Jog Type" value={inp.jogType} onChange={(v) => setField("jogType", v)} options={JOG_TYPES} span={2} />
                 <SelectInput label="Beam Type #1" value={inp.beamType1} onChange={(v) => setField("beamType1", v)} options={BEAM_TYPES_1}
-                  hint={inp.beamType1 === "gutter" ? "Posts move to the front/gutter edge - no separate beam" : undefined} />
+                  hint={inp.beamType1 === "none" ? "Posts move to the front/gutter edge - no separate beam" : undefined} />
                 <SelectInput label="End Cut #1" value={inp.beamEndCut1} onChange={(v) => setField("beamEndCut1", v as never)} options={END_CUTS} />
                 <NumInput label="Beam #1 Qty" value={inp.beamQty1} onChange={(v) => setField("beamQty1", v)} hint="2 for double beam" />
                 <NumInput label="Beam Length #1 (ft)" value={inp.beamLength1} onChange={(v) => setField("beamLength1", v)} hint="Auto from width" />

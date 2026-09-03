@@ -23,6 +23,7 @@ export interface ContractData {
   productType: string;
   dimensions: string;
   postHeight: string;
+  deckHeight: string;
   panelType: string;
   panelColor: string;
   gutterFasciaColor: string;
@@ -125,6 +126,11 @@ export function buildContractData(proposal: Record<string, unknown>): ContractDa
       : Number(inputs.postHeight1) + "'"
     : "";
 
+  const deckHeight =
+    String(inputs.groundAttachment || "") === "deck" && Number(inputs.deckHeight) > 0
+      ? Number(inputs.deckHeight) + "'"
+      : "";
+
   return {
     companyName: (company.name as string) || "Utah Awnings",
     companyAddress1: (company.address as string) || "",
@@ -144,6 +150,7 @@ export function buildContractData(proposal: Record<string, unknown>): ContractDa
     productType: String(quote.style || quote.product_type || ""),
     dimensions,
     postHeight,
+    deckHeight,
     panelType: (quote.panel_type as string) || "",
     panelColor: (quote.color as string) || "",
     gutterFasciaColor: (inputs.colorGutterFascia as string) || "",
