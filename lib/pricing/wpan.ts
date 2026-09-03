@@ -173,12 +173,16 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     }
   }
 
-  // ── BEAMS ──
+  // ── BEAMS — "none"/"gutter" (front gutter acts as the beam) buy no beam
+  // material or insert, matching lib/pricing/shared.ts's beamMaterialRate/
+  // steelInsertRate for the products that share those. ──
   function beamRate(beamType: string): number {
+    if (beamType === "none" || beamType === "gutter") return 0;
     if (beamType === "3x3") return RATES.beam_3x3;
     return RATES.beam_3x8;
   }
   function steelRate(beamType: string): number {
+    if (beamType === "none" || beamType === "gutter") return 0;
     if (beamType === "3x3") return RATES.steel_3x3_g_beam_ft;
     if (beamType === "3x8_no_insert") return 0;
     return RATES.steel_3x8_14ga_ft;
@@ -296,8 +300,8 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     items.push(li("Wedge Anchors", wedgeAnchorQty, 0, RATES.anchor_wedge));
   }
 
-  // ── BEAM END CAPS ──
-  if (inp.beamLength1 > 0) {
+  // ── BEAM END CAPS — no beam, no end cap ──
+  if (inp.beamLength1 > 0 && inp.beamType1 !== "none" && inp.beamType1 !== "gutter") {
     items.push(li("Beam End Caps #1", 2, 0, RATES.endcap_3x3, "", inp.colorPostsBeam));
   }
   if (inp.beamLength2 > 0) {

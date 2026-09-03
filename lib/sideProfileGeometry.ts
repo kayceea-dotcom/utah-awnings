@@ -110,6 +110,12 @@ export interface SideProfileGeometry {
 // on the beam type picker ("4in I-Beam" = 4, "7in I-Beam" = 7).
 function beamHeightInches(beamType: string): number {
   switch (beamType) {
+    // No beam, or the gutter itself acts as the beam - either way there's no
+    // separate member to draw. Zero height collapses the beam rect to
+    // nothing and the panel above it settles directly onto the post top,
+    // with no other geometry changes needed.
+    case "none":
+    case "gutter": return 0;
     case "3x3": return 3;
     case "4_i_beam": return 4;
     case "7_i_beam": return 7;

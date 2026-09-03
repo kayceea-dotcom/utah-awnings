@@ -25,7 +25,7 @@ export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170
     hasRun2, isHouseJog, totalW,
     coverW1, coverH1, coverW2, coverH2,
     run1TopY, run2TopY, run1FrontY,
-    beamY1, beamY2, scale,
+    beamY1, beamY2, showBeam1, showBeam2, postRowY1, postRowY2, scale,
     postPositions, postPositions2, multiSpanBeams,
     tailCount, tailCount2, frontEdgeY, frontEdgeY2, tailTipY, tailTipY2, backTailTipY,
     downspoutPositions, beamType1, beamType2, width1, width2, projection1,
@@ -100,17 +100,19 @@ export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170
           )}
 
           {/* Beam line run 1 */}
-          {beamType1 === "double_3x8" ? (
-            <G>
-              <Line x1={ox} y1={beamY1 - 3} x2={ox + coverW1} y2={beamY1 - 3} stroke="#1e40af" strokeWidth={2} />
-              <Line x1={ox} y1={beamY1 + 3} x2={ox + coverW1} y2={beamY1 + 3} stroke="#1e40af" strokeWidth={2} />
-            </G>
-          ) : (
-            <Line x1={ox} y1={beamY1} x2={ox + coverW1} y2={beamY1} stroke="#1e40af" strokeWidth={3} />
+          {showBeam1 && (
+            beamType1 === "double_3x8" ? (
+              <G>
+                <Line x1={ox} y1={beamY1 - 3} x2={ox + coverW1} y2={beamY1 - 3} stroke="#1e40af" strokeWidth={2} />
+                <Line x1={ox} y1={beamY1 + 3} x2={ox + coverW1} y2={beamY1 + 3} stroke="#1e40af" strokeWidth={2} />
+              </G>
+            ) : (
+              <Line x1={ox} y1={beamY1} x2={ox + coverW1} y2={beamY1} stroke="#1e40af" strokeWidth={3} />
+            )
           )}
 
           {/* Beam line run 2 */}
-          {hasRun2 && (
+          {hasRun2 && showBeam2 && (
             beamType2 === "double_3x8" ? (
               <G>
                 <Line x1={ox + coverW1} y1={beamY2 - 3} x2={ox + coverW1 + coverW2} y2={beamY2 - 3} stroke="#15803d" strokeWidth={2} />
@@ -166,16 +168,16 @@ export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170
           {/* Posts run 1 */}
           {postPositions.map((px, i) => (
             <G key={i}>
-              <Rect x={px - 5} y={beamY1 - 5} width={10} height={10} fill="#1e293b" rx={1} />
-              <Text x={px} y={beamY1 + 4} textAnchor="middle" fill="white" style={{ ...bold, fontSize: 7 }}>{String(i + 1)}</Text>
+              <Rect x={px - 5} y={postRowY1 - 5} width={10} height={10} fill="#1e293b" rx={1} />
+              <Text x={px} y={postRowY1 + 4} textAnchor="middle" fill="white" style={{ ...bold, fontSize: 7 }}>{String(i + 1)}</Text>
             </G>
           ))}
 
           {/* Posts run 2 */}
           {postPositions2.map((px, i) => (
             <G key={"r2-post-" + i}>
-              <Rect x={px - 5} y={beamY2 - 5} width={10} height={10} fill="#1e293b" rx={1} />
-              <Text x={px} y={beamY2 + 4} textAnchor="middle" fill="white" style={{ ...bold, fontSize: 7 }}>{String(postPositions.length + i + 1)}</Text>
+              <Rect x={px - 5} y={postRowY2 - 5} width={10} height={10} fill="#1e293b" rx={1} />
+              <Text x={px} y={postRowY2 + 4} textAnchor="middle" fill="white" style={{ ...bold, fontSize: 7 }}>{String(postPositions.length + i + 1)}</Text>
             </G>
           ))}
 

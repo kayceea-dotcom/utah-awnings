@@ -37,6 +37,13 @@ const BEAM_TYPES = [
   { value: "7_i_beam", label: "7in I-Beam" },
 ];
 
+// Primary beam only - no gutter concept exists for a pergola (open lattice,
+// no wrap kit), so "no beam" is the only new option here.
+const BEAM_TYPES_1 = [
+  { value: "none", label: "No Beam" },
+  ...BEAM_TYPES,
+];
+
 const END_CUTS = [
   { value: "scallop", label: "Scallop" },
   { value: "beveled", label: "Beveled" },
@@ -405,7 +412,7 @@ export default function PergolaQuotePage() {
 
               <SectionCard id="structure" title="Structure" open={open.has("structure")} onToggle={toggleSection}>
                 <SelectInput label="Rafter Gauge" value={inp.rafterGauge} onChange={(v) => setField("rafterGauge", v)} options={RAFTER_GAUGES} />
-                <SelectInput label="Beam Type" value={inp.beamType} onChange={(v) => setField("beamType", v)} options={BEAM_TYPES} />
+                <SelectInput label="Beam Type" value={inp.beamType} onChange={(v) => setField("beamType", v)} options={BEAM_TYPES_1} />
                 <NumInput label="Beam Qty" value={inp.beamQty} onChange={(v) => setField("beamQty", v)} />
                 <SelectInput label="End Cut" value={inp.endCut} onChange={(v) => setField("endCut", v)} options={END_CUTS} />
                 <SelectInput label="End Cut Side" value={inp.endCutSide} onChange={(v) => setField("endCutSide", v)} options={END_CUT_SIDES} />
@@ -481,6 +488,7 @@ export default function PergolaQuotePage() {
                   projection1={inp.projection}
                   width1={inp.width}
                   posts1={inp.posts}
+                  beamType1={inp.beamType}
                   downspouts={0}
                   isLattice
                   latticeType={inp.latticeType}
@@ -538,6 +546,7 @@ export default function PergolaQuotePage() {
                 projection1={inp.projection}
                 width1={inp.width}
                 posts1={inp.posts}
+                beamType1={inp.beamType}
                 downspouts={0}
                 isLattice
                 latticeType={inp.latticeType}

@@ -64,7 +64,7 @@ export default function CoverDiagram({
     hasRun2, isHouseJog, totalW,
     coverW1, coverH1, coverW2, coverH2,
     run1TopY, run2TopY, run1FrontY,
-    beamY1, beamY2,
+    beamY1, beamY2, showBeam1, showBeam2, postRowY1, postRowY2,
     postPositions, postPositions2, multiSpanBeams,
     tailCount, tailCount2, frontEdgeY, frontEdgeY2, tailTipY, tailTipY2, backTailTipY,
     downspoutPositions, rafterXs, tubeYs,
@@ -154,18 +154,20 @@ export default function CoverDiagram({
           {/* Beam line run 1 - horizontal, 1.5ft from front edge; flush with run 2 on a house jog.
               A double beam mounts front + back of the posts (for extra span), shown as 2 lines
               straddling the post instead of the single beam sitting on top of it. */}
-          {geo.beamType1 === "double_3x8" ? (
-            <>
-              <line x1={ox} y1={beamY1 - 3} x2={ox + coverW1} y2={beamY1 - 3} stroke="#1e40af" strokeWidth="2" />
-              <line x1={ox} y1={beamY1 + 3} x2={ox + coverW1} y2={beamY1 + 3} stroke="#1e40af" strokeWidth="2" />
-            </>
-          ) : (
-            <line x1={ox} y1={beamY1} x2={ox + coverW1} y2={beamY1}
-              stroke="#1e40af" strokeWidth="3" />
+          {showBeam1 && (
+            geo.beamType1 === "double_3x8" ? (
+              <>
+                <line x1={ox} y1={beamY1 - 3} x2={ox + coverW1} y2={beamY1 - 3} stroke="#1e40af" strokeWidth="2" />
+                <line x1={ox} y1={beamY1 + 3} x2={ox + coverW1} y2={beamY1 + 3} stroke="#1e40af" strokeWidth="2" />
+              </>
+            ) : (
+              <line x1={ox} y1={beamY1} x2={ox + coverW1} y2={beamY1}
+                stroke="#1e40af" strokeWidth="3" />
+            )
           )}
 
           {/* Beam line run 2 */}
-          {hasRun2 && (
+          {hasRun2 && showBeam2 && (
             geo.beamType2 === "double_3x8" ? (
               <>
                 <line x1={ox + coverW1} y1={beamY2 - 3} x2={ox + coverW1 + coverW2} y2={beamY2 - 3} stroke="#15803d" strokeWidth="2" />
@@ -242,9 +244,9 @@ export default function CoverDiagram({
           {/* Posts on beam (run 1) */}
           {postPositions.map((px, i) => (
             <g key={i}>
-              <rect x={px - 5} y={beamY1 - 5} width={10} height={10}
+              <rect x={px - 5} y={postRowY1 - 5} width={10} height={10}
                 fill="#1e293b" rx="1" />
-              <text x={px} y={beamY1 + 4} textAnchor="middle"
+              <text x={px} y={postRowY1 + 4} textAnchor="middle"
                 fontSize="7" fill="white" fontWeight="bold">{i + 1}</text>
             </g>
           ))}
@@ -252,9 +254,9 @@ export default function CoverDiagram({
           {/* Posts on beam (run 2) - numbering continues from run 1's posts */}
           {postPositions2.map((px, i) => (
             <g key={"r2-post-" + i}>
-              <rect x={px - 5} y={beamY2 - 5} width={10} height={10}
+              <rect x={px - 5} y={postRowY2 - 5} width={10} height={10}
                 fill="#1e293b" rx="1" />
-              <text x={px} y={beamY2 + 4} textAnchor="middle"
+              <text x={px} y={postRowY2 + 4} textAnchor="middle"
                 fontSize="7" fill="white" fontWeight="bold">{postPositions.length + i + 1}</text>
             </g>
           ))}

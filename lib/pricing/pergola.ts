@@ -83,8 +83,8 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
     items.push(li("2x6 Header Board", 1, inp.beamLength, rafterRate, "", inp.colorPergola));
   }
 
-  // ── BEAMS ──
-  if (inp.beamLength > 0 && inp.beamQty > 0) {
+  // ── BEAMS — "none" buys neither the beam nor its steel insert ──
+  if (inp.beamLength > 0 && inp.beamQty > 0 && inp.beamType !== "none") {
     items.push(li("Beam (" + beamTypeLabel(inp.beamType) + ")", inp.beamQty, inp.beamLength, RATES.beam_3x8, "", inp.colorPergola));
     if (inp.beamType !== "3x8_no_insert") {
       const steelStock = nextStockLength(inp.beamLength);
@@ -190,8 +190,8 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
     items.push(li("Wedge Anchors", wedgeAnchorQty, 0, RATES.anchor_wedge));
   }
 
-  // ── BEAM END CAPS — 2 per beam ──
-  if (inp.beamLength > 0 && inp.beamQty > 0) {
+  // ── BEAM END CAPS — 2 per beam, none for "no beam" ──
+  if (inp.beamLength > 0 && inp.beamQty > 0 && inp.beamType !== "none") {
     items.push(li("3x8 Beam End Caps", inp.beamQty * 2, 0, RATES.endcap_3x8, "", inp.colorPergola));
   }
   if (isFreestanding && inp.rearBeamLength > 0) {

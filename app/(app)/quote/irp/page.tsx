@@ -42,6 +42,14 @@ const BEAM_TYPES = [
   { value: "7_i_beam", label: "7in I-Beam" },
 ];
 
+// Primary beam only (#1) - IRP has its own dedicated LRP hanger/gutter/fascia
+// system (not the generic gutterType flat-panel/w-pan share), so there's no
+// "gutter as beam" equivalent here - just "no beam".
+const BEAM_TYPES_1 = [
+  { value: "none", label: "No Beam" },
+  ...BEAM_TYPES,
+];
+
 const POST_HEIGHTS = [8, 10, 12, 14, 16, 20];
 
 const WRAPS = [
@@ -413,7 +421,7 @@ export default function IRPQuotePage() {
               </SectionCard>
 
               <SectionCard id="structure" title="Structure" open={open.has("structure")} onToggle={toggleSection}>
-                <SelectInput label="Beam Type #1" value={inp.beamType1} onChange={(v) => setField("beamType1", v)} options={BEAM_TYPES} />
+                <SelectInput label="Beam Type #1" value={inp.beamType1} onChange={(v) => setField("beamType1", v)} options={BEAM_TYPES_1} />
                 <SelectInput label="Beam Type #2" value={inp.beamType2} onChange={(v) => setField("beamType2", v)}
                   options={[{ value: "", label: "None" }, ...BEAM_TYPES]} />
                 <SelectInput label="Wrap Type" value={inp.wrapType} onChange={(v) => setField("wrapType", v)} options={WRAPS} span={2} />
@@ -525,6 +533,8 @@ export default function IRPQuotePage() {
                 downspouts={inp.downspouts}
                 downspoutSide={inp.downspoutSide}
                 showRafterTails={false}
+                beamType1={inp.beamType1}
+                beamType2={inp.beamType2}
                 mountStyle={inp.mountStyle}
                 rearPosts={inp.rearPosts}
               />

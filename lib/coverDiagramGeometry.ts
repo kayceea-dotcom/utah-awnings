@@ -55,6 +55,15 @@ export interface CoverDiagramGeometry {
   run2FrontY: number;
   beamY1: number;
   beamY2: number;
+  /** Whether a beam line should actually be drawn for each run - false for
+   *  "none" (no beam) and "gutter" (the front gutter itself is structural,
+   *  no separate beam member). */
+  showBeam1: boolean;
+  showBeam2: boolean;
+  /** Y row the posts are drawn at - the usual inset beam row, except
+   *  "gutter" moves them up to the front/gutter edge itself. */
+  postRowY1: number;
+  postRowY2: number;
   postPositions: number[];
   postPositions2: number[];
   multiSpanBeams: { y: number; postXs: number[] }[];
@@ -178,6 +187,14 @@ export function computeCoverDiagramGeometry(input: CoverDiagramGeometryInput): C
   const beamY1 = run1FrontY - (isLattice ? LATTICE_OVERHANG_FT : 1.5) * scale;
   const beamY2 = run2FrontY - 1.5 * scale;
 
+  // "none"/"gutter" both skip drawing an actual beam line; "gutter" also
+  // pulls the posts up to sit right at the front/gutter edge instead of the
+  // usual inset beam row, since the gutter itself is what's structural.
+  const showBeam1 = beamType1 !== "none" && beamType1 !== "gutter";
+  const showBeam2 = beamType2 !== "none" && beamType2 !== "gutter";
+  const postRowY1 = beamType1 === "gutter" ? run1FrontY : beamY1;
+  const postRowY2 = beamType2 === "gutter" ? run2FrontY : beamY2;
+
   // Post X positions along beam - 1.5ft from each end, evenly spaced
   const postPositions = spacedPostXs(posts1, width1, ox, coverW1);
   const postPositions2 = hasRun2 ? spacedPostXs(posts2, width2, ox + coverW1, coverW2) : [];
@@ -241,7 +258,7 @@ export function computeCoverDiagramGeometry(input: CoverDiagramGeometryInput): C
     hasRun2, isHouseJog, totalWidth, totalW, scale,
     coverW1, coverH1, coverW2, coverH2,
     run1TopY, run2TopY, run1FrontY, run2FrontY,
-    beamY1, beamY2,
+    beamY1, beamY2, showBeam1, showBeam2, postRowY1, postRowY2,
     postPositions, postPositions2, multiSpanBeams,
     tailCount, tailCount2, frontEdgeY, frontEdgeY2, tailTipY, tailTipY2, backTailTipY,
     downspoutPositions,

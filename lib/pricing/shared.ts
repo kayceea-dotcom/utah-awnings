@@ -141,8 +141,11 @@ export function fasciaQtyLen(maxProjection: number, extraPerSideFt = 0): { qty: 
 // "3x8_no_insert" is a plain 3x8 beam ordered without its steel insert (same
 // beam material and end cap - only the insert itself is skipped).
 
-// Beam material rate depends on the selected beam type.
+// Beam material rate depends on the selected beam type. "none" (no beam at
+// all) and "gutter" (the front gutter itself is structural, no separate beam
+// member purchased) both price at $0 - neither buys a physical beam.
 export function beamMaterialRate(beamType: string): number {
+  if (beamType === "none" || beamType === "gutter") return 0;
   if (beamType === "double_3x8") return RATES.beam_3x8 * 2;
   if (beamType === "3x3") return RATES.beam_3x3;
   if (beamType === "4_i_beam") return RATES.beam_4_i_beam;
@@ -152,6 +155,7 @@ export function beamMaterialRate(beamType: string): number {
 
 // Only 3x3/3x8 beams take a steel insert — I-beams are solid, no insert needed,
 // and "3x8_no_insert" opts out of it on purpose (falls through to the 0 default).
+// "none"/"gutter" fall through the same way - no beam, no insert.
 export function steelInsertRate(beamType: string): number {
   if (beamType === "double_3x8") return RATES.steel_3x8_14ga_ft * 2;
   if (beamType === "3x3") return RATES.steel_3x3_g_beam_ft;
@@ -161,7 +165,8 @@ export function steelInsertRate(beamType: string): number {
 
 // Beam's own end cap is sized to the beam type, not the wrap kit; I-beams don't
 // take one. "3x8_no_insert" still gets the regular 3x8 end cap - it's the same
-// physical beam, just shipped without the insert.
+// physical beam, just shipped without the insert. "none"/"gutter" fall through
+// the same way - no beam, no end cap.
 export function beamEndcapRate(beamType: string): number {
   if (beamType === "double_3x8") return RATES.endcap_3x8 * 2;
   if (beamType === "3x3") return RATES.endcap_3x3;
@@ -173,6 +178,8 @@ export function beamEndcapRate(beamType: string): number {
 export function beamTypeLabel(beamType: string): string {
   if (beamType === "double_3x8") return "Double 3x8";
   if (beamType === "3x8_no_insert") return "3x8, No Insert";
+  if (beamType === "none") return "No Beam";
+  if (beamType === "gutter") return "Gutter as Beam";
   return beamType;
 }
 
