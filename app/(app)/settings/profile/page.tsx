@@ -6,7 +6,8 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/hooks/useProfile";
 import TopBar from "@/components/TopBar";
-import { User, Save } from "lucide-react";
+import { User, Save, Bell, BellOff } from "lucide-react";
+import { isPushSupported, getExistingSubscription, subscribeToPush, unsubscribeFromPush } from "@/lib/pushNotifications";
 
 // Open to every role, unlike Settings > Team (admin/manager only) - a sales
 // rep has no other way to set their own contact info, which now shows up on
@@ -17,6 +18,9 @@ export default function MyProfilePage() {
   const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [notifStatus, setNotifStatus] = useState<"checking" | "unsupported" | "denied" | "enabled" | "disabled">("checking");
+  const [notifBusy, setNotifBusy] = useState(false);
+  const [notifError, setNotifError] = useState("");
   const supabase = createClient();
 
   useEffect(() => {
@@ -25,6 +29,36 @@ export default function MyProfilePage() {
       setPhone(profile.phone || "");
     }
   }, [profile]);
+
+  useEffect(() => {
+    if (!isPushSupported()) {
+      setNotifStatus("unsupported");
+      return;
+    }
+    if (Notification.permission === "denied") {
+      setNotifStatus("denied");
+      return;
+    }
+    getExistingSubscription().then((sub) => setNotifStatus(sub ? "enabled" : "disabled"));
+  }, []);
+
+  async function handleToggleNotifications() {
+    setNotifBusy(true);
+    setNotifError("");
+    try {
+      if (notifStatus === "enabled") {
+        await unsubscribeFromPush();
+        setNotifStatus("disabled");
+      } else {
+        await subscribeToPush();
+        setNotifStatus(Notification.permission === "denied" ? "denied" : "enabled");
+      }
+    } catch (err) {
+      setNotifError(err instanceof Error ? err.message : "Failed to update notifications");
+      if (Notification.permission === "denied") setNotifStatus("denied");
+    }
+    setNotifBusy(false);
+  }
 
   async function handleSave() {
     if (!profile || !fullName || !phone) return;
@@ -94,6 +128,50 @@ export default function MyProfilePage() {
                 {saving ? "Saving..." : "Save Changes"}
               </button>
             </div>
+          </div>
+
+          <div className="card p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Bell size={18} className="text-gray-500" />
+              <h2 className="text-sm font-bold text-gray-800">Notifications</h2>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              Get a push notification on this device the moment a customer signs one of your jobs - in addition to the email you already get.
+            </p>
+
+            {notifStatus === "unsupported" ? (
+              <p className="text-xs text-gray-400">Not supported on this browser.</p>
+            ) : notifStatus === "denied" ? (
+              <p className="text-xs text-red-500">
+                Notifications are blocked for this site in your browser settings. Re-enable them there, then reload this page.
+              </p>
+            ) : (
+              <>
+                <button
+                  onClick={handleToggleNotifications}
+                  disabled={notifBusy || notifStatus === "checking"}
+                  className="btn-secondary w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {notifStatus === "enabled" ? <BellOff size={15} /> : <Bell size={15} />}
+                  {notifBusy
+                    ? "Working..."
+                    : notifStatus === "checking"
+                    ? "Checking..."
+                    : notifStatus === "enabled"
+                    ? "Disable on This Device"
+                    : "Enable on This Device"}
+                </button>
+                {notifStatus === "enabled" && (
+                  <p className="text-xs text-green-600 mt-2">Enabled on this device.</p>
+                )}
+              </>
+            )}
+
+            {notifError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mt-3">
+                <p className="text-red-600 text-sm">{notifError}</p>
+              </div>
+            )}
           </div>
         </div>
       </main>

@@ -2,8 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { Resend } from "resend";
+import webpush from "web-push";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    process.env.VAPID_SUBJECT || "mailto:utahawnings@gmail.com",
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+}
 
 const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
@@ -82,6 +91,51 @@ export async function POST(request: NextRequest) {
 </html>
       `,
     });
+
+    // Push the rep's own device(s), if they've enabled it - a separate,
+    // best-effort channel on top of the email above. Never let a push
+    // failure (or missing VAPID config) fail the request; the email already
+    // went out. Uses adminClient (service role) since this route runs with
+    // no user session at all - the customer-facing signing page calls it
+    // unauthenticated - so RLS (profile_id = auth.uid()) would return
+    // nothing for a plain session client.
+    if (createdBy && process.env.VAPID_PRIVATE_KEY) {
+      try {
+        const { data: subs } = await adminClient
+          .from("push_subscriptions")
+          .select("id, endpoint, p256dh, auth")
+          .eq("profile_id", createdBy);
+
+        const payload = JSON.stringify({
+          title: "Contract Signed!",
+          body: (customer.name as string) + " - " + jobName,
+          url: "/proposals/" + proposalToken,
+        });
+
+        await Promise.all(
+          (subs || []).map(async (sub) => {
+            try {
+              await webpush.sendNotification(
+                { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+                payload
+              );
+            } catch (pushErr: unknown) {
+              // 404/410 = the subscription is gone (browser data cleared,
+              // permission revoked, etc.) - clean it up so future sends
+              // don't keep retrying a dead endpoint.
+              const status = (pushErr as { statusCode?: number })?.statusCode;
+              if (status === 404 || status === 410) {
+                await adminClient.from("push_subscriptions").delete().eq("id", sub.id);
+              } else {
+                console.error("Push send error:", pushErr);
+              }
+            }
+          })
+        );
+      } catch (err) {
+        console.error("Push notification lookup error:", err);
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {
