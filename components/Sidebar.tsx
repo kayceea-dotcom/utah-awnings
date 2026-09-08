@@ -168,13 +168,13 @@ export default function Sidebar() {
           <span className="text-white text-sm font-bold">{companyName}</span>
         </div>
         {profile && (
-          <div className="ml-auto flex items-center gap-2">
+          <Link href="/settings/profile" className="ml-auto flex items-center gap-2">
             <span className="text-charcoal-400 text-xs font-medium">{profile.full_name}</span>
             <div className="w-7 h-7 rounded-full flex items-center justify-center"
                  style={{ backgroundColor: "#CC2229" }}>
               <User size={13} className="text-white" />
             </div>
-          </div>
+          </Link>
         )}
       </div>
 

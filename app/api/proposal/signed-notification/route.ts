@@ -47,11 +47,20 @@ export async function POST(request: NextRequest) {
     // Resolve the real salesman email via the quote's actual creator (auth
     // user record), not the free-text `salesman` display name on the quote -
     // that's just whatever full_name was on their profile when they built it.
+    // Also cc their optional profiles.email, in case their real login email
+    // isn't an inbox they actually check.
     const recipients = new Set<string>();
     const createdBy = quote.created_by as string | null;
     if (createdBy) {
       const { data: userData } = await adminClient.auth.admin.getUserById(createdBy);
       if (userData?.user?.email) recipients.add(userData.user.email);
+
+      const { data: repProfile } = await adminClient
+        .from("profiles")
+        .select("email")
+        .eq("id", createdBy)
+        .single();
+      if (repProfile?.email) recipients.add(repProfile.email);
     }
     const officeEmail = (company.email as string) || "utahawnings@gmail.com";
     recipients.add(officeEmail);

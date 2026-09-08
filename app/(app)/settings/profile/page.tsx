@@ -16,6 +16,7 @@ export default function MyProfilePage() {
   const { profile, loading } = useProfile();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [notifStatus, setNotifStatus] = useState<"checking" | "unsupported" | "denied" | "enabled" | "disabled">("checking");
@@ -27,6 +28,7 @@ export default function MyProfilePage() {
     if (profile) {
       setFullName(profile.full_name || "");
       setPhone(profile.phone || "");
+      setEmail(profile.email || "");
     }
   }, [profile]);
 
@@ -67,7 +69,7 @@ export default function MyProfilePage() {
 
     const { error } = await supabase
       .from("profiles")
-      .update({ full_name: fullName, phone })
+      .update({ full_name: fullName, phone, email: email || null })
       .eq("id", profile.id);
 
     if (error) {
@@ -108,6 +110,11 @@ export default function MyProfilePage() {
                 <label className="label">Phone</label>
                 <input type="text" className="input" placeholder="(801) 555-1234" value={phone} onChange={(e) => setPhone(e.target.value)} />
                 <p className="text-xs text-gray-400 mt-1">Shown to customers on proposals and contracts - required.</p>
+              </div>
+              <div>
+                <label className="label">Notification Email</label>
+                <input type="email" className="input" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <p className="text-xs text-gray-400 mt-1">Optional - gets notified alongside your login email when a customer signs one of your jobs.</p>
               </div>
 
               {message && (
