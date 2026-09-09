@@ -13,6 +13,15 @@ import FollowUpBadge from "@/components/FollowUpBadge";
 import { useProfile } from "@/lib/hooks/useProfile";
 import { canTrash, trashProposal } from "@/lib/trash";
 import PaymentsPanel from "@/components/quote/PaymentsPanel";
+import { listPayments } from "@/lib/payments";
+import { calcNewport } from "@/lib/pricing/newport";
+import { calcWPan } from "@/lib/pricing/wpan";
+import type { WPanInputs } from "@/lib/pricing/wpan";
+import { calcIRP } from "@/lib/pricing/irp";
+import type { IRPInputs } from "@/lib/pricing/irp";
+import { calcPergola } from "@/lib/pricing/pergola";
+import type { PergolaInputs } from "@/lib/pricing/pergola";
+import type { NewportInputs, QuoteResult } from "@/lib/pricing/types";
 
 const fmt = (n: number) => n?.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
@@ -148,6 +157,29 @@ function optLabel(opts: { value: string; label: string }[] | null, value: string
   return opts?.find((o) => o.value === value)?.label || value;
 }
 
+// Job Details edits that touch color/panel/beam/wrap/end-cut/fan-beam change
+// what's actually in the job, so the material order (which is a frozen
+// lineItems snapshot from whenever the quote was first built - see
+// lib/orderSheet.ts, it never recalculates) and the contract price both need
+// to be regenerated the same way the quote builder computed them originally.
+// "individual" (a hand-picked catalog list) and unrecognized/legacy product
+// types have no single calc function to run here, so they get null - the
+// caller then leaves pricing/material data untouched.
+function repriceQuote(productType: string, inputs: Record<string, unknown>): QuoteResult | null {
+  switch (productType) {
+    case "flat_panel":
+      return calcNewport(inputs as unknown as NewportInputs);
+    case "w_pan":
+      return calcWPan(inputs as unknown as WPanInputs);
+    case "irp":
+      return calcIRP(inputs as unknown as IRPInputs);
+    case "pergola":
+      return calcPergola(inputs as unknown as PergolaInputs);
+    default:
+      return null;
+  }
+}
+
 export default function ProposalPreviewPage() {
   const params = useParams();
   const token = params.token as string;
@@ -208,6 +240,10 @@ export default function ProposalPreviewPage() {
   const [draftFanBeamQty, setDraftFanBeamQty] = useState(0);
   const [draftFanBeamLength, setDraftFanBeamLength] = useState(0);
   const [draftNotes, setDraftNotes] = useState("");
+  const [jobSnapshot, setJobSnapshot] = useState<{
+    colors: Record<string, string>; panelType: string; beamType: string;
+    wrap: string; endCut: string; fanBeamQty: number; fanBeamLength: number;
+  } | null>(null);
   const { profile } = useProfile();
   const supabase = createClient();
 
@@ -250,6 +286,43 @@ export default function ProposalPreviewPage() {
   }, [quote]);
 
   const jobConfig = useMemo(() => getJobDetailsConfig(productType), [productType]);
+
+  function buildUpdatedJobInputs(): Record<string, unknown> {
+    if (!quote) return {};
+    const existingInputs = (quote.inputs as Record<string, unknown>) || {};
+    const updated: Record<string, unknown> = { ...existingInputs, ...draftColors };
+    if (jobConfig.panelTypeKey) updated[jobConfig.panelTypeKey] = draftPanelType;
+    if (jobConfig.beamTypeKey) updated[jobConfig.beamTypeKey] = draftBeamType;
+    if (jobConfig.wrapKey) updated[jobConfig.wrapKey] = draftWrap;
+    if (jobConfig.endCutKey) updated[jobConfig.endCutKey] = draftEndCut;
+    if (jobConfig.fanBeam) {
+      updated.fanBeamQty = draftFanBeamQty;
+      updated.fanBeamLength = draftFanBeamLength;
+    }
+    return updated;
+  }
+
+  // Only Notes changing shouldn't trigger a reprice - if material rates have
+  // moved since this quote was built, a rep just fixing a typo in Notes
+  // would otherwise silently re-price the whole job to today's rates.
+  const jobSpecsChanged = useMemo(() => {
+    if (!jobSnapshot) return false;
+    return (
+      JSON.stringify(jobSnapshot.colors) !== JSON.stringify(draftColors) ||
+      jobSnapshot.panelType !== draftPanelType ||
+      jobSnapshot.beamType !== draftBeamType ||
+      jobSnapshot.wrap !== draftWrap ||
+      jobSnapshot.endCut !== draftEndCut ||
+      jobSnapshot.fanBeamQty !== draftFanBeamQty ||
+      jobSnapshot.fanBeamLength !== draftFanBeamLength
+    );
+  }, [jobSnapshot, draftColors, draftPanelType, draftBeamType, draftWrap, draftEndCut, draftFanBeamQty, draftFanBeamLength]);
+
+  const jobPricePreview = useMemo(() => {
+    if (!editingJob || !quote || !jobSpecsChanged) return null;
+    return repriceQuote(productType, buildUpdatedJobInputs());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingJob, quote, jobSpecsChanged, productType, draftColors, draftPanelType, draftBeamType, draftWrap, draftEndCut, draftFanBeamQty, draftFanBeamLength]);
 
   async function handlePreviewOrder() {
     setPreviewing(true);
@@ -549,14 +622,21 @@ export default function ProposalPreviewPage() {
     const inp = (quote.inputs as Record<string, unknown>) || {};
     const colors: Record<string, string> = {};
     jobConfig.colors.forEach((c) => { colors[c.key] = (inp[c.key] as string) || ""; });
+    const panelType = jobConfig.panelTypeKey ? (inp[jobConfig.panelTypeKey] as string) || "" : "";
+    const beamType = jobConfig.beamTypeKey ? (inp[jobConfig.beamTypeKey] as string) || "" : "";
+    const wrap = jobConfig.wrapKey ? (inp[jobConfig.wrapKey] as string) || "none" : "none";
+    const endCut = jobConfig.endCutKey ? (inp[jobConfig.endCutKey] as string) || "" : "";
+    const fanBeamQty = (inp.fanBeamQty as number) || 0;
+    const fanBeamLength = (inp.fanBeamLength as number) || 0;
     setDraftColors(colors);
-    setDraftPanelType(jobConfig.panelTypeKey ? (inp[jobConfig.panelTypeKey] as string) || "" : "");
-    setDraftBeamType(jobConfig.beamTypeKey ? (inp[jobConfig.beamTypeKey] as string) || "" : "");
-    setDraftWrap(jobConfig.wrapKey ? (inp[jobConfig.wrapKey] as string) || "none" : "none");
-    setDraftEndCut(jobConfig.endCutKey ? (inp[jobConfig.endCutKey] as string) || "" : "");
-    setDraftFanBeamQty((inp.fanBeamQty as number) || 0);
-    setDraftFanBeamLength((inp.fanBeamLength as number) || 0);
+    setDraftPanelType(panelType);
+    setDraftBeamType(beamType);
+    setDraftWrap(wrap);
+    setDraftEndCut(endCut);
+    setDraftFanBeamQty(fanBeamQty);
+    setDraftFanBeamLength(fanBeamLength);
     setDraftNotes((quote.notes as string) || "");
+    setJobSnapshot({ colors, panelType, beamType, wrap, endCut, fanBeamQty, fanBeamLength });
     setJobError("");
     setEditingJob(true);
   }
@@ -566,16 +646,7 @@ export default function ProposalPreviewPage() {
     setSavingJob(true);
     setJobError("");
 
-    const existingInputs = (quote.inputs as Record<string, unknown>) || {};
-    const updatedInputs: Record<string, unknown> = { ...existingInputs, ...draftColors };
-    if (jobConfig.panelTypeKey) updatedInputs[jobConfig.panelTypeKey] = draftPanelType;
-    if (jobConfig.beamTypeKey) updatedInputs[jobConfig.beamTypeKey] = draftBeamType;
-    if (jobConfig.wrapKey) updatedInputs[jobConfig.wrapKey] = draftWrap;
-    if (jobConfig.endCutKey) updatedInputs[jobConfig.endCutKey] = draftEndCut;
-    if (jobConfig.fanBeam) {
-      updatedInputs.fanBeamQty = draftFanBeamQty;
-      updatedInputs.fanBeamLength = draftFanBeamLength;
-    }
+    const updatedInputs = buildUpdatedJobInputs();
 
     // Mirror onto the flat quotes.* columns too (what the customer-facing
     // proposal page, contract PDF, and order sheet actually read) - keeping
@@ -595,6 +666,46 @@ export default function ProposalPreviewPage() {
     if (jobConfig.endCutKey) update.end_cut = draftEndCut;
     if (jobConfig.fanBeam) {
       update.fan_beam = draftFanBeamQty ? draftFanBeamQty + "x " + draftFanBeamLength + "ft" : "";
+    }
+
+    // Colors/panel/beam/wrap/end-cut/fan-beam changes mean the job itself
+    // changed, so the material order (a frozen line_items snapshot from
+    // whenever this quote was first built - see lib/orderSheet.ts) and the
+    // contract price both need to be regenerated the same way the quote
+    // builder computed them originally. Never reprice on a Notes-only save -
+    // if material rates moved since this quote was built, a rep just fixing
+    // a typo shouldn't silently reprice the whole job to today's rates.
+    if (jobSpecsChanged) {
+      const result = repriceQuote(productType, updatedInputs);
+      if (result) {
+        try {
+          const payments = await listPayments(quote.id as string);
+          const totalCollected = payments.reduce((s, p) => s + p.amount, 0);
+          if (result.totalJobSale < totalCollected) {
+            setJobError(
+              "These changes would drop the contract total to " + fmt(result.totalJobSale) +
+              ", which is less than the " + fmt(totalCollected) + " already collected on this job. " +
+              "Adjust the collected payments first, or undo the spec change that lowered the price."
+            );
+            setSavingJob(false);
+            return;
+          }
+        } catch (err) {
+          setJobError(err instanceof Error ? err.message : "Failed to check payments already collected");
+          setSavingJob(false);
+          return;
+        }
+
+        const depositPct = (quote.deposit_pct as number) || 0;
+        const depositAmount = result.totalJobSale * depositPct / 100;
+        update.line_items = result.lineItems;
+        update.material_cost = result.materialCost;
+        update.total_job_sale = result.totalJobSale;
+        update.total_profit = result.totalProfit;
+        update.markup = result.markup;
+        update.deposit_amount = depositAmount;
+        update.balance_due = result.totalJobSale - depositAmount;
+      }
     }
 
     const { error: quoteErr } = await supabase
@@ -756,7 +867,7 @@ export default function ProposalPreviewPage() {
               )}
             </div>
             <p className="text-xs text-gray-400 mb-2">
-              Colors, materials, and other job specs - editable any time, including after the contract's signed, in case the customer changes their mind.
+              Colors, materials, and other job specs - editable any time, including after the contract is signed, in case the customer changes their mind.
             </p>
             {editingJob ? (
               <div className="space-y-3 mt-3">
@@ -823,6 +934,17 @@ export default function ProposalPreviewPage() {
                     <textarea className="input text-sm py-1.5 min-h-16 resize-none" value={draftNotes} onChange={(e) => setDraftNotes(e.target.value)} />
                   </div>
                 </div>
+                {jobPricePreview && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-blue-700">New Contract Total</span>
+                      <span className="font-bold text-blue-900">{fmt(jobPricePreview.totalJobSale)}</span>
+                    </div>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Was {fmt((quote?.total_job_sale as number) || 0)} - saving will also update the material order to match these specs.
+                    </p>
+                  </div>
+                )}
                 {jobError && (
                   <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
                     <p className="text-red-600 text-sm">{jobError}</p>
