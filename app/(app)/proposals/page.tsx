@@ -97,7 +97,7 @@ export default function ProposalsPage() {
           followup1_sent_at: r.followup1_sent_at,
           followup2_sent_at: r.followup2_sent_at,
           final_followup_sent_at: r.final_followup_sent_at,
-        }),
+        }, r.status),
       })),
     [rows]
   );

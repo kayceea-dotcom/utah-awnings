@@ -277,7 +277,7 @@ export default function ProposalPreviewPage() {
       followup2_sent_at: proposal.followup2_sent_at as string | null,
       final_followup_sent_at: proposal.final_followup_sent_at as string | null,
     };
-    return getFollowUpStatus(timestamps);
+    return getFollowUpStatus(timestamps, proposal.status as string);
   }, [proposal]);
 
   const productType = useMemo(() => {

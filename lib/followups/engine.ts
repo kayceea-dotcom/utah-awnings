@@ -1,5 +1,6 @@
 import type { FollowUpStepConfig, FollowUpStatus, ProposalFollowUpTimestamps } from "./types";
 import { FOLLOWUP_STEPS } from "./steps";
+import { isWonStatus } from "@/components/StatusBadge";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -9,9 +10,18 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 // Adding a step to steps.ts requires no changes here.
 export function getFollowUpStatus(
   timestamps: ProposalFollowUpTimestamps,
+  proposalStatus?: string,
   steps: FollowUpStepConfig[] = FOLLOWUP_STEPS,
   now: Date = new Date()
 ): FollowUpStatus {
+  // A signed/accepted/pending-payment/ordered job has already converted -
+  // chasing it with "send a follow-up" nudges makes no sense regardless of
+  // which timestamps are still unset (e.g. a rep skipped straight to an
+  // in-person signature without ever sending the earlier follow-up steps).
+  if (proposalStatus && isWonStatus(proposalStatus)) {
+    return { kind: "complete" };
+  }
+
   const enabledSteps = steps.filter((s) => s.enabled);
 
   for (const step of enabledSteps) {
@@ -39,10 +49,11 @@ export function getFollowUpStatus(
 
 export function getActionableStep(
   timestamps: ProposalFollowUpTimestamps,
+  proposalStatus?: string,
   steps: FollowUpStepConfig[] = FOLLOWUP_STEPS,
   now: Date = new Date()
 ): FollowUpStepConfig | null {
-  const status = getFollowUpStatus(timestamps, steps, now);
+  const status = getFollowUpStatus(timestamps, proposalStatus, steps, now);
   return status.kind === "action_due" ? status.step : null;
 }
 
