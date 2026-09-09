@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     // Never trust the client-supplied stepKey: re-derive server-side which
     // step is actually due so a stale tab or forged request can't skip or
     // replay a step out of order.
-    const status = getFollowUpStatus(timestamps);
+    const status = getFollowUpStatus(timestamps, proposal.status as string);
     if (status.kind !== "action_due" || status.step.key !== stepKey) {
       return NextResponse.json({ error: "This step is not currently due" }, { status: 400 });
     }

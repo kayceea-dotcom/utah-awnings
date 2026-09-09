@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       final_followup_sent_at: proposal.final_followup_sent_at,
     };
 
-    const status = getFollowUpStatus(timestamps);
+    const status = getFollowUpStatus(timestamps, proposal.status as string);
     if (status.kind !== "action_due" || status.step.key !== stepKey) {
       return NextResponse.json({ error: "This step is not currently due" }, { status: 400 });
     }
