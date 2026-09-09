@@ -109,7 +109,7 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
           ) : (
             <Rect x={houseX - 10} y={10} width={10} height={groundY - 10} fill="#cbd5e1" stroke="#64748b" strokeWidth={1.5} />
           )}
-          <Text x={houseX - 5} y={roofY + 42} textAnchor="middle" fill="#475569" style={{ ...bold, fontSize: 7 }}>
+          <Text x={houseX - 5} y={isRoofMount && roofLineY !== null ? roofLineY + 20 : roofY + 42} textAnchor="middle" fill="#475569" style={{ ...bold, fontSize: 7 }}>
             {isFreestanding ? "FREESTANDING" : isRoofMount ? "ROOF MOUNT (SKYLIFT)" : HOUSE_ATTACHMENT_LABELS[houseAttachment] || houseAttachment.toUpperCase()}
           </Text>
 
