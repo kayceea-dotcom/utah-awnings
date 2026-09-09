@@ -756,7 +756,7 @@ export default function ProposalPreviewPage() {
               )}
             </div>
             <p className="text-xs text-gray-400 mb-2">
-              Colors, materials, and other job specs - editable any time, including after the contract's signed, in case the customer changes their mind.
+              Colors, materials, and other job specs - editable any time, including after the contract is signed, in case the customer changes their mind.
             </p>
             {editingJob ? (
               <div className="space-y-3 mt-3">
