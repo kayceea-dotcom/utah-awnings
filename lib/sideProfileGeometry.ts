@@ -291,18 +291,25 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
       footingX: houseX - footingWidth / 2, footingWidth,
     };
   } else if (isRoofMount) {
+    // The rear beam sits at the same height as the front beam (same
+    // reference the flat panel rect above already assumes via panelBottomY
+    // = beamTopY), so the panel rests flush across both front and rear -
+    // matching a real cover, which is level front to back. Deriving the
+    // beam's position from a separate "roof line" reference (rather than
+    // from the panel/front-beam height, like this) left it floating well
+    // above the panel with a visible gap - the panel needs to sit on TOP
+    // of the rear structure, not float below it.
+    const rearBeamHeight = (beamHeightInches(rearBeamType || beamType) / 12) * scale;
+    const rearBeamTopY = beamTopY;
+    const rearBeamBottomY = rearBeamTopY + rearBeamHeight;
     // SkyLift risers are short and mount to the roof surface, not down at
-    // grade like a literal ground/deck post - approximated as a fixed ~2ft
-    // riser whose bottom marks the roof line, positioned level with the
-    // front post's own top (roughly where the front beam sits) so the cover
-    // still reads as a roughly level structure front to back.
+    // grade like a literal ground/deck post - a fixed ~2ft riser hangs
+    // below the rear beam down to the roof line it mounts through.
     const SKYLIFT_RISER_FT = 2;
     const riserPx = SKYLIFT_RISER_FT * scale;
-    roofLineY = postTopY;
-    const rearBeamHeight = (beamHeightInches(rearBeamType || beamType) / 12) * scale;
-    const rearBeamTopY = roofLineY - riserPx - rearBeamHeight;
+    roofLineY = rearBeamBottomY + riserPx;
     rear = {
-      postX: houseX, postTopY: roofLineY - riserPx, postBottomY: roofLineY, embeddedBottomY: null,
+      postX: houseX, postTopY: rearBeamBottomY, postBottomY: roofLineY, embeddedBottomY: null,
       postHeight: SKYLIFT_RISER_FT,
       beamTopY: rearBeamTopY, beamHeight: rearBeamHeight, beamWidth,
       footingX: houseX - footingWidth / 2, footingWidth,
