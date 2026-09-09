@@ -156,7 +156,7 @@ export default function SideProfileDiagram({
           ) : (
             <rect x={houseX - 10} y={10} width={10} height={groundY - 10} fill="url(#sp-hatch)" stroke="#64748b" strokeWidth="1.5" />
           )}
-          <text x={houseX - 5} y={roofY + 42} textAnchor="middle" fontSize="7" fill="#475569" fontWeight="600">
+          <text x={houseX - 5} y={isRoofMount && roofLineY !== null ? roofLineY + 20 : roofY + 42} textAnchor="middle" fontSize="7" fill="#475569" fontWeight="600">
             {isFreestanding ? "FREESTANDING" : isRoofMount ? "ROOF MOUNT (SKYLIFT)" : HOUSE_ATTACHMENT_LABELS[houseAttachment] || houseAttachment.toUpperCase()}
           </text>
 
