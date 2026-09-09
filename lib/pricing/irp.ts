@@ -40,6 +40,7 @@ export interface IRPInputs {
   rearBeamLength: number;
   rearPosts: number;
   rearPostHeight: number;
+  skyliftPosts: number;
   shadeBeamQty: number;
   shadeBeamLength: number;
   discount: number;
@@ -108,10 +109,13 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
   const splitHanger = hasSecondRun && inp.jogType === "house";
   const splitGutter = hasSecondRun && inp.jogType === "ground";
 
-  // ── HANGER — skipped when freestanding, replaced by a rear beam + posts below ──
+  // ── HANGER — skipped when freestanding or roof mount, replaced by a rear
+  // beam + posts/SkyLift risers below ──
   const isFreestanding = inp.mountStyle === "freestanding";
-  if (isFreestanding) {
-    // No house tie-in - the back edge gets its own beam + posts below instead.
+  const isRoofMount = inp.mountStyle === "roof_mount";
+  if (isFreestanding || isRoofMount) {
+    // No house tie-in - the back edge gets its own beam (+ posts, or SkyLift
+    // risers) below instead.
   } else if (splitHanger) {
     if (inp.beamLength1 > 0) items.push(li("LRP Hanger #1", 1, 0, lrpHangerRate(inp.panelType, inp.beamLength1)));
     if (inp.beamLength2 > 0) items.push(li("LRP Hanger #2", 1, 0, lrpHangerRate(inp.panelType, inp.beamLength2)));
@@ -126,9 +130,11 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
   } else if (inp.beamLength1 > 0 || inp.beamLength2 > 0) {
     items.push(li("LRP Gutter", 1, 0, lrpGutterRate(inp.panelType, combinedBeamLength)));
   }
-  // Freestanding - the rear beam is now a real finished edge (no house wall
-  // to tuck under), so it gets its own gutter too, matching the front.
-  if (isFreestanding && inp.rearBeamLength > 0) {
+  // Freestanding/Roof Mount - the rear beam is now a real finished edge (no
+  // house wall to tuck under), so it gets its own gutter too, matching the
+  // front (Roof Mount mirrors the front gutter automatically, no separate
+  // rear gutter selection).
+  if ((isFreestanding || isRoofMount) && inp.rearBeamLength > 0) {
     items.push(li("LRP Gutter Rear", 1, 0, lrpGutterRate(inp.panelType, inp.rearBeamLength)));
   }
 
@@ -172,8 +178,8 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
     items.push(li("Beam End Caps #2", 2, 0, beamEndcapRate(inp.beamType2), "", inp.colorPostsBeam));
   }
 
-  // ── REAR BEAM — freestanding only, replaces the house-side LRP Hanger ──
-  if (isFreestanding && inp.rearBeamLength > 0) {
+  // ── REAR BEAM — freestanding or roof mount only, replaces the house-side LRP Hanger ──
+  if ((isFreestanding || isRoofMount) && inp.rearBeamLength > 0) {
     items.push(li("Beam Rear (" + beamTypeLabel(inp.rearBeamType) + ")", 1, inp.rearBeamLength, beamMaterialRate(inp.rearBeamType), "", inp.colorPostsBeam));
     const steelRateRear = steelInsertRate(inp.rearBeamType);
     if (steelRateRear > 0) {
@@ -201,6 +207,13 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
     items.push(li("3x3 Steel Post Rear",  rearPosts, lenRear, RATES.post_3x3_steel_ft));
   }
 
+  // ── SKYLIFT POSTS — roof mount only. Flat-fee roof risers, not literal
+  // ground posts, so they skip postMaterialLength/anchors/wrap-kit post
+  // finishing entirely - self-contained hardware, priced per riser. ──
+  if (isRoofMount && inp.skyliftPosts > 0) {
+    items.push(li("SkyLift Post", inp.skyliftPosts, 0, RATES.skylift_post));
+  }
+
   // ── WRAP KIT — post plates, sideplates, mitered caps, foam inserts, end caps, plugs.
   // IRP keeps its own dedicated LRP hanger/gutter/fascia regardless, so unlike Flat Panel
   // and W-Pan there are no rafter-tail/front-plate/bracket items here. ──
@@ -212,7 +225,7 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
       postsRear: rearPosts, postHeightRear: inp.rearPostHeight,
       projection1: inp.projection1, width1: inp.width1, panelQty1: p1Qty,
       colorPostsBeam: inp.colorPostsBeam,
-      isFreestanding,
+      isFreestanding: isFreestanding || isRoofMount,
     }));
   }
 

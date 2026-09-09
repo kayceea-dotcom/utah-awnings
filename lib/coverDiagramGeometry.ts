@@ -24,11 +24,13 @@ export interface CoverDiagramGeometryInput {
   /** "1.5x" widens the gap; anything else (including unset) is the default
    *  2x-tube-width spacing. Matches PergolaInputs.latticeSpacing. */
   latticeSpacing?: string;
-  /** "freestanding" draws a rear beam + its own posts along the house-wall
-   *  edge instead of the house wall + dashed hanger line. */
+  /** "freestanding" or "roof_mount" draws a rear beam + its own posts along
+   *  the house-wall edge instead of the house wall + dashed hanger line
+   *  (roof_mount's "posts" are SkyLift roof risers, not literal ground
+   *  posts - the caller passes whichever count applies via `rearPosts`). */
   mountStyle?: string;
-  /** Rear beam's own post count - spaced across the full combined width,
-   *  same rule as the front run's posts. */
+  /** Rear beam's own post (or SkyLift riser) count - spaced across the full
+   *  combined width, same rule as the front run's posts. */
   rearPosts?: number;
 }
 
@@ -202,10 +204,13 @@ export function computeCoverDiagramGeometry(input: CoverDiagramGeometryInput): C
   const postPositions = spacedPostXs(posts1, width1, ox, coverW1);
   const postPositions2 = hasRun2 ? spacedPostXs(posts2, width2, ox + coverW1, coverW2) : [];
 
-  // Freestanding - a rear beam + its own posts along the house-wall edge,
-  // spanning the full combined width as one straight run (a "house jog" is
-  // meaningless once there's no house wall to jog around).
-  const isFreestanding = mountStyle === "freestanding";
+  // Freestanding/Roof Mount - a rear beam + its own posts (or SkyLift roof
+  // risers) along the house-wall edge, spanning the full combined width as
+  // one straight run (a "house jog" is meaningless once there's no house
+  // wall to jog around). Kept as `isFreestanding` below since a top-down
+  // view draws the same either way - "post touches ground" vs "post touches
+  // roof" only matters in the side profile.
+  const isFreestanding = mountStyle === "freestanding" || mountStyle === "roof_mount";
   const rearBeamY = oy + 1.5 * scale;
   const rearPostPositions = isFreestanding ? spacedPostXs(rearPosts, totalWidth, ox, totalW) : [];
 

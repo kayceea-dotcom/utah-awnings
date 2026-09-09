@@ -60,7 +60,9 @@ export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170
                 fill="#cbd5e1" stroke="#64748b" strokeWidth={1.5} />
             )
           )}
-          <Text x={ox + totalW / 2} y={oy - HOUSE_H / 2 + 4} textAnchor="middle" fill="#475569" style={{ ...bold, fontSize: 9 }}>{isFreestanding ? "REAR BEAM" : "HOUSE"}</Text>
+          <Text x={ox + totalW / 2} y={oy - HOUSE_H / 2 + 4} textAnchor="middle" fill="#475569" style={{ ...bold, fontSize: 9 }}>
+            {input.mountStyle === "roof_mount" ? "REAR BEAM (SKYLIFT)" : isFreestanding ? "REAR BEAM" : "HOUSE"}
+          </Text>
 
           {/* Cover rectangle run 1 - lattice pergola gets an outline only, rafters/tubes convey the cover */}
           <Rect x={ox} y={run1TopY} width={coverW1} height={coverH1} fill={isLattice ? "transparent" : "#eff6ff"} stroke="#3b82f6" strokeWidth={1.5} />

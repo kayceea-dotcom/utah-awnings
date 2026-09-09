@@ -51,6 +51,7 @@ export interface WPanInputs {
   rearBeamLength: number;
   rearPosts: number;
   rearPostHeight: number;
+  skyliftPosts: number;
   fanBeamQty: number;
   fanBeamLength: number;
   shadeBeamQty: number;
@@ -120,13 +121,15 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     items.push(li("V-Panel #2 (" + panelLabel(inp.panelType) + ")", p2Qty, inp.projection2, rate, "sq ft", inp.colorPans));
   }
 
-  // ── HANGER — skipped when freestanding, replaced by a rear beam + posts below ──
+  // ── HANGER — skipped when freestanding or roof mount, replaced by a rear
+  // beam + posts/SkyLift risers below ──
   const isFreestanding = inp.mountStyle === "freestanding";
+  const isRoofMount = inp.mountStyle === "roof_mount";
   // For two-run jobs hanger spans combined width
   const totalWidth = inp.width1 + (inp.width2 > 0 ? inp.width2 : 0);
   const hangerLen = totalWidth > 0 ? totalWidth + 1.5 : 0;
   const hangerRate = inp.hangerType === "a_rail" ? RATES.hanger_a_rail_ft : RATES.hanger_roll_form_ft;
-  if (!isFreestanding && hangerLen > 0) {
+  if (!isFreestanding && !isRoofMount && hangerLen > 0) {
     items.push(li("Hanger 2.5in", 1, hangerLen, hangerRate, "", inp.colorPans));
   }
 
@@ -141,14 +144,14 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     // Gets an extra 1ft past the projection to cut to fit on site.
     const { qty: rollFasciaQty, length: rollFasciaStockLen } = fasciaQtyLen(maxProjection, 1);
     items.push(li("Side Fascia (2x6)", rollFasciaQty, rollFasciaStockLen, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
-    if (isFreestanding) {
+    if (isFreestanding || isRoofMount) {
       items.push(li("Roll Form Gutter Rear", 1, rollFormGutterStockLength(totalWidth + 1.5), RATES.gutter_roll_form_ft, "", inp.colorGutterFascia));
     }
   } else {
     items.push(li("Extruded Gutter 2.5in", 1, gutterStockLen, RATES.gutter_extruded_ft, "", inp.colorGutterFascia));
     const { qty: fasciaQty, length: fasciaStockLen } = fasciaQtyLen(maxProjection);
     items.push(li("Extruded Side Fascia", fasciaQty, fasciaStockLen, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
-    if (isFreestanding) {
+    if (isFreestanding || isRoofMount) {
       items.push(li("Extruded Gutter 2.5in Rear", 1, gutterStockLen, RATES.gutter_extruded_ft, "", inp.colorGutterFascia));
     }
   }
@@ -164,7 +167,7 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     }));
     // Freestanding - same finishing set again on the rear beam, since it now
     // looks the same as the front (no house wall to tuck under).
-    if (isFreestanding) {
+    if (isFreestanding || isRoofMount) {
       items.push(...wrapKitRafterItems(wrapRates, {
         gutterType: inp.gutterType, width1: inp.width1, rafterTails: inp.rafterTails,
         colorGutterFascia: inp.colorGutterFascia, colorPostsBeam: inp.colorPostsBeam,
@@ -205,8 +208,8 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     }
   }
 
-  // ── REAR BEAM — freestanding only, replaces the house-side Hanger ──
-  if (isFreestanding && inp.rearBeamLength > 0) {
+  // ── REAR BEAM — freestanding or roof mount only, replaces the house-side Hanger ──
+  if ((isFreestanding || isRoofMount) && inp.rearBeamLength > 0) {
     items.push(li("Beam Rear (" + beamLabel(inp.rearBeamType, inp.rearBeamEndCut) + ")", 1, inp.rearBeamLength, beamRate(inp.rearBeamType), "", inp.colorPostsBeam));
     const steelRateRear = steelRate(inp.rearBeamType);
     if (steelRateRear > 0) {
@@ -233,6 +236,13 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     items.push(li("3x3 Steel Post Rear",  rearPosts, lenRear, RATES.post_3x3_steel_ft));
   }
 
+  // ── SKYLIFT POSTS — roof mount only. Flat-fee roof risers, not literal
+  // ground posts, so they skip postMaterialLength/anchors/wrap-kit post
+  // finishing entirely - self-contained hardware, priced per riser. ──
+  if (isRoofMount && inp.skyliftPosts > 0) {
+    items.push(li("SkyLift Post", inp.skyliftPosts, 0, RATES.skylift_post));
+  }
+
   // ── WRAP KIT — post plates, sideplates, mitered caps, foam inserts, end caps, plugs ──
   if (hasWrap) {
     items.push(...wrapKitFinishingItems(wrapRates, {
@@ -242,7 +252,7 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
       projection1: inp.projection1, width1: inp.width1, panelQty1: p1Qty,
       colorPostsBeam: inp.colorPostsBeam,
       endCut: inp.beamEndCut1,
-      isFreestanding,
+      isFreestanding: isFreestanding || isRoofMount,
     }));
   }
 
@@ -307,7 +317,7 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   if (inp.beamLength2 > 0) {
     items.push(li("Beam End Caps #2", 2, 0, RATES.endcap_3x3, "", inp.colorPostsBeam));
   }
-  if (isFreestanding && inp.rearBeamLength > 0) {
+  if ((isFreestanding || isRoofMount) && inp.rearBeamLength > 0) {
     items.push(li("Beam End Caps Rear", 2, 0, RATES.endcap_3x3, "", inp.colorPostsBeam));
   }
 

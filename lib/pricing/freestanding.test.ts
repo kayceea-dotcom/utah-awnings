@@ -29,7 +29,7 @@ function newportBase(): NewportInputs {
     houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
     mountStyle: "attached",
     rearBeamType: "3x8", rearBeamEndCut: "beveled", rearBeamLength: 0,
-    rearPosts: 0, rearPostHeight: 10,
+    rearPosts: 0, rearPostHeight: 10, skyliftPosts: 0,
     fanBeamQty: 0, fanBeamLength: 16, shadeBeamQty: 0, shadeBeamLength: 16,
     discount: 0, customTotal: null, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
     markup: 2.0, taxRate: 0.0745,
@@ -52,7 +52,7 @@ function wpanBase(): WPanInputs {
     houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
     mountStyle: "attached",
     rearBeamType: "3x3", rearBeamEndCut: "beveled", rearBeamLength: 0,
-    rearPosts: 0, rearPostHeight: 10,
+    rearPosts: 0, rearPostHeight: 10, skyliftPosts: 0,
     fanBeamQty: 0, fanBeamLength: 16, shadeBeamQty: 0, shadeBeamLength: 16,
     discount: 0, customTotal: null, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
     markup: 2.0, taxRate: 0.0745,
@@ -73,7 +73,7 @@ function irpBase(): IRPInputs {
     houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
     mountStyle: "attached",
     rearBeamType: "3x8", rearBeamLength: 0,
-    rearPosts: 0, rearPostHeight: 10,
+    rearPosts: 0, rearPostHeight: 10, skyliftPosts: 0,
     shadeBeamQty: 0, shadeBeamLength: 16,
     discount: 0, customTotal: null, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
     markup: 2.0, taxRate: 0.0745,
@@ -95,7 +95,7 @@ function pergolaBase(): PergolaInputs {
     houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
     mountStyle: "attached",
     rearBeamType: "3x8", rearBeamLength: 0,
-    rearPosts: 0, rearPostHeight: 10,
+    rearPosts: 0, rearPostHeight: 10, skyliftPosts: 0,
     shadeBeamQty: 0, shadeBeamLength: 16,
     discount: 0, customTotal: null, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
     markup: 2.0, taxRate: 0.0745,
@@ -271,5 +271,81 @@ describe("Freestanding mount style", () => {
     const n1 = calcNewport(newportBase());
     const n2 = calcNewport({ ...newportBase(), rearBeamLength: 0, rearPosts: 0 });
     expect(n2.materialCost).toBe(n1.materialCost);
+  });
+});
+
+describe("Roof Mount mount style", () => {
+  it("Newport: roof mount drops the Hanger, adds a rear beam + gutter, and prices SkyLift Posts flat at $150/ea instead of literal ground posts", () => {
+    const attached = calcNewport(newportBase());
+    const inp = newportBase();
+    inp.mountStyle = "roof_mount";
+    inp.rearBeamLength = 20;
+    inp.rearBeamType = "3x3";
+    inp.skyliftPosts = 3;
+    const roof = calcNewport(inp);
+
+    expect(findItem(roof.lineItems, "Hanger")).toBeUndefined();
+    expect(findItem(roof.lineItems, "Beam Rear (3x3)")).toBeTruthy();
+    expect(findItem(roof.lineItems, "Extruded Gutter Rear")).toBeTruthy();
+    const skylift = findItem(roof.lineItems, "SkyLift Post");
+    expect(skylift?.qty).toBe(3);
+    expect(skylift?.amount).toBe(3 * 150);
+
+    // No literal rear ground posts, and the FRONT side's anchors/brackets
+    // are unaffected - roof risers never touch anchorQty/postMaterialLength.
+    expect(findItem(roof.lineItems, "3x3 Post Sleeve Rear")).toBeUndefined();
+    const attachedAnchors = findItem(attached.lineItems, "Wedge Anchors")?.qty ?? 0;
+    const roofAnchors = findItem(roof.lineItems, "Wedge Anchors")?.qty ?? 0;
+    expect(roofAnchors).toBe(attachedAnchors);
+    const attachedBrackets = findItem(attached.lineItems, "Post Brackets")?.qty ?? 0;
+    const roofBrackets = findItem(roof.lineItems, "Post Brackets")?.qty ?? 0;
+    expect(roofBrackets).toBe(attachedBrackets);
+  });
+
+  it("WPan: roof mount drops the Hanger, adds a rear beam + gutter + SkyLift Posts, skips literal rear posts", () => {
+    const inp = wpanBase();
+    inp.mountStyle = "roof_mount";
+    inp.rearBeamLength = 20;
+    inp.rearBeamType = "3x3";
+    inp.skyliftPosts = 2;
+    const roof = calcWPan(inp);
+
+    expect(findItem(roof.lineItems, "Hanger 2.5in")).toBeUndefined();
+    expect(findItem(roof.lineItems, "Beam Rear (3x3)")).toBeTruthy();
+    expect(findItem(roof.lineItems, "Extruded Gutter 2.5in Rear")).toBeTruthy();
+    expect(findItem(roof.lineItems, "SkyLift Post")?.qty).toBe(2);
+    expect(findItem(roof.lineItems, "3x3 Post Sleeve Rear")).toBeUndefined();
+    expect(findItem(roof.lineItems, "Beam End Caps Rear")).toBeTruthy();
+  });
+
+  it("IRP: roof mount drops the LRP Hanger, adds a rear beam + LRP Gutter Rear + SkyLift Posts, skips literal rear posts", () => {
+    const inp = irpBase();
+    inp.mountStyle = "roof_mount";
+    inp.rearBeamLength = 20;
+    inp.skyliftPosts = 2;
+    const roof = calcIRP(inp);
+
+    expect(findItem(roof.lineItems, "LRP Hanger")).toBeUndefined();
+    expect(findItem(roof.lineItems, "Beam Rear (3x8)")).toBeTruthy();
+    expect(findItem(roof.lineItems, "LRP Gutter Rear")).toBeTruthy();
+    expect(findItem(roof.lineItems, "SkyLift Post")?.qty).toBe(2);
+    expect(findItem(roof.lineItems, "3x3 Post Sleeve Rear")).toBeUndefined();
+  });
+
+  it("Pergola: roof mount never adds a Header Board, adds a rear beam + rear brackets + SkyLift Posts, skips literal rear posts", () => {
+    const inp = pergolaBase();
+    inp.headerBoard = true;
+    inp.mountStyle = "roof_mount";
+    inp.rearBeamLength = 20;
+    inp.rearBeamType = "3x3";
+    inp.skyliftPosts = 2;
+    const roof = calcPergola(inp);
+
+    expect(findItem(roof.lineItems, "2x6 Header Board")).toBeUndefined();
+    expect(findItem(roof.lineItems, "Beam Rear (3x3)")).toBeTruthy();
+    expect(findItem(roof.lineItems, "2x6 Inside Brackets Rear")).toBeTruthy();
+    expect(findItem(roof.lineItems, "2x6 Outside Brackets Rear")).toBeTruthy();
+    expect(findItem(roof.lineItems, "SkyLift Post")?.qty).toBe(2);
+    expect(findItem(roof.lineItems, "3x3 Post Sleeve Rear")).toBeUndefined();
   });
 });

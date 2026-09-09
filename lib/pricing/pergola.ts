@@ -31,6 +31,7 @@ export interface PergolaInputs {
   rearBeamLength: number;
   rearPosts: number;
   rearPostHeight: number;
+  skyliftPosts: number;
   shadeBeamQty: number;
   shadeBeamLength: number;
   discount: number;
@@ -46,6 +47,12 @@ export interface PergolaInputs {
 
 export function calcPergola(inp: PergolaInputs): QuoteResult {
   const items: LineItem[] = [];
+
+  // Roof Mount: the house-side ledger/header board is replaced by a real
+  // rear beam riding on SkyLift roof risers (see below) - the front side is
+  // untouched, still normal ground/deck/concrete posts.
+  const isFreestanding = inp.mountStyle === "freestanding";
+  const isRoofMount = inp.mountStyle === "roof_mount";
 
   const rafterRate = RATES.rafter_2x6_032_ft;
   const latticeRate = inp.latticeType === "2x3" ? RATES.lattice_2x3_ft : RATES.lattice_2x2_ft;
@@ -77,9 +84,10 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
     items.push(li("Lattice Splices", latticeQty, 0, latticeSpliceRate));
   }
 
-  // ── HEADER BOARD — a house-side ledger board; freestanding has a real rear
-  // beam there instead, so it never needs one regardless of the toggle. ──
-  if (inp.headerBoard && inp.beamLength > 0 && inp.mountStyle !== "freestanding") {
+  // ── HEADER BOARD — a house-side ledger board; freestanding/roof mount have
+  // a real rear beam there instead, so it never needs one regardless of the
+  // toggle. ──
+  if (inp.headerBoard && inp.beamLength > 0 && !isFreestanding && !isRoofMount) {
     items.push(li("2x6 Header Board", 1, inp.beamLength, rafterRate, "", inp.colorPergola));
   }
 
@@ -92,9 +100,8 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
     }
   }
 
-  // ── REAR BEAM — freestanding only, replaces the house-side ledger ──
-  const isFreestanding = inp.mountStyle === "freestanding";
-  if (isFreestanding && inp.rearBeamLength > 0) {
+  // ── REAR BEAM — freestanding or roof mount only, replaces the house-side ledger ──
+  if ((isFreestanding || isRoofMount) && inp.rearBeamLength > 0) {
     items.push(li("Beam Rear (" + beamTypeLabel(inp.rearBeamType) + ")", 1, inp.rearBeamLength, RATES.beam_3x8, "", inp.colorPergola));
     if (inp.rearBeamType !== "3x8_no_insert") {
       items.push(li("Steel Insert Rear", 1, nextStockLength(inp.rearBeamLength), RATES.steel_3x8_14ga_ft));
@@ -118,6 +125,13 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
     items.push(li("2x6 Post Plates Rear (Mitered)", rearPosts * 2, inp.rearPostHeight + 1, RATES.post_plate_2x6_ft, "", inp.colorPergola));
   }
 
+  // ── SKYLIFT POSTS — roof mount only. Flat-fee roof risers, not literal
+  // ground posts, so they skip postMaterialLength/anchors/post-plate
+  // finishing entirely - self-contained hardware, priced per riser. ──
+  if (isRoofMount && inp.skyliftPosts > 0) {
+    items.push(li("SkyLift Post", inp.skyliftPosts, 0, RATES.skylift_post));
+  }
+
   // ── MITERED CAPS ──
   if (totalPosts > 0) {
     items.push(li("Mitered Caps", totalPosts * 2, 0, RATES.mitered_cap_2x6, "", inp.colorPergola));
@@ -133,10 +147,10 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
     items.push(li("2x6 Outside Brackets", rafterQty, 0, RATES.outside_brkt_2x6, "", inp.colorPergola));
   }
 
-  // Freestanding - each rafter now connects to a real rear beam too (no house
-  // ledger), so it needs a second set of brackets and its own end cap there,
-  // same as the front.
-  if (isFreestanding && rafterQty > 0) {
+  // Freestanding/Roof Mount - each rafter now connects to a real rear beam
+  // too (no house ledger), so it needs a second set of brackets and its own
+  // end cap there, same as the front.
+  if ((isFreestanding || isRoofMount) && rafterQty > 0) {
     items.push(li("2x6 Inside Brackets Rear", rafterQty, 0, RATES.inside_brkt_2x6));
     items.push(li("2x6 Outside Brackets Rear", rafterQty, 0, RATES.outside_brkt_2x6, "", inp.colorPergola));
     items.push(li("2x6 End Caps Rear", rafterQty, 0, RATES.endcap_2x6, "", inp.colorPergola));
@@ -194,7 +208,7 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
   if (inp.beamLength > 0 && inp.beamQty > 0 && inp.beamType !== "none") {
     items.push(li("3x8 Beam End Caps", inp.beamQty * 2, 0, RATES.endcap_3x8, "", inp.colorPergola));
   }
-  if (isFreestanding && inp.rearBeamLength > 0) {
+  if ((isFreestanding || isRoofMount) && inp.rearBeamLength > 0) {
     items.push(li("3x8 Beam End Caps Rear", 2, 0, RATES.endcap_3x8, "", inp.colorPergola));
   }
 

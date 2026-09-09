@@ -11,10 +11,13 @@ export interface SideProfileGeometryInput {
   endCut?: string;
   showRafterTail?: boolean;
   /** "freestanding" draws a mirrored post+beam at the house end instead of a
-   *  wall/eave - fully self-supporting front and back, no house tie-in. */
+   *  wall/eave - fully self-supporting front and back, no house tie-in.
+   *  "roof_mount" draws a short SkyLift riser off a roof line instead - see
+   *  `rear` below. */
   mountStyle?: string;
   /** Rear post's own height/beam type - falls back to the front post's own
-   *  values when not given. */
+   *  values when not given. Ignored for roof_mount (SkyLift risers are a
+   *  fixed short length, not a user-entered post height). */
   rearPostHeight?: number;
   rearBeamType?: string;
   /** Rear beam's own end-cut style - falls back to the front's endCut when
@@ -76,8 +79,17 @@ export interface SideProfileGeometry {
   /** Px size (both width and height) of each tube cross-section. */
   tubeSize: number;
   isFreestanding: boolean;
-  /** Mirrored post+beam at the house end (freestanding only) - null when
-   *  attached (the house wall/eave is drawn there instead). */
+  /** Roof Mount - a short SkyLift riser off a roof line at the house end,
+   *  instead of a wall/eave (attached) or a full-height ground post
+   *  (freestanding). */
+  isRoofMount: boolean;
+  /** Y of the roof line the SkyLift riser mounts to (roof_mount only) - null
+   *  otherwise. Drawn as a distinct roofline indicator, not a ground/footing
+   *  line, so it doesn't read as a literal ground-mounted post. */
+  roofLineY: number | null;
+  /** Mirrored post+beam at the house end (freestanding), or a short SkyLift
+   *  riser off the roof line (roof_mount) - null when attached (the house
+   *  wall/eave is drawn there instead). */
   rear: {
     postX: number; postTopY: number; postBottomY: number; embeddedBottomY: number | null;
     postHeight: number;
@@ -162,6 +174,7 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
   if (!projection || !postHeight) return null;
 
   const isFreestanding = mountStyle === "freestanding";
+  const isRoofMount = mountStyle === "roof_mount";
 
   const PAD = 44;
   const GROUND_MARGIN = 26;
@@ -208,14 +221,15 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
     ? LATTICE_OVERHANG_FT * scale
     : hasPanel ? (panelOverhangInches / 12) * scale : 0;
 
-  // Freestanding shifts the house-end reference point right by the overhang
-  // amount, leaving room on the diagram's left edge for the panel to overhang
-  // past the rear beam by the same amount as it already does past the front -
-  // "houseX" still marks where the rear beam itself sits either way.
-  const houseX = PAD + (isFreestanding ? overhangPx : 0);
+  // Freestanding/Roof Mount shift the house-end reference point right by the
+  // overhang amount, leaving room on the diagram's left edge for the panel
+  // to overhang past the rear beam by the same amount as it already does
+  // past the front - "houseX" still marks where the rear beam itself sits
+  // either way.
+  const houseX = PAD + (isFreestanding || isRoofMount ? overhangPx : 0);
   const postX = houseX + projPx;
   const panelFrontX = postX + beamWidth / 2 + overhangPx;
-  const panelBackX = isFreestanding ? houseX - overhangPx : houseX;
+  const panelBackX = isFreestanding || isRoofMount ? houseX - overhangPx : houseX;
   // Flush with the panel's own front edge - no gap, the rafter tail is
   // attached right there, not floating in front of the cover.
   const tailStartX = panelFrontX;
@@ -261,6 +275,7 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
   // the front beam's panelTopY as a single flat rect either way - it isn't
   // re-sloped to meet a differently-heighted rear beam exactly.
   let rear: SideProfileGeometry["rear"] = null;
+  let roofLineY: number | null = null;
   if (isFreestanding) {
     const rearHeight = rearPostHeight || postHeight;
     const rearHpx = rearHeight * scale;
@@ -275,6 +290,23 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
       beamTopY: rearBeamTopY, beamHeight: rearBeamHeight, beamWidth,
       footingX: houseX - footingWidth / 2, footingWidth,
     };
+  } else if (isRoofMount) {
+    // SkyLift risers are short and mount to the roof surface, not down at
+    // grade like a literal ground/deck post - approximated as a fixed ~2ft
+    // riser whose bottom marks the roof line, positioned level with the
+    // front post's own top (roughly where the front beam sits) so the cover
+    // still reads as a roughly level structure front to back.
+    const SKYLIFT_RISER_FT = 2;
+    const riserPx = SKYLIFT_RISER_FT * scale;
+    roofLineY = postTopY;
+    const rearBeamHeight = (beamHeightInches(rearBeamType || beamType) / 12) * scale;
+    const rearBeamTopY = roofLineY - riserPx - rearBeamHeight;
+    rear = {
+      postX: houseX, postTopY: roofLineY - riserPx, postBottomY: roofLineY, embeddedBottomY: null,
+      postHeight: SKYLIFT_RISER_FT,
+      beamTopY: rearBeamTopY, beamHeight: rearBeamHeight, beamWidth,
+      footingX: houseX - footingWidth / 2, footingWidth,
+    };
   }
 
   // Eave assembly, drawn as the actual boards rather than one abstract
@@ -284,7 +316,7 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
   // 45deg (run = rise, holds at any scale). The wall stub stops at the
   // bottom of the eave - the overhang above isn't backed by wall, same as
   // a real house.
-  const isEaveMount = !isFreestanding && (houseAttachment === "eave" || houseAttachment === "angled_eave");
+  const isEaveMount = !isFreestanding && !isRoofMount && (houseAttachment === "eave" || houseAttachment === "angled_eave");
   const EAVE_H = (6 / 12) * scale;
   const EAVE_PROJECTION = 2 * scale;
   const EAVE_BOARD_T = 4;
@@ -317,7 +349,7 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
     scale, isDeck, isGroundMount,
     houseAttachment, groundAttachment, deckHeight, postHeight, projection, endCut, rearEndCut: rearEndCut || endCut, showRafterTail,
     isLattice, tubeXs, tubeSize,
-    isFreestanding, rear,
+    isFreestanding, isRoofMount, roofLineY, rear,
     isEaveMount, eaveSoffit, eaveFascia, eaveRoofLine, wallStubTopY, eaveWallX,
   };
 }

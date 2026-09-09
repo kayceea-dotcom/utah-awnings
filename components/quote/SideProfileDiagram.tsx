@@ -78,7 +78,7 @@ export default function SideProfileDiagram({
     houseX, roofY, tailStartX, tailW,
     footingX, footingWidth,
     isDeck, isGroundMount, tubeXs, tubeSize,
-    isFreestanding, rear,
+    isFreestanding, isRoofMount, roofLineY, rear,
     isEaveMount, eaveSoffit, eaveFascia, eaveRoofLine, wallStubTopY, eaveWallX,
     rearEndCut: resolvedRearEndCut,
   } = geo;
@@ -129,6 +129,20 @@ export default function SideProfileDiagram({
               </text>
               <rect x={rear.postX - rear.beamWidth / 2} y={rear.beamTopY} width={rear.beamWidth} height={rear.beamHeight} fill="#1e40af" stroke="#1e3a8a" strokeWidth="1" />
             </>
+          ) : isRoofMount && rear && roofLineY !== null ? (
+            <>
+              {/* Roof line - the actual roof surface the SkyLift riser
+                  mounts through (real pipe flashing, per the hardware's own
+                  install diagram), drawn as a short hatched strip rather
+                  than the full ground line so it doesn't read as grade. */}
+              <rect x={rear.postX - 26} y={roofLineY} width={52} height={6} fill="url(#sp-hatch)" opacity={0.6} />
+              <line x1={rear.postX - 26} y1={roofLineY} x2={rear.postX + 26} y2={roofLineY} stroke="#78716c" strokeWidth="3" strokeLinecap="square" />
+              {/* SkyLift riser - short hardware post, not a literal footed
+                  ground post, drawn in a distinct slate/metal tone. */}
+              <rect x={rear.postX - postWidth / 2} y={rear.postTopY} width={postWidth} height={rear.postBottomY - rear.postTopY}
+                fill="#475569" stroke="#1e293b" strokeWidth="1" />
+              <rect x={rear.postX - rear.beamWidth / 2} y={rear.beamTopY} width={rear.beamWidth} height={rear.beamHeight} fill="#1e40af" stroke="#1e3a8a" strokeWidth="1" />
+            </>
           ) : isEaveMount ? (
             <>
               <rect x={eaveWallX - 10} y={wallStubTopY} width={10} height={groundY - wallStubTopY} fill="url(#sp-hatch)" stroke="#64748b" strokeWidth="1.5" />
@@ -143,7 +157,7 @@ export default function SideProfileDiagram({
             <rect x={houseX - 10} y={10} width={10} height={groundY - 10} fill="url(#sp-hatch)" stroke="#64748b" strokeWidth="1.5" />
           )}
           <text x={houseX - 5} y={roofY + 42} textAnchor="middle" fontSize="7" fill="#475569" fontWeight="600">
-            {isFreestanding ? "FREESTANDING" : HOUSE_ATTACHMENT_LABELS[houseAttachment] || houseAttachment.toUpperCase()}
+            {isFreestanding ? "FREESTANDING" : isRoofMount ? "ROOF MOUNT (SKYLIFT)" : HOUSE_ATTACHMENT_LABELS[houseAttachment] || houseAttachment.toUpperCase()}
           </text>
 
           {/* Ground line - starts past whichever sits further back, the
@@ -245,10 +259,11 @@ export default function SideProfileDiagram({
             </g>
           )}
 
-          {/* Rear rafter tail - freestanding only, a horizontally mirrored copy
-              of the front tail (negative x-scale) anchored at the panel's own
-              back edge, using the rear beam's own end-cut style. */}
-          {isFreestanding && !isLattice && showRafterTail && (
+          {/* Rear rafter tail - freestanding/roof mount only, a horizontally
+              mirrored copy of the front tail (negative x-scale) anchored at
+              the panel's own back edge, using the rear beam's own end-cut
+              style. */}
+          {(isFreestanding || isRoofMount) && !isLattice && showRafterTail && (
             <g transform={"translate(" + panelBackX + "," + panelTopY + ") scale(" + (-(tailW / 44)) + "," + (panelHeight / 24) + ")"}>
               <path d={rearTailPath} fill="#3b82f6" stroke="#1e3a8a" strokeWidth="1" />
             </g>

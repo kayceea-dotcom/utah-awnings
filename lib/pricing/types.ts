@@ -25,7 +25,7 @@ export type HouseAttachmentType = "stucco" | "siding" | "eave" | "angled_eave";
 export type GroundAttachmentType = "concrete" | "deck" | "ground_mount";
 // "attached" ties the back edge to the house via a Hanger; "freestanding" replaces
 // that with a real rear beam + its own posts, fully self-supporting front and back.
-export type MountStyle = "attached" | "freestanding";
+export type MountStyle = "attached" | "freestanding" | "roof_mount";
 
 export interface BeamConfig {
   type: string;
@@ -79,6 +79,7 @@ export interface NewportInputs {
   rearBeamLength: number;
   rearPosts: number;
   rearPostHeight: number;
+  skyliftPosts: number;
   fanBeamQty: number;
   fanBeamLength: number;
   shadeBeamQty: number;
