@@ -86,6 +86,7 @@ const GROUND_ATTACHMENTS = [
 const MOUNT_STYLES = [
   { value: "attached",     label: "Attached (house ledger)" },
   { value: "freestanding", label: "Freestanding (posts front + back)" },
+  { value: "roof_mount",   label: "Roof Mount (SkyLift)" },
 ];
 
 const DEFAULT: PergolaInputs = {
@@ -102,7 +103,7 @@ const DEFAULT: PergolaInputs = {
   houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
   mountStyle: "attached",
   rearBeamType: "3x8", rearBeamLength: 0,
-  rearPosts: 0, rearPostHeight: 10,
+  rearPosts: 0, rearPostHeight: 10, skyliftPosts: 0,
   shadeBeamQty: 0, shadeBeamLength: 16,
   discount: 0, customTotal: null, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
   markup: 1.8, taxRate: 0.0745,
@@ -361,6 +362,13 @@ export default function PergolaQuotePage() {
       setInp((p) => ({ ...p, mountStyle: v as never, posts: front, rearPosts: rear }));
     } else if (v !== "freestanding" && inp.mountStyle === "freestanding") {
       setInp((p) => ({ ...p, mountStyle: v as never, posts: p.posts + p.rearPosts, rearPosts: 0 }));
+    } else if (v === "roof_mount" && inp.mountStyle !== "roof_mount") {
+      // Roof Mount's rear side rides on SkyLift roof risers, not literal
+      // ground posts - front posts are untouched (any freestanding rear
+      // ground posts merge back to the front, same as leaving freestanding
+      // outright). Rear beam defaults to 3x3 (the usual SkyLift beam size,
+      // even when the main beam is 3x8) but is still overridable below.
+      setInp((p) => ({ ...p, mountStyle: v as never, posts: p.posts + p.rearPosts, rearPosts: 0, rearBeamType: "3x3" }));
     } else {
       setField("mountStyle", v as never);
     }
@@ -418,7 +426,7 @@ export default function PergolaQuotePage() {
                 <SelectInput label="End Cut Side" value={inp.endCutSide} onChange={(v) => setField("endCutSide", v)} options={END_CUT_SIDES} />
                 <SelectInput label="Lattice Type" value={inp.latticeType} onChange={(v) => setField("latticeType", v as never)} options={LATTICE_TYPES} />
                 <SelectInput label="Lattice Spacing" value={inp.latticeSpacing} onChange={(v) => setField("latticeSpacing", v as never)} options={LATTICE_SPACING} />
-                {inp.mountStyle !== "freestanding" && (
+                {inp.mountStyle === "attached" && (
                   <ToggleInput label="Header Board" value={inp.headerBoard} onChange={(v) => setField("headerBoard", v)} yesLabel="include" />
                 )}
                 <ToggleInput label="Spray Paint" value={inp.sprayPaint} onChange={(v) => setField("sprayPaint", v)} yesLabel="include" />
@@ -426,7 +434,7 @@ export default function PergolaQuotePage() {
 
               <SectionCard id="attachment" title="Attachment" open={open.has("attachment")} onToggle={toggleSection}>
                 <SelectInput label="Mount Style" value={inp.mountStyle} onChange={handleMountStyleChange} options={MOUNT_STYLES} span={2} />
-                {inp.mountStyle !== "freestanding" && (
+                {inp.mountStyle === "attached" && (
                   <SelectInput label="House Attachment" value={inp.houseAttachment} onChange={(v) => setField("houseAttachment", v as never)} options={HOUSE_ATTACHMENTS} />
                 )}
                 <SelectInput label="Ground Attachment" value={inp.groundAttachment} onChange={(v) => setField("groundAttachment", v as never)} options={GROUND_ATTACHMENTS} />
@@ -451,6 +459,15 @@ export default function PergolaQuotePage() {
                     <SelectInput label="Rear Post Height (ft)" value={String(inp.rearPostHeight)} onChange={(v) => setField("rearPostHeight", Number(v))}
                       options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))}
                       hint={"Rear posts: " + inp.rearPosts} />
+                  </>
+                )}
+                {inp.mountStyle === "roof_mount" && (
+                  <>
+                    <div className="col-span-2 text-xs font-bold text-gray-600 uppercase tracking-wide pt-2">Rear Beam &amp; SkyLift Posts</div>
+                    <SelectInput label="Rear Beam Type" value={inp.rearBeamType} onChange={(v) => setField("rearBeamType", v as never)} options={BEAM_TYPES} />
+                    <NumInput label="Rear Beam Length (ft)" value={inp.rearBeamLength} onChange={(v) => setField("rearBeamLength", v)} />
+                    <NumInput label="SkyLift Posts (qty)" value={inp.skyliftPosts} onChange={(v) => setField("skyliftPosts", v)}
+                      hint="$150 each" />
                   </>
                 )}
               </SectionCard>
@@ -494,7 +511,7 @@ export default function PergolaQuotePage() {
                   latticeType={inp.latticeType}
                   latticeSpacing={inp.latticeSpacing}
                   mountStyle={inp.mountStyle}
-                  rearPosts={inp.rearPosts}
+                  rearPosts={inp.mountStyle === "roof_mount" ? inp.skyliftPosts : inp.rearPosts}
                 />
                 <SideProfileDiagram
                   projection={inp.projection}
@@ -552,7 +569,7 @@ export default function PergolaQuotePage() {
                 latticeType={inp.latticeType}
                 latticeSpacing={inp.latticeSpacing}
                 mountStyle={inp.mountStyle}
-                rearPosts={inp.rearPosts}
+                rearPosts={inp.mountStyle === "roof_mount" ? inp.skyliftPosts : inp.rearPosts}
               />
               <SideProfileDiagram
                 projection={inp.projection}

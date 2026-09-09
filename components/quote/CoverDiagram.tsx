@@ -102,7 +102,9 @@ export default function CoverDiagram({
             )
           )}
           <text x={ox + totalW / 2} y={oy - HOUSE_H / 2 + 4}
-            textAnchor="middle" fontSize="9" fill="#475569" fontWeight="600">{isFreestanding ? "REAR BEAM" : "HOUSE"}</text>
+            textAnchor="middle" fontSize="9" fill="#475569" fontWeight="600">
+            {mountStyle === "roof_mount" ? "REAR BEAM (SKYLIFT)" : isFreestanding ? "REAR BEAM" : "HOUSE"}
+          </text>
 
           {/* Cover rectangle run 1 - a lattice pergola has nothing solid to
               fill (open structure), so it's just an outline; the rafters +

@@ -27,6 +27,10 @@ export const RATES = {
   post_3x3_steel_ft:   8.477,
   sampson_post_ft:     6.91,
 
+  // Roof Mount (SkyLift) - flat fee per riser, not priced by length like a
+  // literal ground/deck post
+  skylift_post:      150.00,
+
   // Hangers (per ft, except elevated_roof_mount which is a flat fee)
   hanger_roll_form_ft:   3.37,
   hanger_extruded_ft:    5.00,

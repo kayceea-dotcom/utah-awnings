@@ -59,8 +59,13 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     return RATES.hanger_roll_form_ft;
   }
   const isFreestanding = inp.mountStyle === "freestanding";
-  if (isFreestanding) {
-    // No house tie-in - the back edge gets its own beam + posts below instead.
+  // Roof Mount: the house-side eave hanger is replaced by a real rear beam
+  // riding on SkyLift roof risers (see below) - the front side is untouched,
+  // still normal ground/deck/concrete posts.
+  const isRoofMount = inp.mountStyle === "roof_mount";
+  if (isFreestanding || isRoofMount) {
+    // No house tie-in - the back edge gets its own beam (+ posts, or SkyLift
+    // risers) below instead.
   } else if (inp.hangerType === "elevated_roof_mount") {
     if (combinedWidth > 0) items.push(li("Hanger", 1, 0, RATES.hanger_elevated_roof_mount, "", inp.colorPans));
   } else if (splitHanger) {
@@ -86,9 +91,11 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   } else if (combinedWidth > 0) {
     items.push(li(gutterName, gutterMultiplier, gutterStockLength(combinedWidth), gutterRate, "", inp.colorGutterFascia));
   }
-  // Freestanding - the rear beam is now a real finished edge (no house wall to
-  // tuck under), so it gets its own gutter too, matching the front.
-  if (isFreestanding && combinedWidth > 0) {
+  // Freestanding/Roof Mount - the rear beam is now a real finished edge (no
+  // house wall to tuck under), so it gets its own gutter too, matching the
+  // front (Roof Mount's mirrors the front gutter's own type/color, same as
+  // Freestanding already does - there's no separate rear gutter selection).
+  if ((isFreestanding || isRoofMount) && combinedWidth > 0) {
     items.push(li(gutterName + " Rear", gutterMultiplier, gutterStockLength(combinedWidth), gutterRate, "", inp.colorGutterFascia));
   }
 
@@ -118,9 +125,9 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
       colorGutterFascia: inp.colorGutterFascia, colorPostsBeam: inp.colorPostsBeam,
       endCut: inp.beamEndCut1,
     }));
-    // Freestanding - same finishing set again on the rear beam, since it now
-    // looks the same as the front (no house wall to tuck under).
-    if (isFreestanding) {
+    // Freestanding/Roof Mount - same finishing set again on the rear beam,
+    // since it now looks the same as the front (no house wall to tuck under).
+    if (isFreestanding || isRoofMount) {
       items.push(...wrapKitRafterItems(wrapRates, {
         gutterType: inp.gutterType, width1: inp.width1, rafterTails: inp.rafterTails,
         colorGutterFascia: inp.colorGutterFascia, colorPostsBeam: inp.colorPostsBeam,
@@ -145,8 +152,8 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     }
   }
 
-  // ── REAR BEAM — freestanding only, replaces the house-side Hanger ──
-  if (isFreestanding && inp.rearBeamLength > 0) {
+  // ── REAR BEAM — freestanding or roof mount only, replaces the house-side Hanger ──
+  if ((isFreestanding || isRoofMount) && inp.rearBeamLength > 0) {
     items.push(li("Beam Rear (" + beamLabel(inp.rearBeamType, inp.rearBeamEndCut) + ")", 1, inp.rearBeamLength, beamMaterialRate(inp.rearBeamType), "", inp.colorPostsBeam));
     const steelRateRear = steelInsertRate(inp.rearBeamType);
     if (steelRateRear > 0) {
@@ -172,6 +179,13 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     const lenRear = postMaterialLength(inp.rearPostHeight, inp.groundAttachment);
     items.push(li("3x3 Post Sleeve Rear", rearPosts, lenRear, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
     items.push(li("3x3 Steel Post Rear",  rearPosts, lenRear, RATES.post_3x3_steel_ft));
+  }
+
+  // ── SKYLIFT POSTS — roof mount only. Flat-fee roof risers, not literal
+  // ground posts, so they skip postMaterialLength/anchors/wrap-kit post
+  // finishing entirely - self-contained hardware, priced per riser. ──
+  if (isRoofMount && inp.skyliftPosts > 0) {
+    items.push(li("SkyLift Post", inp.skyliftPosts, 0, RATES.skylift_post));
   }
 
   // ── MULTI-SPAN BEAMS — additional beams beyond the two primary runs (Additional /
@@ -203,7 +217,10 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
       projection1: inp.projection1, width1: inp.width1, panelQty1: p1Qty,
       colorPostsBeam: inp.colorPostsBeam,
       endCut: inp.beamEndCut1,
-      isFreestanding,
+      // Roof Mount overhangs the rear beam the same as Freestanding does
+      // (SkyLift risers aren't literal posts, but the panel still extends
+      // past the rear beam the same 2ft either way).
+      isFreestanding: isFreestanding || isRoofMount,
     }));
   }
 
@@ -278,7 +295,7 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   if (inp.beamLength2 > 0 && inp.beamType2) {
     items.push(li("Beam End Caps #2", 2, 0, beamEndcapRate(inp.beamType2), "", inp.colorPostsBeam));
   }
-  if (isFreestanding && inp.rearBeamLength > 0) {
+  if ((isFreestanding || isRoofMount) && inp.rearBeamLength > 0) {
     items.push(li("Beam End Caps Rear", 2, 0, beamEndcapRate(inp.rearBeamType), "", inp.colorPostsBeam));
   }
 

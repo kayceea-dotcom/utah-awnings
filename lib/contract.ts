@@ -85,7 +85,7 @@ export function buildContractData(proposal: Record<string, unknown>): ContractDa
           beamType1: String(inputs.beamType1 || "3x8"),
           beamType2: String(inputs.beamType2 || "3x8"),
           mountStyle: String(inputs.mountStyle || "attached"),
-          rearPosts: Number(inputs.rearPosts) || 0,
+          rearPosts: inputs.mountStyle === "roof_mount" ? Number(inputs.skyliftPosts) || 0 : Number(inputs.rearPosts) || 0,
         }
       : null;
 
@@ -123,7 +123,9 @@ export function buildContractData(proposal: Record<string, unknown>): ContractDa
   const postHeight = inputs.postHeight1
     ? mountStyle === "freestanding" && inputs.rearPostHeight
       ? Number(inputs.postHeight1) + "' Front / " + Number(inputs.rearPostHeight) + "' Rear"
-      : Number(inputs.postHeight1) + "'"
+      : mountStyle === "roof_mount" && inputs.skyliftPosts
+        ? Number(inputs.postHeight1) + "' Front / " + Number(inputs.skyliftPosts) + " SkyLift Rear"
+        : Number(inputs.postHeight1) + "'"
     : "";
 
   const deckHeight =

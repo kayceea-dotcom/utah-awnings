@@ -38,7 +38,7 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
     houseX, roofY, tailStartX, tailW,
     footingX, footingWidth,
     isDeck, isGroundMount, houseAttachment, groundAttachment, deckHeight, postHeight, showRafterTail,
-    isLattice, tubeXs, tubeSize, isFreestanding, rear, rearEndCut,
+    isLattice, tubeXs, tubeSize, isFreestanding, isRoofMount, roofLineY, rear, rearEndCut,
     isEaveMount, eaveSoffit, eaveFascia, eaveRoofLine, wallStubTopY, eaveWallX,
   } = geo;
 
@@ -83,6 +83,19 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
               </Text>
               <Rect x={rear.postX - rear.beamWidth / 2} y={rear.beamTopY} width={rear.beamWidth} height={rear.beamHeight} fill="#1e40af" stroke="#1e3a8a" strokeWidth={1} />
             </G>
+          ) : isRoofMount && rear && roofLineY !== null ? (
+            <G>
+              {/* Roof line - the actual roof surface the SkyLift riser
+                  mounts through, drawn as a short strip rather than the full
+                  ground line so it doesn't read as grade. */}
+              <Rect x={rear.postX - 26} y={roofLineY} width={52} height={6} fill="#e2e8f0" />
+              <Line x1={rear.postX - 26} y1={roofLineY} x2={rear.postX + 26} y2={roofLineY} stroke="#78716c" strokeWidth={3} strokeLinecap="square" />
+              {/* SkyLift riser - short hardware post, not a literal footed
+                  ground post, drawn in a distinct slate/metal tone. */}
+              <Rect x={rear.postX - postWidth / 2} y={rear.postTopY} width={postWidth} height={rear.postBottomY - rear.postTopY}
+                fill="#475569" stroke="#1e293b" strokeWidth={1} />
+              <Rect x={rear.postX - rear.beamWidth / 2} y={rear.beamTopY} width={rear.beamWidth} height={rear.beamHeight} fill="#1e40af" stroke="#1e3a8a" strokeWidth={1} />
+            </G>
           ) : isEaveMount ? (
             <G>
               <Rect x={eaveWallX - 10} y={wallStubTopY} width={10} height={groundY - wallStubTopY} fill="#cbd5e1" stroke="#64748b" strokeWidth={1.5} />
@@ -97,7 +110,7 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
             <Rect x={houseX - 10} y={10} width={10} height={groundY - 10} fill="#cbd5e1" stroke="#64748b" strokeWidth={1.5} />
           )}
           <Text x={houseX - 5} y={roofY + 42} textAnchor="middle" fill="#475569" style={{ ...bold, fontSize: 7 }}>
-            {isFreestanding ? "FREESTANDING" : HOUSE_ATTACHMENT_LABELS[houseAttachment] || houseAttachment.toUpperCase()}
+            {isFreestanding ? "FREESTANDING" : isRoofMount ? "ROOF MOUNT (SKYLIFT)" : HOUSE_ATTACHMENT_LABELS[houseAttachment] || houseAttachment.toUpperCase()}
           </Text>
 
           {/* Ground line - starts past whichever sits further back, the
@@ -191,10 +204,10 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
             </G>
           )}
 
-          {/* Rear rafter tail - freestanding only, a horizontally mirrored copy
-              of the front tail anchored at the panel's own back edge, using the
-              rear beam's own end-cut style. */}
-          {isFreestanding && !isLattice && showRafterTail && (
+          {/* Rear rafter tail - freestanding/roof mount only, a horizontally
+              mirrored copy of the front tail anchored at the panel's own
+              back edge, using the rear beam's own end-cut style. */}
+          {(isFreestanding || isRoofMount) && !isLattice && showRafterTail && (
             <G transform={"translate(" + panelBackX + "," + panelTopY + ") scale(" + (-tailScaleX) + "," + tailScaleY + ")"}>
               <Path d={rearTailPath} fill="#3b82f6" stroke="#1e3a8a" strokeWidth={1} />
             </G>
