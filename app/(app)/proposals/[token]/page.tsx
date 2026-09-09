@@ -16,6 +16,138 @@ import PaymentsPanel from "@/components/quote/PaymentsPanel";
 
 const fmt = (n: number) => n?.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
+// Mirrors the color/panel/beam/wrap/end-cut option lists defined locally in
+// each product's quote-builder page (app/(app)/quote/<product>/page.tsx) -
+// kept here as a second copy (not a shared import) since those pages define
+// them inline rather than exporting them. Job Details editing needs to know
+// which quotes.inputs key backs each visible field, since that differs per
+// product type (e.g. "color" is inputs.colorPergola for a pergola but
+// inputs.colorPans for a flat panel/w-pan job).
+const COLORS = ["White", "Siennawood", "Slate", "Driftwood", "Beechwood", "Maplewood", "Ebony", "Sandlewood"];
+const COLOR_OPTS = COLORS.map((c) => ({ value: c, label: c }));
+
+const WRAP_OPTS = [
+  { value: "none", label: "None (no wrap kit)" },
+  { value: "3x8", label: "3x8" },
+  { value: "2x6", label: "2x6" },
+];
+
+const END_CUT_OPTS = [
+  { value: "scallop", label: "Scallop" },
+  { value: "beveled", label: "Beveled" },
+  { value: "mitered", label: "Mitered" },
+  { value: "corbel", label: "Corbel" },
+];
+
+const BEAM_TYPE_OPTS: Record<string, { value: string; label: string }[]> = {
+  pergola: [
+    { value: "none", label: "No Beam" }, { value: "3x8", label: "3x8 Beam" },
+    { value: "3x8_no_insert", label: "3x8 Beam (No Insert)" }, { value: "3x3", label: "3x3 Beam" },
+    { value: "4_i_beam", label: "4in I-Beam" }, { value: "7_i_beam", label: "7in I-Beam" },
+  ],
+  flat_panel: [
+    { value: "none", label: "No Beam" }, { value: "3x8", label: "3x8 Beam" },
+    { value: "3x8_no_insert", label: "3x8 Beam (No Insert)" }, { value: "double_3x8", label: "Double 3x8 Beam" },
+    { value: "3x3", label: "3x3 Beam" }, { value: "4_i_beam", label: "4in I-Beam" }, { value: "7_i_beam", label: "7in I-Beam" },
+  ],
+  irp: [
+    { value: "none", label: "No Beam" }, { value: "3x8", label: "3x8 Beam" },
+    { value: "3x8_no_insert", label: "3x8 Beam (No Insert)" }, { value: "3x3", label: "3x3 Beam" },
+    { value: "4_i_beam", label: "4in I-Beam" }, { value: "7_i_beam", label: "7in I-Beam" },
+  ],
+  w_pan: [
+    { value: "none", label: "No Beam" }, { value: "3x3", label: "3x3 Beam" }, { value: "3x8", label: "3x8 Beam" },
+    { value: "3x8_no_insert", label: "3x8 Beam (No Insert)" }, { value: "4_i_beam", label: "4in I-Beam" }, { value: "7_i_beam", label: "7in I-Beam" },
+  ],
+};
+
+const PANEL_TYPE_OPTS: Record<string, { value: string; label: string }[]> = {
+  flat_panel: [
+    { value: "T6_024", label: "T6 .024 - 6in Flat Pan" }, { value: "T6_032", label: "T6 .032 - 6in Flat Pan" },
+    { value: "T6_040", label: "T6 .040 - 6in Flat Pan" }, { value: "flat_8_020", label: "8in Flat Pan .020" },
+    { value: "flat_8_024", label: "8in Flat Pan .024" }, { value: "flat_8_032", label: "8in Flat Pan .032" },
+  ],
+  irp: [
+    { value: "lrp_3_032", label: "3in LRP .032 (per sq ft)" }, { value: "lrp_4_032", label: "4.25in LRP .032 (per sq ft)" },
+  ],
+  w_pan: [
+    { value: "wpan_032", label: "Tri-V 2.5in .032" }, { value: "duraking_025", label: "DuraKing 4x12 .025" },
+    { value: "duraking_032", label: "DuraKing 4x12 .032" }, { value: "duraking_040", label: "DuraKing 4x12 .040" },
+  ],
+};
+
+type JobDetailsConfig = {
+  colors: { key: string; label: string }[];
+  panelTypeKey: string | null;
+  panelTypeOpts: { value: string; label: string }[] | null;
+  beamTypeKey: string | null;
+  beamTypeOpts: { value: string; label: string }[] | null;
+  wrapKey: string | null;
+  endCutKey: string | null;
+  fanBeam: boolean;
+};
+
+function getJobDetailsConfig(productType: string): JobDetailsConfig {
+  switch (productType) {
+    case "pergola":
+      return {
+        colors: [{ key: "colorPergola", label: "Pergola Color" }],
+        panelTypeKey: null, panelTypeOpts: null,
+        beamTypeKey: "beamType", beamTypeOpts: BEAM_TYPE_OPTS.pergola,
+        wrapKey: null,
+        endCutKey: "endCut",
+        fanBeam: false,
+      };
+    case "irp":
+      return {
+        colors: [{ key: "colorPostsBeam", label: "Color" }],
+        panelTypeKey: "panelType", panelTypeOpts: PANEL_TYPE_OPTS.irp,
+        beamTypeKey: "beamType1", beamTypeOpts: BEAM_TYPE_OPTS.irp,
+        wrapKey: "wrapType",
+        endCutKey: null,
+        fanBeam: false,
+      };
+    case "w_pan":
+      return {
+        colors: [
+          { key: "colorPans", label: "Panel Color" },
+          { key: "colorGutterFascia", label: "Gutter/Fascia Color" },
+          { key: "colorPostsBeam", label: "Posts/Beam Color" },
+        ],
+        panelTypeKey: "panelType", panelTypeOpts: PANEL_TYPE_OPTS.w_pan,
+        beamTypeKey: "beamType1", beamTypeOpts: BEAM_TYPE_OPTS.w_pan,
+        wrapKey: "wrapType",
+        endCutKey: "beamEndCut1",
+        fanBeam: true,
+      };
+    case "flat_panel":
+      return {
+        colors: [
+          { key: "colorPans", label: "Panel Color" },
+          { key: "colorGutterFascia", label: "Gutter/Fascia Color" },
+          { key: "colorPostsBeam", label: "Posts/Beam Color" },
+        ],
+        panelTypeKey: "panelType1", panelTypeOpts: PANEL_TYPE_OPTS.flat_panel,
+        beamTypeKey: "beamType1", beamTypeOpts: BEAM_TYPE_OPTS.flat_panel,
+        wrapKey: "wrapType",
+        endCutKey: "beamEndCut1",
+        fanBeam: true,
+      };
+    default:
+      // "individual" (catalog line-item quotes) and anything unrecognized
+      // have no single color/panel/beam scheme to edit here - only Notes.
+      return {
+        colors: [], panelTypeKey: null, panelTypeOpts: null,
+        beamTypeKey: null, beamTypeOpts: null, wrapKey: null, endCutKey: null, fanBeam: false,
+      };
+  }
+}
+
+function optLabel(opts: { value: string; label: string }[] | null, value: string): string {
+  if (!value) return "-";
+  return opts?.find((o) => o.value === value)?.label || value;
+}
+
 export default function ProposalPreviewPage() {
   const params = useParams();
   const token = params.token as string;
@@ -65,6 +197,17 @@ export default function ProposalPreviewPage() {
   const [totalError, setTotalError] = useState("");
   const [draftTotal, setDraftTotal] = useState(0);
   const [draftDepositPct, setDraftDepositPct] = useState(0);
+  const [editingJob, setEditingJob] = useState(false);
+  const [savingJob, setSavingJob] = useState(false);
+  const [jobError, setJobError] = useState("");
+  const [draftColors, setDraftColors] = useState<Record<string, string>>({});
+  const [draftPanelType, setDraftPanelType] = useState("");
+  const [draftBeamType, setDraftBeamType] = useState("");
+  const [draftWrap, setDraftWrap] = useState("");
+  const [draftEndCut, setDraftEndCut] = useState("");
+  const [draftFanBeamQty, setDraftFanBeamQty] = useState(0);
+  const [draftFanBeamLength, setDraftFanBeamLength] = useState(0);
+  const [draftNotes, setDraftNotes] = useState("");
   const { profile } = useProfile();
   const supabase = createClient();
 
@@ -100,6 +243,13 @@ export default function ProposalPreviewPage() {
     };
     return getFollowUpStatus(timestamps);
   }, [proposal]);
+
+  const productType = useMemo(() => {
+    if (!quote) return "";
+    return ((quote.product_type as string) || (quote.style as string) || "").toLowerCase();
+  }, [quote]);
+
+  const jobConfig = useMemo(() => getJobDetailsConfig(productType), [productType]);
 
   async function handlePreviewOrder() {
     setPreviewing(true);
@@ -394,6 +544,75 @@ export default function ProposalPreviewPage() {
     setSavingTotal(false);
   }
 
+  function startEditingJob() {
+    if (!quote) return;
+    const inp = (quote.inputs as Record<string, unknown>) || {};
+    const colors: Record<string, string> = {};
+    jobConfig.colors.forEach((c) => { colors[c.key] = (inp[c.key] as string) || ""; });
+    setDraftColors(colors);
+    setDraftPanelType(jobConfig.panelTypeKey ? (inp[jobConfig.panelTypeKey] as string) || "" : "");
+    setDraftBeamType(jobConfig.beamTypeKey ? (inp[jobConfig.beamTypeKey] as string) || "" : "");
+    setDraftWrap(jobConfig.wrapKey ? (inp[jobConfig.wrapKey] as string) || "none" : "none");
+    setDraftEndCut(jobConfig.endCutKey ? (inp[jobConfig.endCutKey] as string) || "" : "");
+    setDraftFanBeamQty((inp.fanBeamQty as number) || 0);
+    setDraftFanBeamLength((inp.fanBeamLength as number) || 0);
+    setDraftNotes((quote.notes as string) || "");
+    setJobError("");
+    setEditingJob(true);
+  }
+
+  async function handleSaveJob() {
+    if (!quote) return;
+    setSavingJob(true);
+    setJobError("");
+
+    const existingInputs = (quote.inputs as Record<string, unknown>) || {};
+    const updatedInputs: Record<string, unknown> = { ...existingInputs, ...draftColors };
+    if (jobConfig.panelTypeKey) updatedInputs[jobConfig.panelTypeKey] = draftPanelType;
+    if (jobConfig.beamTypeKey) updatedInputs[jobConfig.beamTypeKey] = draftBeamType;
+    if (jobConfig.wrapKey) updatedInputs[jobConfig.wrapKey] = draftWrap;
+    if (jobConfig.endCutKey) updatedInputs[jobConfig.endCutKey] = draftEndCut;
+    if (jobConfig.fanBeam) {
+      updatedInputs.fanBeamQty = draftFanBeamQty;
+      updatedInputs.fanBeamLength = draftFanBeamLength;
+    }
+
+    // Mirror onto the flat quotes.* columns too (what the customer-facing
+    // proposal page, contract PDF, and order sheet actually read) - keeping
+    // both in sync the same way components/quote/SaveQuoteModal.tsx does at
+    // creation time, but keyed off this product's own field names so it
+    // doesn't blank out color/beam_type/end_cut for pergola/IRP the way that
+    // modal's fixed fallback chain does.
+    const primaryColorKey = jobConfig.colors[0]?.key;
+    const update: Record<string, unknown> = {
+      inputs: updatedInputs,
+      notes: draftNotes || null,
+    };
+    if (primaryColorKey) update.color = draftColors[primaryColorKey] || "";
+    if (jobConfig.panelTypeKey) update.panel_type = draftPanelType;
+    if (jobConfig.beamTypeKey) update.beam_type = draftBeamType;
+    if (jobConfig.wrapKey) update.wrap = draftWrap;
+    if (jobConfig.endCutKey) update.end_cut = draftEndCut;
+    if (jobConfig.fanBeam) {
+      update.fan_beam = draftFanBeamQty ? draftFanBeamQty + "x " + draftFanBeamLength + "ft" : "";
+    }
+
+    const { error: quoteErr } = await supabase
+      .from("quotes")
+      .update(update)
+      .eq("id", quote.id as string);
+
+    if (quoteErr) {
+      setJobError(quoteErr.message || "Failed to save changes");
+      setSavingJob(false);
+      return;
+    }
+
+    await load();
+    setEditingJob(false);
+    setSavingJob(false);
+  }
+
   if (loading) {
     return (
       <>
@@ -523,6 +742,124 @@ export default function ProposalPreviewPage() {
                       className="h-32 w-32 rounded-lg object-cover border border-gray-200" />
                   </div>
                 )}
+              </div>
+            )}
+          </div>
+
+          <div className="card p-5">
+            <div className="flex items-center justify-between mb-1">
+              <p className="section-heading mb-0">Job Details</p>
+              {!editingJob && canTrash(profile, (quote?.created_by as string) || null) && (
+                <button onClick={startEditingJob} className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                  <Pencil size={12} /> Edit
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-gray-400 mb-2">
+              Colors, materials, and other job specs - editable any time, including after the contract's signed, in case the customer changes their mind.
+            </p>
+            {editingJob ? (
+              <div className="space-y-3 mt-3">
+                <div className="grid grid-cols-2 gap-2">
+                  {jobConfig.panelTypeKey && (
+                    <div className="col-span-2">
+                      <label className="text-xs text-gray-500">Panel Type</label>
+                      <select className="select text-sm py-1.5" value={draftPanelType} onChange={(e) => setDraftPanelType(e.target.value)}>
+                        {jobConfig.panelTypeOpts?.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                    </div>
+                  )}
+                  {jobConfig.colors.map((c) => (
+                    <div key={c.key} className={jobConfig.colors.length === 1 ? "col-span-2" : ""}>
+                      <label className="text-xs text-gray-500">{c.label}</label>
+                      <select className="select text-sm py-1.5" value={draftColors[c.key] || ""}
+                        onChange={(e) => setDraftColors((prev) => ({ ...prev, [c.key]: e.target.value }))}>
+                        <option value="">-</option>
+                        {COLOR_OPTS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                    </div>
+                  ))}
+                  {jobConfig.beamTypeKey && (
+                    <div>
+                      <label className="text-xs text-gray-500">Beam Type</label>
+                      <select className="select text-sm py-1.5" value={draftBeamType} onChange={(e) => setDraftBeamType(e.target.value)}>
+                        {jobConfig.beamTypeOpts?.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                    </div>
+                  )}
+                  {jobConfig.wrapKey && (
+                    <div>
+                      <label className="text-xs text-gray-500">Wrap</label>
+                      <select className="select text-sm py-1.5" value={draftWrap} onChange={(e) => setDraftWrap(e.target.value)}>
+                        {WRAP_OPTS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                    </div>
+                  )}
+                  {jobConfig.endCutKey && (
+                    <div>
+                      <label className="text-xs text-gray-500">End Cut</label>
+                      <select className="select text-sm py-1.5" value={draftEndCut} onChange={(e) => setDraftEndCut(e.target.value)}>
+                        <option value="">-</option>
+                        {END_CUT_OPTS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                    </div>
+                  )}
+                  {jobConfig.fanBeam && (
+                    <>
+                      <div>
+                        <label className="text-xs text-gray-500">Fan Beam Qty</label>
+                        <input type="number" className="input text-sm py-1.5" value={draftFanBeamQty === 0 ? "" : draftFanBeamQty}
+                          placeholder="0" onChange={(e) => setDraftFanBeamQty(parseFloat(e.target.value) || 0)} />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Fan Beam Length (ft)</label>
+                        <input type="number" className="input text-sm py-1.5" value={draftFanBeamLength === 0 ? "" : draftFanBeamLength}
+                          placeholder="0" onChange={(e) => setDraftFanBeamLength(parseFloat(e.target.value) || 0)} />
+                      </div>
+                    </>
+                  )}
+                  <div className="col-span-2">
+                    <label className="text-xs text-gray-500">Notes</label>
+                    <textarea className="input text-sm py-1.5 min-h-16 resize-none" value={draftNotes} onChange={(e) => setDraftNotes(e.target.value)} />
+                  </div>
+                </div>
+                {jobError && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                    <p className="text-red-600 text-sm">{jobError}</p>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <button onClick={() => setEditingJob(false)} disabled={savingJob} className="btn-secondary flex-1 justify-center text-sm disabled:opacity-50">
+                    Cancel
+                  </button>
+                  <button onClick={handleSaveJob} disabled={savingJob} className="btn-primary flex-1 justify-center text-sm disabled:opacity-50">
+                    <Save size={14} /> {savingJob ? "Saving..." : "Save Changes"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 text-sm mt-2">
+                <div className="col-span-2"><span className="text-gray-500">Style:</span> <span className="font-medium capitalize">{((q.style as string) || "").replace(/_/g, " ")}</span></div>
+                {jobConfig.panelTypeKey && (
+                  <div className="col-span-2"><span className="text-gray-500">Panel Type:</span> <span className="font-medium">{optLabel(jobConfig.panelTypeOpts, ((q.inputs as Record<string, unknown>)?.[jobConfig.panelTypeKey] as string) || "")}</span></div>
+                )}
+                {jobConfig.colors.map((c) => {
+                  const val = ((q.inputs as Record<string, unknown>)?.[c.key] as string) || "";
+                  return val ? <div key={c.key}><span className="text-gray-500">{c.label}:</span> <span className="font-medium">{val}</span></div> : null;
+                })}
+                {jobConfig.beamTypeKey && (
+                  <div><span className="text-gray-500">Beam Type:</span> <span className="font-medium">{optLabel(jobConfig.beamTypeOpts, ((q.inputs as Record<string, unknown>)?.[jobConfig.beamTypeKey] as string) || "")}</span></div>
+                )}
+                {jobConfig.wrapKey && (
+                  <div><span className="text-gray-500">Wrap:</span> <span className="font-medium">{optLabel(WRAP_OPTS, ((q.inputs as Record<string, unknown>)?.[jobConfig.wrapKey] as string) || "")}</span></div>
+                )}
+                {jobConfig.endCutKey && (
+                  <div><span className="text-gray-500">End Cut:</span> <span className="font-medium">{optLabel(END_CUT_OPTS, ((q.inputs as Record<string, unknown>)?.[jobConfig.endCutKey] as string) || "")}</span></div>
+                )}
+                {jobConfig.fanBeam && !!q.fan_beam && (
+                  <div><span className="text-gray-500">Fan Beam:</span> <span className="font-medium">{String(q.fan_beam)}</span></div>
+                )}
+                <div className="col-span-2"><span className="text-gray-500">Notes:</span> <span className="font-medium">{(q.notes as string) || "-"}</span></div>
               </div>
             )}
           </div>
