@@ -518,6 +518,39 @@ export default function IRPQuotePage() {
                 <PriceSummaryPanel result={effectiveResult} />
               </div>
 
+              {/* Mobile diagrams - the desktop right panel below is hidden on mobile */}
+              <div className="lg:hidden">
+                <CoverDiagram
+                  projection1={inp.projection1}
+                  width1={inp.width1}
+                  projection2={inp.projection2}
+                  width2={inp.width2}
+                  jogType={inp.jogType}
+                  posts1={inp.posts1}
+                  posts2={inp.posts2}
+                  downspouts={inp.downspouts}
+                  downspoutSide={inp.downspoutSide}
+                  showRafterTails={false}
+                  beamType1={inp.beamType1}
+                  beamType2={inp.beamType2}
+                  mountStyle={inp.mountStyle}
+                  rearPosts={inp.mountStyle === "roof_mount" ? inp.skyliftPosts : inp.rearPosts}
+                />
+                <SideProfileDiagram
+                  projection={inp.projection1}
+                  postHeight={inp.postHeight1}
+                  deckHeight={inp.deckHeight}
+                  houseAttachment={inp.houseAttachment}
+                  groundAttachment={inp.groundAttachment}
+                  beamType={inp.beamType1}
+                  wrapType={inp.wrapType}
+                  showRafterTail={false}
+                  mountStyle={inp.mountStyle}
+                  rearPostHeight={inp.rearPostHeight}
+                  rearBeamType={inp.rearBeamType}
+                />
+              </div>
+
               <button onClick={() => setShowMaterials((v) => !v)} className="btn-secondary w-full">
                 <DollarSign size={15} />
                 {showMaterials ? "Hide" : "Show"} Material List ({effectiveResult.lineItems.length} items)

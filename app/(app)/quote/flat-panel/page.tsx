@@ -810,6 +810,47 @@ export default function FlatPanelQuotePage() {
                 <PriceSummaryPanel result={effectiveResult} />
               </div>
 
+              {/* Mobile diagrams - the desktop right panel below is hidden on
+                  mobile, so it's not enough on its own the way it is for the
+                  price summary/commission panels (which have their own mobile
+                  bottom-bar equivalent). Always 2D here regardless of the 3D
+                  viewer toggle - that toggle and its WebGL panel are desktop-
+                  only, same as Pergola's mobile diagrams. */}
+              <div className="lg:hidden">
+                <CoverDiagram
+                  projection1={inp.projection1}
+                  width1={inp.width1}
+                  projection2={inp.projection2}
+                  width2={inp.width2}
+                  jogType={inp.jogType}
+                  posts1={inp.posts1}
+                  posts2={inp.posts2}
+                  downspouts={inp.downspouts}
+                  downspoutSide={inp.downspoutSide}
+                  showRafterTails={inp.wrapType !== "none" && inp.rafterTails}
+                  beams={inp.beams}
+                  beamType1={inp.beamType1}
+                  beamType2={inp.beamType2}
+                  mountStyle={inp.mountStyle}
+                  rearPosts={inp.mountStyle === "roof_mount" ? inp.skyliftPosts : inp.rearPosts}
+                />
+                <SideProfileDiagram
+                  projection={inp.projection1}
+                  postHeight={inp.postHeight1}
+                  deckHeight={inp.deckHeight}
+                  houseAttachment={inp.houseAttachment}
+                  groundAttachment={inp.groundAttachment}
+                  beamType={inp.beamType1}
+                  wrapType={inp.wrapType}
+                  endCut={inp.beamEndCut1}
+                  showRafterTail={inp.wrapType !== "none" && inp.rafterTails}
+                  mountStyle={inp.mountStyle}
+                  rearPostHeight={inp.rearPostHeight}
+                  rearBeamType={inp.rearBeamType}
+                  rearEndCut={inp.rearBeamEndCut}
+                />
+              </div>
+
               <button
                 onClick={() => setShowMaterials((v) => !v)}
                 className="btn-secondary w-full"
