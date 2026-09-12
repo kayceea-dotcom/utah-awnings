@@ -101,20 +101,24 @@ export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170
             </G>
           )}
 
-          {/* Beam line run 1 */}
+          {/* Beam line run 1 - a house jog's beam is one continuous run flush across
+              the FULL combined width (matching the Jog Type dropdown's own "1 beam"
+              label) rather than two separate per-run segments - Beam Type #2 doesn't
+              apply to it, so it's drawn here instead of as its own "run 2" line below. */}
           {showBeam1 && (
             beamType1 === "double_3x8" ? (
               <G>
-                <Line x1={ox} y1={beamY1 - 3} x2={ox + coverW1} y2={beamY1 - 3} stroke="#1e40af" strokeWidth={2} />
-                <Line x1={ox} y1={beamY1 + 3} x2={ox + coverW1} y2={beamY1 + 3} stroke="#1e40af" strokeWidth={2} />
+                <Line x1={ox} y1={beamY1 - 3} x2={ox + (isHouseJog ? totalW : coverW1)} y2={beamY1 - 3} stroke="#1e40af" strokeWidth={2} />
+                <Line x1={ox} y1={beamY1 + 3} x2={ox + (isHouseJog ? totalW : coverW1)} y2={beamY1 + 3} stroke="#1e40af" strokeWidth={2} />
               </G>
             ) : (
-              <Line x1={ox} y1={beamY1} x2={ox + coverW1} y2={beamY1} stroke="#1e40af" strokeWidth={3} />
+              <Line x1={ox} y1={beamY1} x2={ox + (isHouseJog ? totalW : coverW1)} y2={beamY1} stroke="#1e40af" strokeWidth={3} />
             )
           )}
 
-          {/* Beam line run 2 */}
-          {hasRun2 && showBeam2 && (
+          {/* Beam line run 2 - not drawn on a house jog, whose one continuous beam is
+              already the full-width line above. */}
+          {hasRun2 && showBeam2 && !isHouseJog && (
             beamType2 === "double_3x8" ? (
               <G>
                 <Line x1={ox + coverW1} y1={beamY2 - 3} x2={ox + coverW1 + coverW2} y2={beamY2 - 3} stroke="#15803d" strokeWidth={2} />

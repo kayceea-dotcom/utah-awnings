@@ -200,9 +200,16 @@ export function computeCoverDiagramGeometry(input: CoverDiagramGeometryInput): C
   const postRowY1 = hasNoBeam1 ? run1FrontY : beamY1;
   const postRowY2 = hasNoBeam2 ? run2FrontY : beamY2;
 
-  // Post X positions along beam - 1.5ft from each end, evenly spaced
-  const postPositions = spacedPostXs(posts1, width1, ox, coverW1);
-  const postPositions2 = hasRun2 ? spacedPostXs(posts2, width2, ox + coverW1, coverW2) : [];
+  // Post X positions along beam - 1.5ft from each end, evenly spaced. A house
+  // jog's beam is one continuous run (see isHouseJog below), so its posts
+  // spread evenly across the FULL combined width instead of being clustered
+  // within just one run's own portion - matching the single real beam
+  // that's actually there. A ground jog keeps each run's own posts fully
+  // separate, since the beam itself literally steps between them.
+  const postPositions = isHouseJog
+    ? spacedPostXs(posts1 + posts2, totalWidth, ox, totalW)
+    : spacedPostXs(posts1, width1, ox, coverW1);
+  const postPositions2 = isHouseJog ? [] : hasRun2 ? spacedPostXs(posts2, width2, ox + coverW1, coverW2) : [];
 
   // Freestanding/Roof Mount - a rear beam + its own posts (or SkyLift roof
   // risers) along the house-wall edge, spanning the full combined width as
