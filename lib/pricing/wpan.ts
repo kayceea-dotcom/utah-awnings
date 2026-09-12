@@ -1,6 +1,6 @@
 import { RATES } from "./rates";
 import { CATALOG_BY_KEY } from "./catalog";
-import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, EndCut, MountStyle } from "./types";
+import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, EndCut, EndCutSide, MountStyle } from "./types";
 import {
   li, nextStockLength, rollFormGutterStockLength, wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen,
   anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, beamTypeLabel,
@@ -27,6 +27,8 @@ export interface WPanInputs {
   beamType2: string;
   beamEndCut1: EndCut;
   beamEndCut2: EndCut | "";
+  beamEndCutSide1: EndCutSide;
+  beamEndCutSide2: EndCutSide;
   jogType: string;
   hangerType: string;
   gutterType: string;
@@ -48,6 +50,7 @@ export interface WPanInputs {
   mountStyle: MountStyle;
   rearBeamType: string;
   rearBeamEndCut: EndCut | "";
+  rearBeamEndCutSide: EndCutSide;
   rearBeamLength: number;
   rearPosts: number;
   rearPostHeight: number;
@@ -98,10 +101,15 @@ function panelWidthFt(type: WPanType): number {
 }
 
 // Only 3x8/double-3x8 beams take the selected end-cut treatment (3x3/I-beam don't).
-function beamLabel(type: string, endCut: string): string {
+// The side is always spelled out explicitly (never omitted for the "both ends"
+// default) so the fabrication order sheet is unambiguous about which ends get
+// cut - it isn't a report a rep reads on-screen, so there's no room for an
+// implied default the way the UI can afford.
+function beamLabel(type: string, endCut: string, endCutSide?: string): string {
   const takesEndCut = type === "3x8" || type === "3x8_no_insert";
   if (!takesEndCut || !endCut) return beamTypeLabel(type);
-  return beamTypeLabel(type) + ", " + (END_CUT_LABELS[endCut] ?? endCut);
+  const sideLabel = endCutSide === "one_end" ? "One End Cut" : "Both Ends Cut";
+  return beamTypeLabel(type) + ", " + (END_CUT_LABELS[endCut] ?? endCut) + ", " + sideLabel;
 }
 
 export function calcWPan(inp: WPanInputs): QuoteResult {
@@ -193,7 +201,7 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
 
   if (inp.beamLength1 > 0) {
     const bq1 = inp.beamQty1 || 1;
-    items.push(li("Beam #1 (" + beamLabel(inp.beamType1, inp.beamEndCut1) + ")", bq1, inp.beamLength1, beamRate(inp.beamType1), "", inp.colorPostsBeam));
+    items.push(li("Beam #1 (" + beamLabel(inp.beamType1, inp.beamEndCut1, inp.beamEndCutSide1) + ")", bq1, inp.beamLength1, beamRate(inp.beamType1), "", inp.colorPostsBeam));
     const steelRate1 = steelRate(inp.beamType1);
     if (steelRate1 > 0) {
       items.push(li("Steel Insert #1", bq1, nextStockLength(inp.beamLength1), steelRate1));
@@ -201,7 +209,7 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   }
   if (inp.beamLength2 > 0 && inp.beamType2) {
     const bq2 = inp.beamQty2 || 1;
-    items.push(li("Beam #2 (" + beamLabel(inp.beamType2, inp.beamEndCut2) + ")", bq2, inp.beamLength2, beamRate(inp.beamType2), "", inp.colorPostsBeam));
+    items.push(li("Beam #2 (" + beamLabel(inp.beamType2, inp.beamEndCut2, inp.beamEndCutSide2) + ")", bq2, inp.beamLength2, beamRate(inp.beamType2), "", inp.colorPostsBeam));
     const steelRate2 = steelRate(inp.beamType2);
     if (steelRate2 > 0) {
       items.push(li("Steel Insert #2", bq2, nextStockLength(inp.beamLength2), steelRate2));
@@ -210,7 +218,7 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
 
   // ── REAR BEAM — freestanding or roof mount only, replaces the house-side Hanger ──
   if ((isFreestanding || isRoofMount) && inp.rearBeamLength > 0) {
-    items.push(li("Beam Rear (" + beamLabel(inp.rearBeamType, inp.rearBeamEndCut) + ")", 1, inp.rearBeamLength, beamRate(inp.rearBeamType), "", inp.colorPostsBeam));
+    items.push(li("Beam Rear (" + beamLabel(inp.rearBeamType, inp.rearBeamEndCut, inp.rearBeamEndCutSide) + ")", 1, inp.rearBeamLength, beamRate(inp.rearBeamType), "", inp.colorPostsBeam));
     const steelRateRear = steelRate(inp.rearBeamType);
     if (steelRateRear > 0) {
       items.push(li("Steel Insert Rear", 1, nextStockLength(inp.rearBeamLength), steelRateRear));
@@ -253,6 +261,11 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
       colorPostsBeam: inp.colorPostsBeam,
       endCut: inp.beamEndCut1,
       isFreestanding: isFreestanding || isRoofMount,
+      // End Caps here are the rafter tails' own end caps - no rafter tails
+      // means no end caps for them either. Same shared-function bug as Flat
+      // Panel had (End Caps/Brackets weren't actually gated on Rafter
+      // Tails) - fixed for both together since it's the same function.
+      includeEndCaps: inp.rafterTails,
     }));
   }
 

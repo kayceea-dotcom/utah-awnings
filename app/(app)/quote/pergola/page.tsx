@@ -52,8 +52,8 @@ const END_CUTS = [
 ];
 
 const END_CUT_SIDES = [
-  { value: "one_end",  label: "One End" },
-  { value: "both_ends", label: "Both Ends" },
+  { value: "both_ends", label: "Both Ends Cut" },
+  { value: "one_end",  label: "One End Cut" },
 ];
 
 const LATTICE_TYPES = [
@@ -98,7 +98,7 @@ const DEFAULT: PergolaInputs = {
   headerBoard: true,
   posts: 0, postHeight: 10,
   colorPergola: "White",
-  endCut: "scallop", endCutSide: "one_end",
+  endCut: "scallop", endCutSide: "both_ends",
   sprayPaint: false,
   houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
   mountStyle: "attached",

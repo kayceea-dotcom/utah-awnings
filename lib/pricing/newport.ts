@@ -16,10 +16,15 @@ function panelLabel(type: string): string {
 }
 
 // Only 3x8/double-3x8 beams take the selected end-cut treatment (3x3/I-beam don't).
-function beamLabel(type: string, endCut: string): string {
+// The side is always spelled out explicitly (never omitted for the "both ends"
+// default) so the fabrication order sheet is unambiguous about which ends get
+// cut - it isn't a report a rep reads on-screen, so there's no room for an
+// implied default the way the UI can afford.
+function beamLabel(type: string, endCut: string, endCutSide?: string): string {
   const takesEndCut = type === "3x8" || type === "double_3x8" || type === "3x8_no_insert";
   if (!takesEndCut || !endCut) return beamTypeLabel(type);
-  return beamTypeLabel(type) + ", " + (END_CUT_LABELS[endCut] ?? endCut);
+  const sideLabel = endCutSide === "one_end" ? "One End Cut" : "Both Ends Cut";
+  return beamTypeLabel(type) + ", " + (END_CUT_LABELS[endCut] ?? endCut) + ", " + sideLabel;
 }
 
 function panelWidthFt(type: string): number {
@@ -138,14 +143,14 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
 
   // ── BEAMS — rate depends on selected beam type ──
   if (inp.beamLength1 > 0) {
-    items.push(li("Beam #1 (" + beamLabel(inp.beamType1, inp.beamEndCut1) + ")", 1, inp.beamLength1, beamMaterialRate(inp.beamType1), "", inp.colorPostsBeam));
+    items.push(li("Beam #1 (" + beamLabel(inp.beamType1, inp.beamEndCut1, inp.beamEndCutSide1) + ")", 1, inp.beamLength1, beamMaterialRate(inp.beamType1), "", inp.colorPostsBeam));
     const steelRate1 = steelInsertRate(inp.beamType1);
     if (steelRate1 > 0) {
       items.push(li("Steel Insert #1", 1, nextStockLength(inp.beamLength1), steelRate1));
     }
   }
   if (inp.beamLength2 > 0 && inp.beamType2) {
-    items.push(li("Beam #2 (" + beamLabel(inp.beamType2, inp.beamEndCut2) + ")", 1, inp.beamLength2, beamMaterialRate(inp.beamType2), "", inp.colorPostsBeam));
+    items.push(li("Beam #2 (" + beamLabel(inp.beamType2, inp.beamEndCut2, inp.beamEndCutSide2) + ")", 1, inp.beamLength2, beamMaterialRate(inp.beamType2), "", inp.colorPostsBeam));
     const steelRate2 = steelInsertRate(inp.beamType2);
     if (steelRate2 > 0) {
       items.push(li("Steel Insert #2", 1, nextStockLength(inp.beamLength2), steelRate2));
@@ -154,26 +159,54 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
 
   // ── REAR BEAM — freestanding or roof mount only, replaces the house-side Hanger ──
   if ((isFreestanding || isRoofMount) && inp.rearBeamLength > 0) {
-    items.push(li("Beam Rear (" + beamLabel(inp.rearBeamType, inp.rearBeamEndCut) + ")", 1, inp.rearBeamLength, beamMaterialRate(inp.rearBeamType), "", inp.colorPostsBeam));
+    items.push(li("Beam Rear (" + beamLabel(inp.rearBeamType, inp.rearBeamEndCut, inp.rearBeamEndCutSide) + ")", 1, inp.rearBeamLength, beamMaterialRate(inp.rearBeamType), "", inp.colorPostsBeam));
     const steelRateRear = steelInsertRate(inp.rearBeamType);
     if (steelRateRear > 0) {
       items.push(li("Steel Insert Rear", 1, nextStockLength(inp.rearBeamLength), steelRateRear));
     }
   }
 
-  // ── POSTS ──
+  // ── POSTS — posts1/posts2 can each mix Ground Mount (embedded, no anchor,
+  // +2ft buried length, $100/post surcharge) and the job's default Concrete/
+  // Deck-mounted treatment (surface-bolted) within the same group, instead
+  // of forcing every post in the project onto one mounting method. A deck
+  // job doesn't get this split - every post on a deck is deck-mounted, no
+  // "ground mount vs concrete" choice applies. ──
+  const canMixMount = inp.groundAttachment !== "deck";
+  const posts1Ground = canMixMount ? Math.min(Math.max(inp.posts1GroundMount, 0), inp.posts1) : 0;
+  const posts1Concrete = inp.posts1 - posts1Ground;
+  const posts2Ground = canMixMount ? Math.min(Math.max(inp.posts2GroundMount, 0), inp.posts2) : 0;
+  const posts2Concrete = inp.posts2 - posts2Ground;
+
   const rearPosts = isFreestanding ? inp.rearPosts : 0;
   const multiSpanPosts = (inp.beams || []).reduce((s, b) => s + (b.posts || 0), 0);
   const totalPosts = inp.posts1 + inp.posts2 + rearPosts + multiSpanPosts;
-  if (inp.posts1 > 0) {
-    const len1 = postMaterialLength(inp.postHeight1, inp.groundAttachment);
-    items.push(li("3x3 Post Sleeve #1", inp.posts1, len1, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
-    items.push(li("3x3 Steel Post #1",  inp.posts1, len1, RATES.post_3x3_steel_ft));
+  // Rear/multi-span posts aren't split by mount type (out of scope for now -
+  // only the primary Posts #1/#2 groups are) - they simply follow the job's
+  // Ground Attachment dropdown, same as every other product.
+  const totalGroundMountPosts = posts1Ground + posts2Ground
+    + (inp.groundAttachment === "ground_mount" ? rearPosts + multiSpanPosts : 0);
+  const totalConcretePosts = totalPosts - totalGroundMountPosts;
+
+  if (posts1Concrete > 0) {
+    const len1 = postMaterialLength(inp.postHeight1, canMixMount ? "concrete" : inp.groundAttachment);
+    items.push(li("3x3 Post Sleeve #1", posts1Concrete, len1, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
+    items.push(li("3x3 Steel Post #1",  posts1Concrete, len1, RATES.post_3x3_steel_ft));
   }
-  if (inp.posts2 > 0) {
-    const len2 = postMaterialLength(inp.postHeight2, inp.groundAttachment);
-    items.push(li("3x3 Post Sleeve #2", inp.posts2, len2, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
-    items.push(li("3x3 Steel Post #2",  inp.posts2, len2, RATES.post_3x3_steel_ft));
+  if (posts1Ground > 0) {
+    const len1g = postMaterialLength(inp.postHeight1, "ground_mount");
+    items.push(li("3x3 Post Sleeve #1 (Ground Mount)", posts1Ground, len1g, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
+    items.push(li("3x3 Steel Post #1 (Ground Mount)",  posts1Ground, len1g, RATES.post_3x3_steel_ft));
+  }
+  if (posts2Concrete > 0) {
+    const len2 = postMaterialLength(inp.postHeight2, canMixMount ? "concrete" : inp.groundAttachment);
+    items.push(li("3x3 Post Sleeve #2", posts2Concrete, len2, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
+    items.push(li("3x3 Steel Post #2",  posts2Concrete, len2, RATES.post_3x3_steel_ft));
+  }
+  if (posts2Ground > 0) {
+    const len2g = postMaterialLength(inp.postHeight2, "ground_mount");
+    items.push(li("3x3 Post Sleeve #2 (Ground Mount)", posts2Ground, len2g, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
+    items.push(li("3x3 Steel Post #2 (Ground Mount)",  posts2Ground, len2g, RATES.post_3x3_steel_ft));
   }
   if (rearPosts > 0) {
     const lenRear = postMaterialLength(inp.rearPostHeight, inp.groundAttachment);
@@ -221,6 +254,9 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
       // (SkyLift risers aren't literal posts, but the panel still extends
       // past the rear beam the same 2ft either way).
       isFreestanding: isFreestanding || isRoofMount,
+      // End Caps here are the rafter tails' own end caps - no rafter tails
+      // means no end caps for them either.
+      includeEndCaps: inp.rafterTails,
     }));
   }
 
@@ -282,8 +318,8 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("Foam Gasket", 1, combinedWidth, RATES.foam_gasket_ft));
   }
 
-  // ── ANCHORS — 2 per post, skip whichever post group is ground-mounted (no anchor needed) ──
-  const wedgeAnchorQty = anchorQty(totalPosts, inp.groundAttachment);
+  // ── ANCHORS — 2 per post, skip whichever posts are ground-mounted (no anchor needed) ──
+  const wedgeAnchorQty = anchorQty(totalConcretePosts, "concrete");
   if (wedgeAnchorQty > 0) {
     items.push(li("Wedge Anchors", wedgeAnchorQty, 0, RATES.anchor_wedge));
   }
@@ -320,7 +356,7 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
 
   // ── PRICING SUMMARY ──
   const misc = inp.misc + deckHeightSurcharge(inp.groundAttachment, inp.deckHeight)
-             + groundMountSurcharge(inp.groundAttachment, totalPosts);
+             + groundMountSurcharge("ground_mount", totalGroundMountPosts);
   const materialCost = items.reduce((s, i) => s + i.amount, 0);
   const pricing = finalizePricing(materialCost, {
     taxRate: inp.taxRate, discount: inp.discount, customTotal: inp.customTotal,

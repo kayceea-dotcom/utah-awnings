@@ -78,6 +78,14 @@ const END_CUTS = [
   { value: "corbel",  label: "Corbel" },
 ];
 
+const END_CUT_SIDES = [
+  { value: "both_ends", label: "Both Ends Cut" },
+  { value: "one_end",   label: "One End Cut" },
+];
+
+// Matches lib/pricing/newport.ts's beamLabel() - only these beam types take an end cut.
+const TAKES_END_CUT = new Set(["3x8", "double_3x8", "3x8_no_insert"]);
+
 const HANGERS = [
   { value: "a_rail",              label: "A-Rail" },
   { value: "roll_form",           label: "Roll Form" },
@@ -132,16 +140,18 @@ const DEFAULT: NewportInputs = {
   beamLength1: 0, beamLength2: 0,
   beamType1: "3x8", beamType2: "",
   beamEndCut1: "beveled", beamEndCut2: "",
+  beamEndCutSide1: "both_ends", beamEndCutSide2: "both_ends",
   gutterType: "extruded", hangerType: "roll_form",
   posts1: 0, postHeight1: 10,
   posts2: 0, postHeight2: 10,
+  posts1GroundMount: 0, posts2GroundMount: 0,
   colorPans: "White", colorGutterFascia: "White", colorPostsBeam: "White",
   wrapType: "2x6",
   rafterTails: true, bayWindowPopout: false,
   downspouts: 1, downspoutSide: "right", sprayPaint: true,
   houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
   mountStyle: "attached",
-  rearBeamType: "3x8", rearBeamEndCut: "beveled", rearBeamLength: 0,
+  rearBeamType: "3x8", rearBeamEndCut: "beveled", rearBeamEndCutSide: "both_ends", rearBeamLength: 0,
   rearPosts: 0, rearPostHeight: 10, skyliftPosts: 0,
   fanBeamQty: 0, fanBeamLength: 16,
   shadeBeamQty: 0, shadeBeamLength: 16,
@@ -425,8 +435,17 @@ export default function FlatPanelQuotePage() {
 
   const result = useMemo(() => calcNewport(inp), [inp]);
   const sceneConfig = useMemo(() => newportToScene(inp, cosmetic), [inp, cosmetic]);
-  const groundMountHoles = inp.posts1 + inp.posts2 + (inp.beams || []).reduce((s, b) => s + (b.posts || 0), 0);
-  const groundMountAddOn = groundMountSurcharge(inp.groundAttachment, groundMountHoles);
+  // Mirrors calcNewport's own ground-mount post count: posts1/posts2 use
+  // their own explicit Ground Mount qty (clamped to that group's total, and
+  // only when not on a deck); rear/multi-span posts aren't split by mount
+  // type, so they follow the job-level Ground Attachment dropdown as-is.
+  const canMixMount = inp.groundAttachment !== "deck";
+  const multiSpanPosts = (inp.beams || []).reduce((s, b) => s + (b.posts || 0), 0);
+  const groundMountHoles =
+    (canMixMount ? Math.min(Math.max(inp.posts1GroundMount, 0), inp.posts1) : 0) +
+    (canMixMount ? Math.min(Math.max(inp.posts2GroundMount, 0), inp.posts2) : 0) +
+    (inp.groundAttachment === "ground_mount" ? multiSpanPosts : 0);
+  const groundMountAddOn = groundMountSurcharge("ground_mount", groundMountHoles);
   const editableList = useEditableMaterialList(result, inp);
   const effectiveResult = editableList.displayResult;
   const markupTier = useMarkupTier({
@@ -485,6 +504,20 @@ export default function FlatPanelQuotePage() {
   function handleTotalPostsChange(v: number) {
     const { front, rear } = splitPostsEvenly(v);
     setInp((p) => ({ ...p, posts1: front, rearPosts: rear }));
+  }
+
+  // Ground Attachment is still a quick one-click default for the WHOLE job -
+  // switching it to Ground Mount pre-fills both post groups as fully ground
+  // mounted (editable down to carve out a concrete-mounted subset), and
+  // switching to Concrete/Deck clears any ground-mount split back to fully
+  // concrete/deck. The rep can still hand-edit the Ground Mount qty fields
+  // afterward to mix both types within the same project.
+  function handleGroundAttachmentChange(v: string) {
+    if (v === "ground_mount") {
+      setInp((p) => ({ ...p, groundAttachment: v as never, posts1GroundMount: p.posts1, posts2GroundMount: p.posts2 }));
+    } else {
+      setInp((p) => ({ ...p, groundAttachment: v as never, posts1GroundMount: 0, posts2GroundMount: 0 }));
+    }
   }
 
   function handleWidth1Change(v: number) {
@@ -546,11 +579,17 @@ export default function FlatPanelQuotePage() {
                     : inp.beamType1 === "none" ? "Posts move to the front/gutter edge - no separate beam"
                     : undefined} />
                 <SelectInput label="End Cut #1" value={inp.beamEndCut1} onChange={(v) => setField("beamEndCut1", v as never)} options={END_CUTS} />
+                {TAKES_END_CUT.has(inp.beamType1) && (
+                  <SelectInput label="End Cut Side #1" value={inp.beamEndCutSide1} onChange={(v) => setField("beamEndCutSide1", v as never)} options={END_CUT_SIDES} />
+                )}
                 <SelectInput label="Beam Type #2" value={inp.beamType2} onChange={(v) => setField("beamType2", v as never)}
                   options={[{ value: "", label: "None" }, ...BEAM_TYPES]}
                   hint={inp.beamType2 === "double_3x8" ? "Mounted front + back of posts for greater span" : undefined} />
                 <SelectInput label="End Cut #2" value={inp.beamEndCut2} onChange={(v) => setField("beamEndCut2", v as never)}
                   options={[{ value: "", label: "N/A" }, ...END_CUTS]} />
+                {TAKES_END_CUT.has(inp.beamType2) && (
+                  <SelectInput label="End Cut Side #2" value={inp.beamEndCutSide2} onChange={(v) => setField("beamEndCutSide2", v as never)} options={END_CUT_SIDES} />
+                )}
                 <SelectInput label="Hanger Type" value={inp.hangerType} onChange={(v) => setField("hangerType", v as never)} options={HANGERS} />
                 <ToggleInput label="Bay Window / Pop-out" value={inp.bayWindowPopout} onChange={(v) => setField("bayWindowPopout", v)}
                   yesLabel="extra hanger for angled jog" />
@@ -564,7 +603,7 @@ export default function FlatPanelQuotePage() {
                 {inp.mountStyle === "attached" && (
                   <SelectInput label="House Attachment" value={inp.houseAttachment} onChange={(v) => setField("houseAttachment", v as never)} options={HOUSE_ATTACHMENTS} />
                 )}
-                <SelectInput label="Ground Attachment" value={inp.groundAttachment} onChange={(v) => setField("groundAttachment", v as never)} options={GROUND_ATTACHMENTS} />
+                <SelectInput label="Ground Attachment" value={inp.groundAttachment} onChange={handleGroundAttachmentChange} options={GROUND_ATTACHMENTS} />
                 {inp.groundAttachment === "deck" && (
                   <NumInput label="Deck Height (ft)" value={inp.deckHeight} onChange={(v) => setField("deckHeight", v)}
                     hint="12ft or over adds $250" span={2} />
@@ -578,15 +617,26 @@ export default function FlatPanelQuotePage() {
                   hint={inp.mountStyle === "freestanding" ? "Splits evenly - front beam + rear beam" : undefined} />
                 <SelectInput label={inp.mountStyle === "freestanding" ? "Front Post Height (ft)" : "Height #1 (ft)"} value={String(inp.postHeight1)} onChange={(v) => setField("postHeight1", Number(v))}
                   options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))} />
+                {inp.groundAttachment !== "deck" && (
+                  <NumInput label="Ground Mount (of Posts #1)" value={inp.posts1GroundMount} onChange={(v) => setField("posts1GroundMount", v)}
+                    hint={"Rest (" + Math.max(0, inp.posts1 - inp.posts1GroundMount) + ") are " + GROUND_ATTACHMENTS.find((o) => o.value === "concrete")?.label} span={2} />
+                )}
                 <NumInput label="Posts #2 (qty)" value={inp.posts2} onChange={(v) => setField("posts2", v)} />
                 <SelectInput label="Height #2 (ft)" value={String(inp.postHeight2)} onChange={(v) => setField("postHeight2", Number(v))}
                   options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))} />
+                {inp.groundAttachment !== "deck" && inp.posts2 > 0 && (
+                  <NumInput label="Ground Mount (of Posts #2)" value={inp.posts2GroundMount} onChange={(v) => setField("posts2GroundMount", v)}
+                    hint={"Rest (" + Math.max(0, inp.posts2 - inp.posts2GroundMount) + ") are " + GROUND_ATTACHMENTS.find((o) => o.value === "concrete")?.label} span={2} />
+                )}
                 {inp.mountStyle === "freestanding" && (
                   <>
                     <div className="col-span-2 text-xs font-bold text-gray-600 uppercase tracking-wide pt-2">Rear Beam &amp; Posts</div>
                     <SelectInput label="Rear Beam Type" value={inp.rearBeamType} onChange={(v) => setField("rearBeamType", v as never)} options={BEAM_TYPES} />
                     <NumInput label="Rear Beam Length (ft)" value={inp.rearBeamLength} onChange={(v) => setField("rearBeamLength", v)} />
                     <SelectInput label="Rear Beam End Cut" value={inp.rearBeamEndCut} onChange={(v) => setField("rearBeamEndCut", v as never)} options={END_CUTS} />
+                    {TAKES_END_CUT.has(inp.rearBeamType) && (
+                      <SelectInput label="Rear Beam End Cut Side" value={inp.rearBeamEndCutSide} onChange={(v) => setField("rearBeamEndCutSide", v as never)} options={END_CUT_SIDES} />
+                    )}
                     <SelectInput label="Rear Post Height (ft)" value={String(inp.rearPostHeight)} onChange={(v) => setField("rearPostHeight", Number(v))}
                       options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))}
                       hint={"Rear posts: " + inp.rearPosts} />
@@ -598,6 +648,9 @@ export default function FlatPanelQuotePage() {
                     <SelectInput label="Rear Beam Type" value={inp.rearBeamType} onChange={(v) => setField("rearBeamType", v as never)} options={BEAM_TYPES} />
                     <NumInput label="Rear Beam Length (ft)" value={inp.rearBeamLength} onChange={(v) => setField("rearBeamLength", v)} />
                     <SelectInput label="Rear Beam End Cut" value={inp.rearBeamEndCut} onChange={(v) => setField("rearBeamEndCut", v as never)} options={END_CUTS} />
+                    {TAKES_END_CUT.has(inp.rearBeamType) && (
+                      <SelectInput label="Rear Beam End Cut Side" value={inp.rearBeamEndCutSide} onChange={(v) => setField("rearBeamEndCutSide", v as never)} options={END_CUT_SIDES} />
+                    )}
                     <NumInput label="SkyLift Posts (qty)" value={inp.skyliftPosts} onChange={(v) => setField("skyliftPosts", v)}
                       hint="$150 each" />
                   </>

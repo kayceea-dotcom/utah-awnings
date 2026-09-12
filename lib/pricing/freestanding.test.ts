@@ -20,15 +20,17 @@ function newportBase(): NewportInputs {
     beamLength1: 20, beamLength2: 0,
     beamType1: "3x8", beamType2: "",
     beamEndCut1: "beveled", beamEndCut2: "",
+    beamEndCutSide1: "both_ends", beamEndCutSide2: "both_ends",
     beams: [],
     gutterType: "extruded", hangerType: "roll_form",
     posts1: 2, postHeight1: 10, posts2: 0, postHeight2: 10,
+    posts1GroundMount: 0, posts2GroundMount: 0,
     colorPans: "White", colorGutterFascia: "White", colorPostsBeam: "White",
     wrapType: "2x6", rafterTails: true, bayWindowPopout: false,
     downspouts: 1, downspoutSide: "right", sprayPaint: false,
     houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
     mountStyle: "attached",
-    rearBeamType: "3x8", rearBeamEndCut: "beveled", rearBeamLength: 0,
+    rearBeamType: "3x8", rearBeamEndCut: "beveled", rearBeamEndCutSide: "both_ends", rearBeamLength: 0,
     rearPosts: 0, rearPostHeight: 10, skyliftPosts: 0,
     fanBeamQty: 0, fanBeamLength: 16, shadeBeamQty: 0, shadeBeamLength: 16,
     discount: 0, customTotal: null, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
@@ -44,6 +46,7 @@ function wpanBase(): WPanInputs {
     beamLength1: 20, beamLength2: 0, beamQty1: 1, beamQty2: 1,
     beamType1: "3x3", beamType2: "",
     beamEndCut1: "beveled", beamEndCut2: "",
+    beamEndCutSide1: "both_ends", beamEndCutSide2: "both_ends",
     jogType: "none", hangerType: "roll_form", gutterType: "extruded",
     posts1: 2, postHeight1: 10, posts2: 0, postHeight2: 10,
     colorPans: "White", colorGutterFascia: "White", colorPostsBeam: "White",
@@ -51,7 +54,7 @@ function wpanBase(): WPanInputs {
     downspouts: 1, downspoutSide: "right", sprayPaint: false,
     houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
     mountStyle: "attached",
-    rearBeamType: "3x3", rearBeamEndCut: "beveled", rearBeamLength: 0,
+    rearBeamType: "3x3", rearBeamEndCut: "beveled", rearBeamEndCutSide: "both_ends", rearBeamLength: 0,
     rearPosts: 0, rearPostHeight: 10, skyliftPosts: 0,
     fanBeamQty: 0, fanBeamLength: 16, shadeBeamQty: 0, shadeBeamLength: 16,
     discount: 0, customTotal: null, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
@@ -69,11 +72,13 @@ function irpBase(): IRPInputs {
     posts1: 2, postHeight1: 10, posts2: 0, postHeight2: 10,
     colorPostsBeam: "White",
     wrapType: "none",
+    rafterTails: true,
     downspouts: 1, downspoutSide: "right", sprayPaint: false,
     houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
     mountStyle: "attached",
     rearBeamType: "3x8", rearBeamLength: 0,
     rearPosts: 0, rearPostHeight: 10, skyliftPosts: 0,
+    fanBeamQty: 0, fanBeamLength: 16,
     shadeBeamQty: 0, shadeBeamLength: 16,
     discount: 0, customTotal: null, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
     markup: 2.0, taxRate: 0.0745,
@@ -119,7 +124,7 @@ describe("Freestanding mount style", () => {
     const free = calcNewport(inp);
 
     expect(findItem(free.lineItems, "Hanger")).toBeUndefined();
-    expect(findItem(free.lineItems, "Beam Rear (3x8, Beveled)")).toBeTruthy();
+    expect(findItem(free.lineItems, "Beam Rear (3x8, Beveled, Both Ends Cut)")).toBeTruthy();
     expect(findItem(free.lineItems, "3x3 Post Sleeve Rear")?.qty).toBe(2);
     expect(findItem(free.lineItems, "Post Plates Rear (2x6, Mitered)")?.qty).toBe(4);
 

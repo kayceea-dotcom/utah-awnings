@@ -51,6 +51,14 @@ const BEAM_TYPES_1 = [
   ...BEAM_TYPES,
 ];
 
+const END_CUT_SIDES = [
+  { value: "both_ends", label: "Both Ends Cut" },
+  { value: "one_end",   label: "One End Cut" },
+];
+
+// Matches lib/pricing/wpan.ts's beamLabel() - only these beam types take an end cut.
+const TAKES_END_CUT = new Set(["3x8", "3x8_no_insert"]);
+
 const END_CUTS = [
   { value: "scallop", label: "Scallop" },
   { value: "beveled", label: "Beveled" },
@@ -112,6 +120,7 @@ const DEFAULT: WPanInputs = {
   beamQty1: 1, beamQty2: 1,
   beamType1: "3x3", beamType2: "",
   beamEndCut1: "beveled", beamEndCut2: "",
+  beamEndCutSide1: "both_ends", beamEndCutSide2: "both_ends",
   jogType: "none",
   hangerType: "roll_form", gutterType: "extruded",
   posts1: 0, postHeight1: 10,
@@ -121,7 +130,7 @@ const DEFAULT: WPanInputs = {
   downspouts: 1, downspoutSide: "right", sprayPaint: true,
   houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
   mountStyle: "attached",
-  rearBeamType: "3x3", rearBeamEndCut: "beveled", rearBeamLength: 0,
+  rearBeamType: "3x3", rearBeamEndCut: "beveled", rearBeamEndCutSide: "both_ends", rearBeamLength: 0,
   rearPosts: 0, rearPostHeight: 10, skyliftPosts: 0,
   fanBeamQty: 0, fanBeamLength: 16,
   shadeBeamQty: 0, shadeBeamLength: 16,
@@ -467,12 +476,18 @@ export default function WPanQuotePage() {
                 <SelectInput label="Beam Type #1" value={inp.beamType1} onChange={(v) => setField("beamType1", v)} options={BEAM_TYPES_1}
                   hint={inp.beamType1 === "none" ? "Posts move to the front/gutter edge - no separate beam" : undefined} />
                 <SelectInput label="End Cut #1" value={inp.beamEndCut1} onChange={(v) => setField("beamEndCut1", v as never)} options={END_CUTS} />
+                {TAKES_END_CUT.has(inp.beamType1) && (
+                  <SelectInput label="End Cut Side #1" value={inp.beamEndCutSide1} onChange={(v) => setField("beamEndCutSide1", v as never)} options={END_CUT_SIDES} />
+                )}
                 <NumInput label="Beam #1 Qty" value={inp.beamQty1} onChange={(v) => setField("beamQty1", v)} hint="2 for double beam" />
                 <NumInput label="Beam Length #1 (ft)" value={inp.beamLength1} onChange={(v) => setField("beamLength1", v)} hint="Auto from width" />
                 <SelectInput label="Beam Type #2" value={inp.beamType2} onChange={(v) => setField("beamType2", v)}
                   options={[{ value: "", label: "None" }, ...BEAM_TYPES]} />
                 <SelectInput label="End Cut #2" value={inp.beamEndCut2} onChange={(v) => setField("beamEndCut2", v as never)}
                   options={[{ value: "", label: "N/A" }, ...END_CUTS]} />
+                {TAKES_END_CUT.has(inp.beamType2) && (
+                  <SelectInput label="End Cut Side #2" value={inp.beamEndCutSide2} onChange={(v) => setField("beamEndCutSide2", v as never)} options={END_CUT_SIDES} />
+                )}
                 <NumInput label="Beam #2 Qty" value={inp.beamQty2} onChange={(v) => setField("beamQty2", v)} hint="2 for double beam" />
                 <NumInput label="Beam Length #2 (ft)" value={inp.beamLength2} onChange={(v) => setField("beamLength2", v)} />
                 <SelectInput label="Hanger Type" value={inp.hangerType} onChange={(v) => setField("hangerType", v)} options={HANGERS} />
@@ -509,6 +524,9 @@ export default function WPanQuotePage() {
                     <SelectInput label="Rear Beam Type" value={inp.rearBeamType} onChange={(v) => setField("rearBeamType", v as never)} options={BEAM_TYPES} />
                     <NumInput label="Rear Beam Length (ft)" value={inp.rearBeamLength} onChange={(v) => setField("rearBeamLength", v)} />
                     <SelectInput label="Rear Beam End Cut" value={inp.rearBeamEndCut} onChange={(v) => setField("rearBeamEndCut", v as never)} options={END_CUTS} />
+                    {TAKES_END_CUT.has(inp.rearBeamType) && (
+                      <SelectInput label="Rear Beam End Cut Side" value={inp.rearBeamEndCutSide} onChange={(v) => setField("rearBeamEndCutSide", v as never)} options={END_CUT_SIDES} />
+                    )}
                     <SelectInput label="Rear Post Height (ft)" value={String(inp.rearPostHeight)} onChange={(v) => setField("rearPostHeight", Number(v))}
                       options={POST_HEIGHTS.map((h) => ({ value: String(h), label: String(h) + " ft" }))}
                       hint={"Rear posts: " + inp.rearPosts} />
@@ -520,6 +538,9 @@ export default function WPanQuotePage() {
                     <SelectInput label="Rear Beam Type" value={inp.rearBeamType} onChange={(v) => setField("rearBeamType", v as never)} options={BEAM_TYPES} />
                     <NumInput label="Rear Beam Length (ft)" value={inp.rearBeamLength} onChange={(v) => setField("rearBeamLength", v)} />
                     <SelectInput label="Rear Beam End Cut" value={inp.rearBeamEndCut} onChange={(v) => setField("rearBeamEndCut", v as never)} options={END_CUTS} />
+                    {TAKES_END_CUT.has(inp.rearBeamType) && (
+                      <SelectInput label="Rear Beam End Cut Side" value={inp.rearBeamEndCutSide} onChange={(v) => setField("rearBeamEndCutSide", v as never)} options={END_CUT_SIDES} />
+                    )}
                     <NumInput label="SkyLift Posts (qty)" value={inp.skyliftPosts} onChange={(v) => setField("skyliftPosts", v)}
                       hint="$150 each" />
                   </>
