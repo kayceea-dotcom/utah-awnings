@@ -1,6 +1,18 @@
 import { RATES } from "./rates";
 import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, MountStyle } from "./types";
-import { li, nextStockLength, anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, beamTypeLabel } from "./shared";
+import {
+  li, nextStockLength, anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge,
+  finalizePricing, shadeBeamItems, beamTypeLabel, END_CUT_LABELS,
+} from "./shared";
+
+// Mirrors newport.ts/wpan.ts's beamLabel() - the side is always spelled out
+// explicitly (never omitted for the "both ends" default) so the fabrication
+// order sheet is unambiguous about which ends of the rafter get cut.
+function rafterLabel(endCut: string, endCutSide: string): string {
+  if (!endCut) return "2x6 Rafters";
+  const sideLabel = endCutSide === "one_end" ? "One End Cut" : "Both Ends Cut";
+  return "2x6 Rafters (" + (END_CUT_LABELS[endCut] ?? endCut) + ", " + sideLabel + ")";
+}
 
 export interface PergolaInputs {
   jobName: string;
@@ -65,7 +77,7 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
   // (depending on whether the width is odd or even), not flush with the beam.
   const rafterQty = inp.width > 0 ? Math.round(inp.width / 2) : 0;
   if (rafterQty > 0) {
-    items.push(li("2x6 Rafters", rafterQty, inp.projection, rafterRate, "ft", inp.colorPergola));
+    items.push(li(rafterLabel(inp.endCut, inp.endCutSide), rafterQty, inp.projection, rafterRate, "ft", inp.colorPergola));
   }
 
   // ── LATTICE TUBING ──

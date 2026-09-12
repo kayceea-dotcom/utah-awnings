@@ -29,6 +29,11 @@ export interface IRPInputs {
   postHeight2: number;
   colorPostsBeam: string;
   wrapType: string;
+  // Only meaningful with a Wrap Kit selected (wrapType !== "none") - IRP has
+  // no generic front-plate/hanger system to hang tails off of otherwise.
+  rafterTails: boolean;
+  fanBeamQty: number;
+  fanBeamLength: number;
   downspouts: number;
   downspoutSide: "left" | "right";
   sprayPaint: boolean;
@@ -146,12 +151,17 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
     items.push(li("LRP Side Fascia", 2, 0, lrpFasciaRate(inp.panelType, Math.max(inp.projection1, inp.projection2))));
   }
 
-  // ── DRIP EDGE ──
-  if (splitGutter) {
-    if (inp.beamLength1 > 0) items.push(li("LRP Drip Edge #1", 1, 0, RATES.lrp_drip_edge_24));
-    if (inp.beamLength2 > 0) items.push(li("LRP Drip Edge #2", 1, 0, RATES.lrp_drip_edge_24));
-  } else if (inp.beamLength1 > 0 || inp.beamLength2 > 0) {
-    items.push(li("LRP Drip Edge", 1, 0, RATES.lrp_drip_edge_24));
+  // ── DRIP EDGE — the 3in LRP gutter doesn't use a separate drip edge piece
+  // (its own gutter profile already sheds water); only the 4.25in gutter
+  // needs one. Still needs a real gutter/beam present either way - this
+  // isn't a substitute for a gutter-less configuration. ──
+  if (is4in) {
+    if (splitGutter) {
+      if (inp.beamLength1 > 0) items.push(li("LRP Drip Edge #1", 1, 0, RATES.lrp_drip_edge_24));
+      if (inp.beamLength2 > 0) items.push(li("LRP Drip Edge #2", 1, 0, RATES.lrp_drip_edge_24));
+    } else if (inp.beamLength1 > 0 || inp.beamLength2 > 0) {
+      items.push(li("LRP Drip Edge", 1, 0, RATES.lrp_drip_edge_24));
+    }
   }
 
   // ── BEAMS ──
@@ -216,17 +226,44 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
 
   // ── WRAP KIT — post plates, sideplates, mitered caps, foam inserts, end caps, plugs.
   // IRP keeps its own dedicated LRP hanger/gutter/fascia regardless, so unlike Flat Panel
-  // and W-Pan there are no rafter-tail/front-plate/bracket items here. ──
+  // and W-Pan there's no front-plate item here (see the Rafter Tails block below for the
+  // one wrap-kit piece IRP does share with them). End Caps here are just a normal part
+  // of the Wrap Kit itself (always included whenever hasWrap, independent of the Rafter
+  // Tails toggle below) - not the same thing as Newport/W-Pan's rafter-tail-position end
+  // caps, so it isn't gated on inp.rafterTails. ──
   const hasWrap = inp.wrapType === "3x8" || inp.wrapType === "2x6";
+  const wrapRates = wrapKitRates(inp.wrapType);
   if (hasWrap) {
-    items.push(...wrapKitFinishingItems(wrapKitRates(inp.wrapType), {
+    items.push(...wrapKitFinishingItems(wrapRates, {
       posts1: inp.posts1, postHeight1: inp.postHeight1,
       posts2: inp.posts2, postHeight2: inp.postHeight2,
       postsRear: rearPosts, postHeightRear: inp.rearPostHeight,
-      projection1: inp.projection1, width1: inp.width1, panelQty1: p1Qty,
+      projection1: inp.projection1, width1: inp.width1, panelQty1: p1Qty, panelQty2: p2Qty,
       colorPostsBeam: inp.colorPostsBeam,
       isFreestanding: isFreestanding || isRoofMount,
+      includeEndCaps: true,
     }));
+  }
+
+  // ── RAFTER TAILS — only with a Wrap Kit selected (no generic front-plate/
+  // hanger system to hang tails off of otherwise), and only the tails +
+  // their mounting brackets. Deliberately does NOT add End Caps - those
+  // already come from the Wrap Kit itself above regardless of this toggle,
+  // so adding them again here would double-count. Mirrors onto the rear
+  // beam too when it's a real finished edge (Freestanding/Roof Mount), same
+  // as Newport/W-Pan already do. ──
+  if (hasWrap && inp.rafterTails && inp.width1 > 0) {
+    const dim = wrapRates.is3x8 ? "3x8" : "2x6";
+    const spacingQty = Math.round(inp.width1 / 2);
+    const bracketQty = spacingQty + 2;
+    items.push(li("Rafter Tails (" + dim + ")", spacingQty, 0, wrapRates.rafterRate, "", inp.colorPostsBeam));
+    items.push(li("Inside Brackets (" + dim + ")", bracketQty, 0, wrapRates.insideBrktRate));
+    items.push(li("Outside Brackets (" + dim + ")", bracketQty, 0, wrapRates.outsideBrktRate, "", inp.colorPostsBeam));
+    if ((isFreestanding || isRoofMount) && inp.rearBeamLength > 0) {
+      items.push(li("Rafter Tails Rear (" + dim + ")", spacingQty, 0, wrapRates.rafterRate, "", inp.colorPostsBeam));
+      items.push(li("Inside Brackets Rear (" + dim + ")", bracketQty, 0, wrapRates.insideBrktRate));
+      items.push(li("Outside Brackets Rear (" + dim + ")", bracketQty, 0, wrapRates.outsideBrktRate, "", inp.colorPostsBeam));
+    }
   }
 
   // ── POST BRACKETS ──
@@ -271,6 +308,12 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
   // ── SILICONE — combined beam length / 10, rounded up ──
   if (combinedBeamLength > 0) {
     items.push(li("Silicone Clear", Math.ceil(combinedBeamLength / 10), 0, RATES.silicone_clear));
+  }
+
+  // ── FAN BEAM ──
+  if (inp.fanBeamQty > 0) {
+    items.push(li("Fan Beam",     inp.fanBeamQty, inp.fanBeamLength, RATES.fan_beam_ft));
+    items.push(li("Fan Beam Cap", inp.fanBeamQty, inp.fanBeamLength, RATES.fan_beam_cap_ft, "", "Match Top Color"));
   }
 
   // ── SHADE BEAM ──

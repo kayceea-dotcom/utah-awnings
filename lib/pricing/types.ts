@@ -3,6 +3,10 @@ export type ProductType =
 
 export type BeamType = "3x3" | "3x8" | "double_3x8" | "4_i_beam" | "7_i_beam" | "none";
 export type EndCut = "scallop" | "beveled" | "mitered" | "corbel";
+// Whether the selected End Cut treatment is cut into just the exposed/visible
+// end of the beam or into both ends - e.g. a beam butted against the house on
+// one side only needs its street-facing end shaped. Defaults to both ends.
+export type EndCutSide = "one_end" | "both_ends";
 export type GutterType = "roll_form" | "extruded";
 export type HangerType = "roll_form" | "extruded" | "a_rail" | "elevated_roof_mount";
 export type PanelType =
@@ -54,6 +58,8 @@ export interface NewportInputs {
   beamType2: BeamType | "";
   beamEndCut1: EndCut;
   beamEndCut2: EndCut | "";
+  beamEndCutSide1: EndCutSide;
+  beamEndCutSide2: EndCutSide;
   beams: BeamConfig[];
   gutterType: GutterType;
   hangerType: HangerType;
@@ -61,6 +67,15 @@ export interface NewportInputs {
   postHeight1: number;
   posts2: number;
   postHeight2: number;
+  // Of posts1/posts2, how many are Ground Mount (embedded, no anchor, +2ft
+  // buried length, $100/post surcharge) rather than the job's default
+  // Concrete/Deck-mounted (surface-bolted) treatment - a single project can
+  // mix both within the same post group instead of forcing every post onto
+  // one mounting method. Clamped to the group's own qty at calc time, never
+  // stored pre-clamped. Ignored entirely when groundAttachment is "deck" -
+  // deck posts don't have a ground-mount option to split out.
+  posts1GroundMount: number;
+  posts2GroundMount: number;
   colorPans: AwningColor;
   colorGutterFascia: AwningColor;
   colorPostsBeam: AwningColor;
@@ -76,6 +91,7 @@ export interface NewportInputs {
   mountStyle: MountStyle;
   rearBeamType: BeamType;
   rearBeamEndCut: EndCut | "";
+  rearBeamEndCutSide: EndCutSide;
   rearBeamLength: number;
   rearPosts: number;
   rearPostHeight: number;

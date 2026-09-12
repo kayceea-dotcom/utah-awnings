@@ -280,12 +280,25 @@ export function wrapKitFinishingItems(rates: WrapKitRates, opts: {
   projection1: number;
   width1: number;
   panelQty1: number;
+  // Run 2's own panel count, folded into the Plugs quantity alongside
+  // panelQty1 - a job with a second run needs plugs for those panels too.
+  // Optional/defaults to 0 so existing single-run-aware callers are
+  // unaffected.
+  panelQty2?: number;
   colorPostsBeam: string;
   endCut?: string;
   // Freestanding only - the roof now overhangs the rear beam by the same
   // amount it already overhangs the front, so the sideplate has to span
   // 2ft further to actually reach both ends.
   isFreestanding?: boolean;
+  // End Caps here are the rafter-tail position's own end caps (same
+  // spacingQty formula as the tails/brackets in wrapKitRafterItems) for
+  // Flat Panel/W-Pan - so those two callers gate this on their own Rafter
+  // Tails toggle. IRP has no generic rafter/front-plate system at all (its
+  // own dedicated LRP hardware is priced separately) and its End Caps here
+  // are just a normal part of the Wrap Kit regardless of any rafter-tail
+  // toggle - it always passes true.
+  includeEndCaps: boolean;
 }): LineItem[] {
   const items: LineItem[] = [];
   const postsRear = opts.postsRear ?? 0;
@@ -310,12 +323,13 @@ export function wrapKitFinishingItems(rates: WrapKitRates, opts: {
     items.push(li("Mitered Caps (" + dim + ")", totalPosts * 2, 0, rates.miterCapRate, "", opts.colorPostsBeam));
     items.push(li("Foam Inserts 2x6", totalPosts * 2, 0, RATES.foam_insert_2x6, "ea"));
   }
-  if (opts.width1 > 0) {
+  if (opts.includeEndCaps && opts.width1 > 0) {
     const spacingQty = Math.round(opts.width1 / 2);
     items.push(li("End Caps (" + dim + ")", spacingQty + 2, 0, rates.endcapRate, "", opts.colorPostsBeam));
   }
-  if (opts.panelQty1 > 0) {
-    items.push(li("Plugs", Math.round(opts.panelQty1 * 0.7) + 1, 0, RATES.plug_5_8));
+  const totalPanelQty = opts.panelQty1 + (opts.panelQty2 ?? 0);
+  if (totalPanelQty > 0) {
+    items.push(li("Plugs", Math.round(totalPanelQty * 0.7) + 1, 0, RATES.plug_5_8));
   }
 
   return items;
@@ -343,11 +357,12 @@ export function wrapKitRafterItems(rates: WrapKitRates, opts: {
   if (opts.gutterType === "extruded" && opts.width1 > 0) {
     items.push(li("Front Plate Gutter" + suffix + " (" + dim + ")", 1, opts.width1 + 1, rates.wrapRate, "", opts.colorGutterFascia));
   }
-  if (opts.width1 > 0) {
+  // Rafter tails, and the brackets that mount them, only apply when the
+  // tails are actually exposed - none of this is needed on a job with no
+  // rafter tails at all.
+  if (opts.width1 > 0 && opts.rafterTails) {
     const spacingQty = Math.round(opts.width1 / 2);
-    if (opts.rafterTails) {
-      items.push(li("Rafter Tails" + suffix + " (" + dim + endCutSuffix(opts.endCut) + ")", spacingQty, 0, rates.rafterRate, "", opts.colorPostsBeam));
-    }
+    items.push(li("Rafter Tails" + suffix + " (" + dim + endCutSuffix(opts.endCut) + ")", spacingQty, 0, rates.rafterRate, "", opts.colorPostsBeam));
     const bracketQty = spacingQty + 2;
     items.push(li("Inside Brackets" + suffix + " (" + dim + ")", bracketQty, 0, rates.insideBrktRate));
     items.push(li("Outside Brackets" + suffix + " (" + dim + ")", bracketQty, 0, rates.outsideBrktRate, "", opts.colorPostsBeam));

@@ -94,11 +94,13 @@ const DEFAULT: IRPInputs = {
   posts2: 0, postHeight2: 10,
   colorPostsBeam: "White",
   wrapType: "none",
+  rafterTails: true,
   downspouts: 1, downspoutSide: "right", sprayPaint: false,
   houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
   mountStyle: "attached",
   rearBeamType: "3x8", rearBeamLength: 0,
   rearPosts: 0, rearPostHeight: 10, skyliftPosts: 0,
+  fanBeamQty: 0, fanBeamLength: 16,
   shadeBeamQty: 0, shadeBeamLength: 16,
   discount: 0, customTotal: null, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
   markup: 2.0, taxRate: 0.0745,
@@ -432,6 +434,9 @@ export default function IRPQuotePage() {
                 <SelectInput label="Beam Type #2" value={inp.beamType2} onChange={(v) => setField("beamType2", v)}
                   options={[{ value: "", label: "None" }, ...BEAM_TYPES]} />
                 <SelectInput label="Wrap Type" value={inp.wrapType} onChange={(v) => setField("wrapType", v)} options={WRAPS} span={2} />
+                {inp.wrapType !== "none" && (
+                  <ToggleInput label="Rafter Tails" value={inp.rafterTails} onChange={(v) => setField("rafterTails", v)} />
+                )}
               </SectionCard>
 
               <SectionCard id="attachment" title="Attachment" open={open.has("attachment")} onToggle={toggleSection}>
@@ -487,7 +492,9 @@ export default function IRPQuotePage() {
                 <SelectInput label="Posts / Beam Color" value={inp.colorPostsBeam} onChange={(v) => setField("colorPostsBeam", v)} options={COLOR_OPTS} span={2} />
               </SectionCard>
 
-              <SectionCard id="extras" title="Shade Beam" open={open.has("extras")} onToggle={toggleSection}>
+              <SectionCard id="extras" title="Fan Beam / Shade Beam" open={open.has("extras")} onToggle={toggleSection}>
+                <NumInput label="Fan Beam Qty" value={inp.fanBeamQty} onChange={(v) => setField("fanBeamQty", v)} />
+                <NumInput label="Fan Beam Length (ft)" value={inp.fanBeamLength} onChange={(v) => setField("fanBeamLength", v)} />
                 <NumInput label="Shade Beam Qty" value={inp.shadeBeamQty} onChange={(v) => setField("shadeBeamQty", v)} />
                 <NumInput label="Shade Beam Length (ft)" value={inp.shadeBeamLength} onChange={(v) => setField("shadeBeamLength", v)} />
               </SectionCard>
