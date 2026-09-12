@@ -21,7 +21,9 @@ import { calcIRP } from "@/lib/pricing/irp";
 import type { IRPInputs } from "@/lib/pricing/irp";
 import { calcPergola } from "@/lib/pricing/pergola";
 import type { PergolaInputs } from "@/lib/pricing/pergola";
-import type { NewportInputs, QuoteResult } from "@/lib/pricing/types";
+import type { NewportInputs, QuoteResult, LineItem } from "@/lib/pricing/types";
+import { finalizePricing } from "@/lib/pricing/shared";
+import MaterialList from "@/components/quote/MaterialList";
 
 const fmt = (n: number) => n?.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
@@ -244,6 +246,10 @@ export default function ProposalPreviewPage() {
     colors: Record<string, string>; panelType: string; beamType: string;
     wrap: string; endCut: string; fanBeamQty: number; fanBeamLength: number;
   } | null>(null);
+  const [editingMaterials, setEditingMaterials] = useState(false);
+  const [savingMaterials, setSavingMaterials] = useState(false);
+  const [materialsError, setMaterialsError] = useState("");
+  const [draftLineItems, setDraftLineItems] = useState<LineItem[]>([]);
   const { profile } = useProfile();
   const supabase = createClient();
 
@@ -323,6 +329,117 @@ export default function ProposalPreviewPage() {
     return repriceQuote(productType, buildUpdatedJobInputs());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingJob, quote, jobSpecsChanged, productType, draftColors, draftPanelType, draftBeamType, draftWrap, draftEndCut, draftFanBeamQty, draftFanBeamLength]);
+
+  // Re-totals a manually edited material list without re-deriving it from the
+  // job's specs (that's what Job Details is for). footings/roofMounts/misc/
+  // tearDown/markup aren't stored as their own quotes.* columns - misc in
+  // particular is a computed figure (rep-entered $ plus ground-mount/deck-
+  // height surcharges baked in by the product's own calc function), not
+  // something safe to reconstruct by hand here. Re-running the SAME calc
+  // function against this quote's unchanged inputs gets those figures back
+  // correctly without duplicating any per-product surcharge logic - only the
+  // resulting lineItems/materialCost get overridden with the manual edits.
+  // Products with no calc function (Individual Items, legacy/unknown types)
+  // fall back to reading those fields directly off inputs, where they're
+  // already the final number (no surcharges to bake in without posts/roof).
+  function repriceMaterials(items: LineItem[]): QuoteResult | null {
+    if (!quote) return null;
+    const inputs = (quote.inputs as Record<string, unknown>) || {};
+    const baseline = repriceQuote(productType, inputs);
+    const materialCost = items.reduce((s, i) => s + i.amount, 0);
+    const pricing = finalizePricing(materialCost, {
+      taxRate: (inputs.taxRate as number) || 0,
+      discount: baseline ? baseline.discount : (inputs.discount as number) || 0,
+      customTotal: (inputs.customTotal as number | null) ?? null,
+      footings: baseline ? baseline.footings : (inputs.footings as number) || 0,
+      roofMounts: baseline ? baseline.roofMounts : (inputs.roofMounts as number) || 0,
+      misc: baseline ? baseline.misc : (inputs.misc as number) || 0,
+      tearDown: baseline ? baseline.tearDown : (inputs.tearDown as number) || 0,
+      markup: baseline ? baseline.markup : (inputs.markup as number) || (quote.markup as number) || 1,
+    });
+    const totalSqFt = baseline?.totalSqFt || 0;
+    return {
+      ...pricing,
+      lineItems: items,
+      totalSqFt,
+      costPerSqFt: totalSqFt > 0 ? pricing.subtotal / totalSqFt : 0,
+      pricePerSqFt: totalSqFt > 0 ? pricing.totalJobSale / totalSqFt : 0,
+    };
+  }
+
+  const materialsChanged = useMemo(() => {
+    if (!editingMaterials || !quote) return false;
+    return JSON.stringify(quote.line_items || []) !== JSON.stringify(draftLineItems);
+  }, [editingMaterials, quote, draftLineItems]);
+
+  const materialsPricePreview = useMemo(() => {
+    if (!editingMaterials || !materialsChanged) return null;
+    return repriceMaterials(draftLineItems);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingMaterials, materialsChanged, draftLineItems]);
+
+  function startEditingMaterials() {
+    if (!quote) return;
+    setDraftLineItems(((quote.line_items as LineItem[]) || []).map((i) => ({ ...i })));
+    setMaterialsError("");
+    setEditingMaterials(true);
+  }
+
+  async function handleSaveMaterials() {
+    if (!quote) return;
+    setSavingMaterials(true);
+    setMaterialsError("");
+
+    const pricing = repriceMaterials(draftLineItems);
+    if (!pricing) {
+      setMaterialsError("Couldn't re-total this job's material list.");
+      setSavingMaterials(false);
+      return;
+    }
+
+    try {
+      const payments = await listPayments(quote.id as string);
+      const totalCollected = payments.reduce((s, p) => s + p.amount, 0);
+      if (pricing.totalJobSale < totalCollected) {
+        setMaterialsError(
+          "These changes would drop the contract total to " + fmt(pricing.totalJobSale) +
+          ", which is less than the " + fmt(totalCollected) + " already collected on this job. " +
+          "Adjust the collected payments first, or undo the edit that lowered the price."
+        );
+        setSavingMaterials(false);
+        return;
+      }
+    } catch (err) {
+      setMaterialsError(err instanceof Error ? err.message : "Failed to check payments already collected");
+      setSavingMaterials(false);
+      return;
+    }
+
+    const depositPct = (quote.deposit_pct as number) || 0;
+    const depositAmount = pricing.totalJobSale * depositPct / 100;
+    const { error: quoteErr } = await supabase
+      .from("quotes")
+      .update({
+        line_items: draftLineItems,
+        material_cost: pricing.materialCost,
+        total_job_sale: pricing.totalJobSale,
+        total_profit: pricing.totalProfit,
+        markup: pricing.markup,
+        deposit_amount: depositAmount,
+        balance_due: pricing.totalJobSale - depositAmount,
+      })
+      .eq("id", quote.id as string);
+
+    if (quoteErr) {
+      setMaterialsError(quoteErr.message || "Failed to save changes");
+      setSavingMaterials(false);
+      return;
+    }
+
+    await load();
+    setEditingMaterials(false);
+    setSavingMaterials(false);
+  }
 
   async function handlePreviewOrder() {
     setPreviewing(true);
@@ -983,6 +1100,55 @@ export default function ProposalPreviewPage() {
                 )}
                 <div className="col-span-2"><span className="text-gray-500">Notes:</span> <span className="font-medium">{(q.notes as string) || "-"}</span></div>
               </div>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="section-heading mb-0">Material List</p>
+                <p className="text-xs text-gray-400">
+                  Add, remove, or adjust any line item directly - for one-off changes Job Details above doesn&apos;t cover. This overrides the material order and contract total; it won&apos;t be touched again unless you edit it here.
+                </p>
+              </div>
+              {!editingMaterials && canTrash(profile, (quote?.created_by as string) || null) && (
+                <button onClick={startEditingMaterials} className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 flex-shrink-0">
+                  <Pencil size={12} /> Edit
+                </button>
+              )}
+            </div>
+            <MaterialList
+              items={editingMaterials ? draftLineItems : ((quote?.line_items as LineItem[]) || [])}
+              editable={editingMaterials}
+              onItemsChange={setDraftLineItems}
+            />
+            {editingMaterials && (
+              <>
+                {materialsPricePreview && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-blue-700">New Contract Total</span>
+                      <span className="font-bold text-blue-900">{fmt(materialsPricePreview.totalJobSale)}</span>
+                    </div>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Was {fmt((quote?.total_job_sale as number) || 0)} - saving will also update the material order to match.
+                    </p>
+                  </div>
+                )}
+                {materialsError && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                    <p className="text-red-600 text-sm">{materialsError}</p>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <button onClick={() => setEditingMaterials(false)} disabled={savingMaterials} className="btn-secondary flex-1 justify-center text-sm disabled:opacity-50">
+                    Cancel
+                  </button>
+                  <button onClick={handleSaveMaterials} disabled={savingMaterials} className="btn-primary flex-1 justify-center text-sm disabled:opacity-50">
+                    <Save size={14} /> {savingMaterials ? "Saving..." : "Save Changes"}
+                  </button>
+                </div>
+              </>
             )}
           </div>
 
