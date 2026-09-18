@@ -79,6 +79,7 @@ const PANEL_TYPE_OPTS: Record<string, { value: string; label: string }[]> = {
     { value: "flat_8_024", label: "8in Flat Pan .024" }, { value: "flat_8_032", label: "8in Flat Pan .032" },
   ],
   irp: [
+    { value: "lrp_3_024", label: "3in LRP .024 (per sq ft)" },
     { value: "lrp_3_032", label: "3in LRP .032 (per sq ft)" }, { value: "lrp_4_032", label: "4.25in LRP .032 (per sq ft)" },
   ],
   w_pan: [

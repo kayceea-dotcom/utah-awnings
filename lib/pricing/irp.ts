@@ -6,7 +6,7 @@ import {
   finalizePricing, shadeBeamItems,
 } from "./shared";
 
-export type IRPType = "lrp_3_032" | "lrp_4_032";
+export type IRPType = "lrp_3_024" | "lrp_3_032" | "lrp_4_032";
 
 export interface IRPInputs {
   jobName: string;
@@ -89,8 +89,18 @@ function lrpFasciaRate(panelType: IRPType, projection: number): number {
 export function calcIRP(inp: IRPInputs): QuoteResult {
   const items: LineItem[] = [];
 
-  const panelRate = inp.panelType === "lrp_4_032" ? RATES.IRP_4_032 : RATES.IRP_3_032;
+  // .024 is a lighter/thinner gauge of the same 3in profile as .032 - same
+  // hanger/gutter/side-fascia/drip-edge hardware either way (those are sized
+  // to the panel's WIDTH, not its gauge), so it only needs its own panel rate
+  // and label - every other lrpHangerRate/lrpGutterRate/lrpFasciaRate branch
+  // below already falls through to the correct 3in behavior for it.
+  const panelRate = inp.panelType === "lrp_4_032" ? RATES.IRP_4_032
+    : inp.panelType === "lrp_3_024" ? RATES.IRP_3_024
+    : RATES.IRP_3_032;
   const is4in = inp.panelType === "lrp_4_032";
+  const panelLabel = inp.panelType === "lrp_4_032" ? "4.25in .032"
+    : inp.panelType === "lrp_3_024" ? "3in .024"
+    : "3in .032";
 
   // ── PANELS — IRP/LRP is 4ft wide, priced per sq ft. `length` here is each panel's
   // own area (4ft x projection), not just the projection, so qty x length x rate
@@ -101,10 +111,10 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
   const p2Qty = inp.projection2 > 0 ? Math.ceil(inp.width2 / 4) : 0;
 
   if (p1Qty > 0) {
-    items.push(li("LRP Panel #1 (" + (is4in ? "4.25in" : "3in") + ")", p1Qty, 4 * inp.projection1, panelRate, "sq ft", "", inp.projection1));
+    items.push(li("LRP Panel #1 (" + panelLabel + ")", p1Qty, 4 * inp.projection1, panelRate, "sq ft", "", inp.projection1));
   }
   if (p2Qty > 0) {
-    items.push(li("LRP Panel #2 (" + (is4in ? "4.25in" : "3in") + ")", p2Qty, 4 * inp.projection2, panelRate, "sq ft", "", inp.projection2));
+    items.push(li("LRP Panel #2 (" + panelLabel + ")", p2Qty, 4 * inp.projection2, panelRate, "sq ft", "", inp.projection2));
   }
 
   // A 2nd run's jog only matters once there's a 2nd run at all. A house-wall jog keeps the

@@ -125,6 +125,7 @@ export const CATALOG: CatalogEntry[] = [
   { key: "metal_panel_screws", label: "Metal Wall Panel Screws (box)", category: "Metal Wall", unit: "ea" },
 
   // IRP / LRP Panels
+  { key: "IRP_3_024", label: "IRP 3in .024 Panel", category: "IRP / LRP", unit: "sq ft" },
   { key: "IRP_3_032", label: "IRP 3in .032 Panel", category: "IRP / LRP", unit: "sq ft" },
   { key: "IRP_4_032", label: "IRP 4.25in .032 Panel", category: "IRP / LRP", unit: "sq ft" },
 

@@ -185,3 +185,45 @@ describe("LRP 4.25in Hanger now has a 24ft tier (previously always charged the 2
     expect(hanger.rate).toBe(RATES.lrp_4_hanger_20);
   });
 });
+
+describe("LRP 3in .024 panel - new lighter gauge alongside the existing .032", () => {
+  it("prices at its own rate and labels itself distinctly from .032", () => {
+    const inp = irpBase();
+    inp.panelType = "lrp_3_024";
+    const out = calcIRP(inp);
+    const panel = findItem(out.lineItems, "LRP Panel #1 (3in .024)")!;
+    expect(panel).toBeTruthy();
+    expect(panel.rate).toBe(RATES.IRP_3_024);
+  });
+
+  it("shares the same 3in hanger/gutter/side-fascia hardware as .032 (same width, different gauge)", () => {
+    const base = irpBase();
+    base.panelType = "lrp_3_032";
+    const baseOut = calcIRP(base);
+
+    const inp = irpBase();
+    inp.panelType = "lrp_3_024";
+    const out = calcIRP(inp);
+
+    expect(findItem(out.lineItems, "LRP Hanger")!.rate).toBe(findItem(baseOut.lineItems, "LRP Hanger")!.rate);
+    expect(findItem(out.lineItems, "LRP Gutter")!.rate).toBe(findItem(baseOut.lineItems, "LRP Gutter")!.rate);
+    expect(findItem(out.lineItems, "LRP Side Fascia")!.rate).toBe(findItem(baseOut.lineItems, "LRP Side Fascia")!.rate);
+  });
+
+  it("has no drip edge, same as the other 3in gutter (drip edge is 4.25in-only)", () => {
+    const inp = irpBase();
+    inp.panelType = "lrp_3_024";
+    const out = calcIRP(inp);
+    expect(findItem(out.lineItems, "LRP Drip Edge")).toBeUndefined();
+  });
+
+  it(".032 and 4.25in panel labels are unchanged in shape (still show the gauge, just alongside .024 now)", () => {
+    const inp32 = irpBase();
+    inp32.panelType = "lrp_3_032";
+    expect(findItem(calcIRP(inp32).lineItems, "LRP Panel #1 (3in .032)")).toBeTruthy();
+
+    const inp4 = irpBase();
+    inp4.panelType = "lrp_4_032";
+    expect(findItem(calcIRP(inp4).lineItems, "LRP Panel #1 (4.25in .032)")).toBeTruthy();
+  });
+});
