@@ -77,7 +77,7 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
               <Line x1={rear.postX - 26} y1={rear.postTopY} x2={rear.postX - 18} y2={rear.postTopY} stroke="#CC2229" strokeWidth={1.5} />
               <Line x1={rear.postX - 26} y1={rear.postBottomY} x2={rear.postX - 18} y2={rear.postBottomY} stroke="#CC2229" strokeWidth={1.5} />
               <Text x={rear.postX - 34} y={(rear.postTopY + rear.postBottomY) / 2 + 4} textAnchor="middle" fill="#CC2229"
-                style={{ ...bold, fontSize: 12 }}
+                style={{ ...bold, fontSize: 15 }}
                 transform={"rotate(-90," + (rear.postX - 34) + "," + (rear.postTopY + rear.postBottomY) / 2 + ")"}>
                 {rear.postHeight}&apos;
               </Text>
@@ -178,7 +178,7 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
           <Line x1={postX + 18} y1={postTopY} x2={postX + 26} y2={postTopY} stroke="#CC2229" strokeWidth={1.5} />
           <Line x1={postX + 18} y1={postBottomY} x2={postX + 26} y2={postBottomY} stroke="#CC2229" strokeWidth={1.5} />
           <Text x={postX + 34} y={(postTopY + postBottomY) / 2 + 4} textAnchor="middle" fill="#CC2229"
-            style={{ ...bold, fontSize: 12 }}
+            style={{ ...bold, fontSize: 15 }}
             transform={"rotate(90," + (postX + 34) + "," + (postTopY + postBottomY) / 2 + ")"}>
             {postHeight}&apos;
           </Text>

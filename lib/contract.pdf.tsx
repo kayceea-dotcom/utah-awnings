@@ -137,12 +137,12 @@ export default function ContractPdf({ data }: { data: ContractData }) {
           <View style={styles.diagramRow}>
             {data.diagramInput && (
               <View style={styles.diagramCol}>
-                <CoverDiagramPdf input={data.diagramInput} maxWidth={170} maxHeight={150} />
+                <CoverDiagramPdf input={data.diagramInput} maxWidth={250} maxHeight={200} />
               </View>
             )}
             {data.sideProfileInput && (
               <View style={styles.diagramCol}>
-                <SideProfilePdf input={data.sideProfileInput} maxWidth={170} maxHeight={150} />
+                <SideProfilePdf input={data.sideProfileInput} maxWidth={250} maxHeight={200} />
               </View>
             )}
           </View>
@@ -150,6 +150,12 @@ export default function ContractPdf({ data }: { data: ContractData }) {
 
         <Text style={styles.sectionLabel}>Contract Summary</Text>
         <View style={styles.totalsBox}>
+          {data.discount > 0 && (
+            <View style={styles.totalsRow}>
+              <Text style={styles.totalsLabel}>Discount Applied</Text>
+              <Text style={styles.totalsValue}>-{fmt(data.discount)}</Text>
+            </View>
+          )}
           <View style={styles.totalsRow}>
             <Text style={styles.totalsLabel}>Down Payment ({data.depositPct}%)</Text>
             <Text style={styles.totalsValue}>{fmt(data.depositAmount)}</Text>

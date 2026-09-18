@@ -213,7 +213,7 @@ export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170
           <Line x1={ox} y1={oy - HOUSE_H - 8} x2={ox + coverW1} y2={oy - HOUSE_H - 8} stroke="#64748b" strokeWidth={1} />
           <Line x1={ox} y1={oy - HOUSE_H - 12} x2={ox} y2={oy - HOUSE_H - 4} stroke="#64748b" strokeWidth={1} />
           <Line x1={ox + coverW1} y1={oy - HOUSE_H - 12} x2={ox + coverW1} y2={oy - HOUSE_H - 4} stroke="#64748b" strokeWidth={1} />
-          <Text x={ox + coverW1 / 2} y={oy - HOUSE_H - 12} textAnchor="middle" fill="#1e293b" style={{ ...bold, fontSize: 13 }}>
+          <Text x={ox + coverW1 / 2} y={oy - HOUSE_H - 12} textAnchor="middle" fill="#1e293b" style={{ ...bold, fontSize: 16 }}>
             {width1}&apos;
           </Text>
 
@@ -222,7 +222,7 @@ export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170
           <Line x1={ox + coverW1 + 6} y1={run1TopY} x2={ox + coverW1 + 14} y2={run1TopY} stroke="#CC2229" strokeWidth={1.5} />
           <Line x1={ox + coverW1 + 6} y1={run1FrontY} x2={ox + coverW1 + 14} y2={run1FrontY} stroke="#CC2229" strokeWidth={1.5} />
           <Text x={ox + coverW1 + 22} y={(run1TopY + run1FrontY) / 2 + 4} textAnchor="middle" fill="#CC2229"
-            style={{ ...bold, fontSize: 13 }}
+            style={{ ...bold, fontSize: 16 }}
             transform={"rotate(90," + (ox + coverW1 + 22) + "," + (run1TopY + run1FrontY) / 2 + ")"}>
             {projection1}&apos;
           </Text>
@@ -233,7 +233,7 @@ export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170
               <Line x1={ox + coverW1} y1={oy - HOUSE_H - 8} x2={ox + coverW1 + coverW2} y2={oy - HOUSE_H - 8} stroke="#64748b" strokeWidth={1} />
               <Line x1={ox + coverW1} y1={oy - HOUSE_H - 12} x2={ox + coverW1} y2={oy - HOUSE_H - 4} stroke="#64748b" strokeWidth={1} />
               <Line x1={ox + coverW1 + coverW2} y1={oy - HOUSE_H - 12} x2={ox + coverW1 + coverW2} y2={oy - HOUSE_H - 4} stroke="#64748b" strokeWidth={1} />
-              <Text x={ox + coverW1 + coverW2 / 2} y={oy - HOUSE_H - 12} textAnchor="middle" fill="#1e293b" style={{ ...bold, fontSize: 13 }}>
+              <Text x={ox + coverW1 + coverW2 / 2} y={oy - HOUSE_H - 12} textAnchor="middle" fill="#1e293b" style={{ ...bold, fontSize: 16 }}>
                 {width2}&apos;
               </Text>
             </G>
@@ -246,7 +246,7 @@ export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170
               <Line x1={ox + coverW1 + coverW2 + 6} y1={run2TopY} x2={ox + coverW1 + coverW2 + 14} y2={run2TopY} stroke="#CC2229" strokeWidth={1.5} />
               <Line x1={ox + coverW1 + coverW2 + 6} y1={run2FrontY} x2={ox + coverW1 + coverW2 + 14} y2={run2FrontY} stroke="#CC2229" strokeWidth={1.5} />
               <Text x={ox + coverW1 + coverW2 + 22} y={(run2TopY + run2FrontY) / 2 + 4} textAnchor="middle" fill="#CC2229"
-                style={{ ...bold, fontSize: 13 }}
+                style={{ ...bold, fontSize: 16 }}
                 transform={"rotate(90," + (ox + coverW1 + coverW2 + 22) + "," + (run2TopY + run2FrontY) / 2 + ")"}>
                 {projection2}&apos;
               </Text>
