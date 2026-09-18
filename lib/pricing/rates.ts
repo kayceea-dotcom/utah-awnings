@@ -8,12 +8,12 @@ export const RATES = {
   T6_040:       6.45,
   flat_8_020:   2.49,
   flat_8_024:   2.87,
-  flat_8_032:   4.98,
+  flat_8_032:   4.58,
 
   // Beams (per linear ft)
-  beam_3x8:    10.10,
+  beam_3x8:     8.47,
   beam_2x6:     6.59,
-  beam_3x3:     4.71,
+  beam_3x3:     3.73,
   beam_4_i_beam: 14.19,
   beam_7_i_beam: 25.24,
   steel_3x3_g_beam_ft: 12.0075,
@@ -23,7 +23,7 @@ export const RATES = {
   steel_3x8_12ga_ft:  21.80,
 
   // Posts
-  post_3x3_sleeve_ft:  4.71,
+  post_3x3_sleeve_ft:  3.73,
   post_3x3_steel_ft:   8.477,
   sampson_post_ft:     6.91,
 
@@ -31,16 +31,25 @@ export const RATES = {
   // literal ground/deck post
   skylift_post:      150.00,
 
-  // Hangers (per ft, except elevated_roof_mount which is a flat fee)
+  // Hangers (roll form is cut to length, priced per ft; extruded/A-Rail are
+  // only sold in these fixed stock lengths - flat fee per piece regardless of
+  // the run's actual needed length, same as elevated_roof_mount already was)
   hanger_roll_form_ft:   3.37,
-  hanger_extruded_ft:    5.00,
-  hanger_a_rail_ft:     13.77,
+  hanger_extruded_20:  115.51,
+  hanger_a_rail_10:     22.91,
   hanger_elevated_roof_mount: 300,
 
-  // Gutters
+  // Gutters - 2.5in extruded gutter/side fascia are only sold in 16'/20'/24'
+  // stock pieces (not cut to order), so these are flat per-piece, not per-ft -
+  // see extrudedGutterRate/extrudedFasciaQtyRate in shared.ts. Roll form
+  // gutter stays cut-to-length, priced per ft.
   gutter_roll_form_ft:   4.63,
-  gutter_extruded_ft:   14.784,
-  fascia_extruded_ft:    7.117,
+  gutter_extruded_16:  200.50,
+  gutter_extruded_20:  250.22,
+  gutter_extruded_24:  294.17,
+  fascia_extruded_16:   87.61,
+  fascia_extruded_20:  109.43,
+  fascia_extruded_24:  131.35,
 
   // Post plates / brackets / caps
   post_plate_3x8_ft:   10.10,
@@ -66,11 +75,11 @@ export const RATES = {
   fan_beam_cap_ft:  4.84,
 
   // Downspouts and drainage
-  downspout_2x3_10:  23.75,
-  elbow_2x3:          4.08,
+  downspout_2x3_10:  26.77,
+  elbow_2x3:          3.17,
   dropout:            2.96,
   downspout_strap:    2.01,
-  flashing:          25.41,
+  flashing:          19.83,
 
   // Hardware
   lag_screw:              0.40,
@@ -93,10 +102,10 @@ export const RATES = {
   DEFAULT_TAX:   0.0725,
 
   // Pergola
-  rafter_2x6_032_ft:   6.59,
+  rafter_2x6_032_ft:   6.21,
   rafter_2x6_040_ft:   8.59,
-  lattice_2x2_ft:      2.02,
-  lattice_2x3_ft:      3.17,
+  lattice_2x2_ft:      1.87,
+  lattice_2x3_ft:      2.32,
   lattice_screw:       0.48,
   lattice_splice_2x2:  2.01,
   lattice_splice_2x3:  2.07,
@@ -117,27 +126,28 @@ export const RATES = {
   metal_panel_screws:  40.00,
 
   // IRP / LRP panels (per sq ft)
-  IRP_3_032:   13.54,
-  IRP_4_032:   16.02,
+  IRP_3_032:   15.29,
+  IRP_4_032:   17.40,
 
   // LRP Hangers (per piece)
-  lrp_3_hanger_16:  139.73,
-  lrp_3_hanger_20:  174.67,
-  lrp_3_hanger_24:  209.57,
-  lrp_4_hanger_20:  232.47,
+  lrp_3_hanger_16:  103.72,
+  lrp_3_hanger_20:  129.62,
+  lrp_3_hanger_24:  155.55,
+  lrp_4_hanger_20:  202.70,
+  lrp_4_hanger_24:  243.19,
 
   // LRP Gutters (per piece)
-  lrp_3_gutter_16:  279.18,
-  lrp_3_gutter_20:  348.95,
-  lrp_3_gutter_24:  418.71,
-  lrp_4_gutter_20:  444.33,
-  lrp_4_gutter_24:  533.22,
+  lrp_3_gutter_16:  263.50,
+  lrp_3_gutter_20:  331.50,
+  lrp_3_gutter_24:  395.88,
+  lrp_4_gutter_20:  308.27,
+  lrp_4_gutter_24:  370.33,
 
   // LRP Side Fascia (per piece)
-  lrp_3_fascia_17:  124.54,
-  lrp_3_fascia_21:  153.87,
-  lrp_3_fascia_25:  183.06,
-  lrp_4_fascia_25:  231.10,
+  lrp_3_fascia_17:   93.03,
+  lrp_3_fascia_21:  116.28,
+  lrp_3_fascia_25:  140.50,
+  lrp_4_fascia_25:  170.91,
 
   // LRP Drip edge
   lrp_drip_edge_24: 297.16,

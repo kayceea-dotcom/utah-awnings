@@ -63,7 +63,7 @@ export default function CoverDiagram({
     svgW, svgH, ox, oy, HOUSE_H,
     hasRun2, isHouseJog, totalW,
     coverW1, coverH1, coverW2, coverH2,
-    run1TopY, run2TopY, run1FrontY,
+    run1TopY, run2TopY, run1FrontY, run2FrontY,
     beamY1, beamY2, showBeam1, showBeam2, postRowY1, postRowY2,
     postPositions, postPositions2, multiSpanBeams,
     tailCount, tailCount2, frontEdgeY, frontEdgeY2, tailTipY, tailTipY2, backTailTipY,
@@ -316,6 +316,47 @@ export default function CoverDiagram({
             transform={"rotate(90," + (ox + coverW1 + 22) + "," + (run1TopY + run1FrontY) / 2 + ")"}>
             {projection1}{"'"}
           </text>
+
+          {/* Width dimension (top) - run 2 */}
+          {hasRun2 && (
+            <>
+              <line x1={ox + coverW1} y1={oy - HOUSE_H - 8} x2={ox + coverW1 + coverW2} y2={oy - HOUSE_H - 8}
+                stroke="#64748b" strokeWidth="1" />
+              <line x1={ox + coverW1} y1={oy - HOUSE_H - 12} x2={ox + coverW1} y2={oy - HOUSE_H - 4}
+                stroke="#64748b" strokeWidth="1" />
+              <line x1={ox + coverW1 + coverW2} y1={oy - HOUSE_H - 12} x2={ox + coverW1 + coverW2} y2={oy - HOUSE_H - 4}
+                stroke="#64748b" strokeWidth="1" />
+              <text x={ox + coverW1 + coverW2 / 2} y={oy - HOUSE_H - 12}
+                textAnchor="middle" fontSize="13" fontWeight="700" fill="#1e293b">
+                {width2}{"'"}
+              </text>
+            </>
+          )}
+
+          {/* Projection dimension (right side, red) - run 2 */}
+          {hasRun2 && (
+            <>
+              <line x1={ox + coverW1 + coverW2 + 10} y1={run2TopY} x2={ox + coverW1 + coverW2 + 10} y2={run2FrontY}
+                stroke="#CC2229" strokeWidth="1.5" />
+              <line x1={ox + coverW1 + coverW2 + 6} y1={run2TopY} x2={ox + coverW1 + coverW2 + 14} y2={run2TopY}
+                stroke="#CC2229" strokeWidth="1.5" />
+              <line x1={ox + coverW1 + coverW2 + 6} y1={run2FrontY} x2={ox + coverW1 + coverW2 + 14} y2={run2FrontY}
+                stroke="#CC2229" strokeWidth="1.5" />
+              <text x={ox + coverW1 + coverW2 + 22} y={(run2TopY + run2FrontY) / 2 + 4}
+                textAnchor="middle" fontSize="13" fontWeight="700" fill="#CC2229"
+                transform={"rotate(90," + (ox + coverW1 + coverW2 + 22) + "," + (run2TopY + run2FrontY) / 2 + ")"}>
+                {projection2}{"'"}
+              </text>
+            </>
+          )}
+
+          {/* Sq ft label - run 2 */}
+          {hasRun2 && (
+            <text x={ox + coverW1 + coverW2 / 2} y={(run2TopY + run2FrontY) / 2 + 4}
+              textAnchor="middle" fontSize="9" fill="#94a3b8">
+              {width2 * projection2} sq ft
+            </text>
+          )}
 
           {/* Sq ft label */}
           <text x={ox + coverW1 / 2} y={(run1TopY + run1FrontY) / 2 + 4}

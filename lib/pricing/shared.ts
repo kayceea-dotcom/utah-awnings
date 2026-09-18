@@ -135,6 +135,37 @@ export function fasciaQtyLen(maxProjection: number, extraPerSideFt = 0): { qty: 
   return { qty: 2, length: nextStockLength(maxProjection + extraPerSideFt) };
 }
 
+// 2.5in extruded gutter/side fascia are only sold in 16'/20'/24' stock pieces
+// (not cut to order like roll form or the general stock-length ladder above),
+// so each run is priced as one flat-fee piece at whichever tier covers its
+// needed length - same tier-lookup rule LRP's own hanger/gutter/fascia
+// already use (see lrpHangerRate/lrpGutterRate/lrpFasciaRate in irp.ts).
+// Anything longer than 24ft is capped at the 24ft piece, the same
+// simplification LRP's own tiers already make.
+function extrudedStockFt(neededFt: number): number {
+  return neededFt <= 16 ? 16 : neededFt <= 20 ? 20 : 24;
+}
+export function extrudedGutterRate(neededFt: number): number {
+  const stockFt = extrudedStockFt(neededFt);
+  return stockFt === 16 ? RATES.gutter_extruded_16 : stockFt === 20 ? RATES.gutter_extruded_20 : RATES.gutter_extruded_24;
+}
+function extrudedFasciaRate(neededFt: number): number {
+  const stockFt = extrudedStockFt(neededFt);
+  return stockFt === 16 ? RATES.fascia_extruded_16 : stockFt === 20 ? RATES.fascia_extruded_20 : RATES.fascia_extruded_24;
+}
+
+// Same 1-piece-cut-in-half-for-both-sides (projection <= 12ft) vs 2-separate-
+// pieces split as fasciaQtyLen, but priced off the 16'/20'/24' stock tiers
+// instead of the general ladder, since extruded side fascia is only sold in
+// those 3 sizes. `stockFt` is exposed for the material list's Len column,
+// since amount is now qty x rate (a flat piece price), not qty x length x rate.
+export function extrudedFasciaQtyRate(maxProjection: number): { qty: number; rate: number; stockFt: number } {
+  const isOnePiece = maxProjection <= 12;
+  const neededFt = isOnePiece ? 2 * maxProjection : maxProjection;
+  const stockFt = extrudedStockFt(neededFt);
+  return { qty: isOnePiece ? 1 : 2, rate: extrudedFasciaRate(neededFt), stockFt };
+}
+
 // "double_3x8" is two 3x8 beams mounted to the front and back of the posts
 // (instead of one beam sitting on top) to get more span between posts - not a
 // distinct catalog rate, just 2x a single 3x8 beam's material/insert/endcap.

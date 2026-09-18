@@ -4,7 +4,7 @@ import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, 
 import {
   li, nextStockLength, rollFormGutterStockLength, wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen,
   anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, beamTypeLabel,
-  END_CUT_LABELS,
+  END_CUT_LABELS, extrudedGutterRate,
 } from "./shared";
 
 export type WPanType = "wpan_032" | "duraking_025" | "duraking_032" | "duraking_040";
@@ -133,17 +133,25 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   // beam + posts/SkyLift risers below ──
   const isFreestanding = inp.mountStyle === "freestanding";
   const isRoofMount = inp.mountStyle === "roof_mount";
-  // For two-run jobs hanger spans combined width
+  // For two-run jobs hanger spans combined width. Roll Form hanger is cut to
+  // length, priced per ft; A-Rail is only sold in one fixed 10ft stock length
+  // - a flat fee per piece regardless of the run's actual needed length.
   const totalWidth = inp.width1 + (inp.width2 > 0 ? inp.width2 : 0);
   const hangerLen = totalWidth > 0 ? totalWidth + 1.5 : 0;
-  const hangerRate = inp.hangerType === "a_rail" ? RATES.hanger_a_rail_ft : RATES.hanger_roll_form_ft;
+  const isARail = inp.hangerType === "a_rail";
   if (!isFreestanding && !isRoofMount && hangerLen > 0) {
-    items.push(li("Hanger 2.5in", 1, hangerLen, hangerRate, "", inp.colorPans));
+    items.push(isARail
+      ? li("Hanger 2.5in", 1, 0, RATES.hanger_a_rail_10, "", inp.colorPans, 10)
+      : li("Hanger 2.5in", 1, hangerLen, RATES.hanger_roll_form_ft, "", inp.colorPans));
   }
 
   // ── GUTTER ──
-  // Gutter spans combined width, rounded to next stock length
-  const gutterStockLen = nextStockLength(totalWidth + 1.5);
+  // Gutter spans combined width. Roll form gutter is cut to length (rounded
+  // to the next stock length); extruded gutter is only sold in 16'/20'/24'
+  // stock pieces - a flat fee per piece at whichever tier covers the needed
+  // width (see extrudedGutterRate).
+  const gutterNeededFt = totalWidth + 1.5;
+  const extrudedGutterStockFt = gutterNeededFt <= 16 ? 16 : gutterNeededFt <= 20 ? 20 : 24;
   const maxProjection = Math.max(inp.projection1, inp.projection2 || 0);
   if (inp.gutterType === "roll_form") {
     items.push(li("Roll Form Gutter", 1, rollFormGutterStockLength(totalWidth + 1.5), RATES.gutter_roll_form_ft, "", inp.colorGutterFascia));
@@ -156,11 +164,11 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
       items.push(li("Roll Form Gutter Rear", 1, rollFormGutterStockLength(totalWidth + 1.5), RATES.gutter_roll_form_ft, "", inp.colorGutterFascia));
     }
   } else {
-    items.push(li("Extruded Gutter 2.5in", 1, gutterStockLen, RATES.gutter_extruded_ft, "", inp.colorGutterFascia));
+    items.push(li("Extruded Gutter 2.5in", 1, 0, extrudedGutterRate(gutterNeededFt), "", inp.colorGutterFascia, extrudedGutterStockFt));
     const { qty: fasciaQty, length: fasciaStockLen } = fasciaQtyLen(maxProjection);
     items.push(li("Extruded Side Fascia", fasciaQty, fasciaStockLen, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
     if (isFreestanding || isRoofMount) {
-      items.push(li("Extruded Gutter 2.5in Rear", 1, gutterStockLen, RATES.gutter_extruded_ft, "", inp.colorGutterFascia));
+      items.push(li("Extruded Gutter 2.5in Rear", 1, 0, extrudedGutterRate(gutterNeededFt), "", inp.colorGutterFascia, extrudedGutterStockFt));
     }
   }
 

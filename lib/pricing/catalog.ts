@@ -41,14 +41,18 @@ export const CATALOG: CatalogEntry[] = [
 
   // Hangers
   { key: "hanger_roll_form_ft", label: "Hanger - Roll Form", category: "Hangers", unit: "ft" },
-  { key: "hanger_extruded_ft", label: "Hanger - Extruded", category: "Hangers", unit: "ft" },
-  { key: "hanger_a_rail_ft", label: "Hanger - A-Rail", category: "Hangers", unit: "ft" },
+  { key: "hanger_extruded_20", label: "Hanger - Extruded (20ft)", category: "Hangers", unit: "ea" },
+  { key: "hanger_a_rail_10", label: "Hanger - A-Rail (10ft)", category: "Hangers", unit: "ea" },
   { key: "hanger_elevated_roof_mount", label: "Hanger - Elevated Roof Mount", category: "Hangers", unit: "ea" },
 
   // Gutters
   { key: "gutter_roll_form_ft", label: "Gutter - Roll Form", category: "Gutters", unit: "ft" },
-  { key: "gutter_extruded_ft", label: "Gutter - Extruded", category: "Gutters", unit: "ft" },
-  { key: "fascia_extruded_ft", label: "Fascia - Extruded", category: "Gutters", unit: "ft" },
+  { key: "gutter_extruded_16", label: "Gutter - Extruded (16ft)", category: "Gutters", unit: "ea" },
+  { key: "gutter_extruded_20", label: "Gutter - Extruded (20ft)", category: "Gutters", unit: "ea" },
+  { key: "gutter_extruded_24", label: "Gutter - Extruded (24ft)", category: "Gutters", unit: "ea" },
+  { key: "fascia_extruded_16", label: "Fascia - Extruded (16ft)", category: "Gutters", unit: "ea" },
+  { key: "fascia_extruded_20", label: "Fascia - Extruded (20ft)", category: "Gutters", unit: "ea" },
+  { key: "fascia_extruded_24", label: "Fascia - Extruded (24ft)", category: "Gutters", unit: "ea" },
   { key: "fascia_extruded_2x6_ft", label: "Fascia - Extruded 2x6 (V-Panel)", category: "Gutters", unit: "ft" },
   { key: "fascia_extruded_3x8_ft", label: "Fascia - Extruded 3x8", category: "Gutters", unit: "ft" },
 
@@ -129,6 +133,7 @@ export const CATALOG: CatalogEntry[] = [
   { key: "lrp_3_hanger_20", label: "LRP 3in Hanger - 20ft", category: "IRP / LRP", unit: "ea" },
   { key: "lrp_3_hanger_24", label: "LRP 3in Hanger - 24ft", category: "IRP / LRP", unit: "ea" },
   { key: "lrp_4_hanger_20", label: "LRP 4.25in Hanger - 20ft", category: "IRP / LRP", unit: "ea" },
+  { key: "lrp_4_hanger_24", label: "LRP 4.25in Hanger - 24ft", category: "IRP / LRP", unit: "ea" },
 
   // LRP Gutters
   { key: "lrp_3_gutter_16", label: "LRP 3in Gutter - 16ft", category: "IRP / LRP", unit: "ea" },
