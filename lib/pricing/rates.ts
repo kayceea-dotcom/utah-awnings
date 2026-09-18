@@ -126,6 +126,7 @@ export const RATES = {
   metal_panel_screws:  40.00,
 
   // IRP / LRP panels (per sq ft)
+  IRP_3_024:   11.29,
   IRP_3_032:   15.29,
   IRP_4_032:   17.40,
 

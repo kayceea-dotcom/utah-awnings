@@ -30,6 +30,7 @@ const COLORS = ["White","Siennawood","Slate","Driftwood","Beechwood","Maplewood"
 const COLOR_OPTS = COLORS.map((c) => ({ value: c, label: c }));
 
 const PANEL_TYPES = [
+  { value: "lrp_3_024", label: "3in LRP .024 (per sq ft)" },
   { value: "lrp_3_032", label: "3in LRP .032 (per sq ft)" },
   { value: "lrp_4_032", label: "4.25in LRP .032 (per sq ft)" },
 ];
