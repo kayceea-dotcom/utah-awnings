@@ -24,7 +24,7 @@ export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170
     svgW, svgH, ox, oy, HOUSE_H,
     hasRun2, isHouseJog, totalW,
     coverW1, coverH1, coverW2, coverH2,
-    run1TopY, run2TopY, run1FrontY,
+    run1TopY, run2TopY, run1FrontY, run2FrontY,
     beamY1, beamY2, showBeam1, showBeam2, postRowY1, postRowY2, scale,
     postPositions, postPositions2, multiSpanBeams,
     tailCount, tailCount2, frontEdgeY, frontEdgeY2, tailTipY, tailTipY2, backTailTipY,
@@ -32,6 +32,7 @@ export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170
     showRafterTails, isLattice, rafterXs, tubeYs,
     isFreestanding, rearBeamY, rearPostPositions,
   } = geo;
+  const projection2 = input.projection2 ?? 0;
 
   // Scale the whole diagram down to fit a comfortable box on the printed
   // page - the on-screen version can run wide/tall for big covers, but the
@@ -226,10 +227,43 @@ export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170
             {projection1}&apos;
           </Text>
 
+          {/* Width dimension - run 2 */}
+          {hasRun2 && (
+            <G>
+              <Line x1={ox + coverW1} y1={oy - HOUSE_H - 8} x2={ox + coverW1 + coverW2} y2={oy - HOUSE_H - 8} stroke="#64748b" strokeWidth={1} />
+              <Line x1={ox + coverW1} y1={oy - HOUSE_H - 12} x2={ox + coverW1} y2={oy - HOUSE_H - 4} stroke="#64748b" strokeWidth={1} />
+              <Line x1={ox + coverW1 + coverW2} y1={oy - HOUSE_H - 12} x2={ox + coverW1 + coverW2} y2={oy - HOUSE_H - 4} stroke="#64748b" strokeWidth={1} />
+              <Text x={ox + coverW1 + coverW2 / 2} y={oy - HOUSE_H - 12} textAnchor="middle" fill="#1e293b" style={{ ...bold, fontSize: 13 }}>
+                {width2}&apos;
+              </Text>
+            </G>
+          )}
+
+          {/* Projection dimension (rotated label) - run 2 */}
+          {hasRun2 && (
+            <G>
+              <Line x1={ox + coverW1 + coverW2 + 10} y1={run2TopY} x2={ox + coverW1 + coverW2 + 10} y2={run2FrontY} stroke="#CC2229" strokeWidth={1.5} />
+              <Line x1={ox + coverW1 + coverW2 + 6} y1={run2TopY} x2={ox + coverW1 + coverW2 + 14} y2={run2TopY} stroke="#CC2229" strokeWidth={1.5} />
+              <Line x1={ox + coverW1 + coverW2 + 6} y1={run2FrontY} x2={ox + coverW1 + coverW2 + 14} y2={run2FrontY} stroke="#CC2229" strokeWidth={1.5} />
+              <Text x={ox + coverW1 + coverW2 + 22} y={(run2TopY + run2FrontY) / 2 + 4} textAnchor="middle" fill="#CC2229"
+                style={{ ...bold, fontSize: 13 }}
+                transform={"rotate(90," + (ox + coverW1 + coverW2 + 22) + "," + (run2TopY + run2FrontY) / 2 + ")"}>
+                {projection2}&apos;
+              </Text>
+            </G>
+          )}
+
           {/* Sq ft label */}
           <Text x={ox + coverW1 / 2} y={(run1TopY + run1FrontY) / 2 + 4} textAnchor="middle" fill="#94a3b8" style={{ fontSize: 9 }}>
             {width1 * projection1} sq ft
           </Text>
+
+          {/* Sq ft label - run 2 */}
+          {hasRun2 && (
+            <Text x={ox + coverW1 + coverW2 / 2} y={(run2TopY + run2FrontY) / 2 + 4} textAnchor="middle" fill="#94a3b8" style={{ fontSize: 9 }}>
+              {width2 * projection2} sq ft
+            </Text>
+          )}
 
           {/* Legend */}
           <Rect x={ox} y={svgH - 16} width={8} height={8} fill="#1e293b" rx={1} />
