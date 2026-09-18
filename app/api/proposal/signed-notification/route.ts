@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     const supabase = await createServerClient();
     const { data: proposal } = await supabase
       .from("proposals")
-      .select("*, quotes(*, customers(*), companies(*))")
+      .select("*, quotes(*, customers(*))")
       .eq("token", proposalToken)
       .single();
 
@@ -36,7 +36,6 @@ export async function POST(request: NextRequest) {
 
     const quote = proposal.quotes as Record<string, unknown>;
     const customer = (quote.customers as Record<string, unknown>) || {};
-    const company = (quote.companies as Record<string, unknown>) || {};
     const inputs = (quote.inputs as Record<string, unknown>) || {};
 
     const adminClient = createClient(
@@ -48,7 +47,13 @@ export async function POST(request: NextRequest) {
     // user record), not the free-text `salesman` display name on the quote -
     // that's just whatever full_name was on their profile when they built it.
     // Also cc their optional profiles.email, in case their real login email
-    // isn't an inbox they actually check.
+    // isn't an inbox they actually check. The office is deliberately NOT
+    // notified here - this fires automatically the instant the customer
+    // signs, before the rep has had any chance to review/adjust the job, and
+    // it doesn't carry the actual contract PDF. The office only hears about
+    // a signed job when the rep explicitly sends it via the "Send Signed
+    // Contract to Office" button (app/api/contract/resend), once they're
+    // sure it's final - see that route for the real one-and-only office send.
     const recipients = new Set<string>();
     const createdBy = quote.created_by as string | null;
     if (createdBy) {
@@ -62,14 +67,16 @@ export async function POST(request: NextRequest) {
         .single();
       if (repProfile?.email) recipients.add(repProfile.email);
     }
-    const officeEmail = (company.email as string) || "utahawnings@gmail.com";
-    recipients.add(officeEmail);
 
     const jobName = (inputs.jobName as string) || (customer.name as string) || "Unknown Job";
     const salesman = (inputs.salesman as string) || "Utah Awnings";
     const total = (quote.total_job_sale as number) || 0;
     const proposalUrl = "https://uaquotepro.com/proposals/" + proposalToken;
 
+    // Only the rep is notified here now (see comment above) - skip the send
+    // entirely on the rare quote with no resolvable creator, rather than
+    // calling Resend with an empty `to` list.
+    if (recipients.size > 0) {
     await resend.emails.send({
       from: "Utah Awnings <noreply@uaquotepro.com>",
       to: Array.from(recipients),
@@ -100,6 +107,7 @@ export async function POST(request: NextRequest) {
 </html>
       `,
     });
+    }
 
     // Push the rep's own device(s), if they've enabled it - a separate,
     // best-effort channel on top of the email above. Never let a push

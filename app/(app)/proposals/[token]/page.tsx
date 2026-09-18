@@ -1245,10 +1245,14 @@ export default function ProposalPreviewPage() {
                 <img src={String(proposal.signature_data)} alt="Signature"
                   className="mt-3 border border-green-200 rounded-lg bg-white p-2 max-h-20" />
               ) : null}
+              <p className="text-xs text-green-600 mt-3">
+                The office isn&apos;t notified automatically when a customer signs - send (or re-send) the contract
+                below whenever the job is finalized, including after any changes.
+              </p>
               <button onClick={handleResendContract} disabled={resendingContract}
-                className="btn-secondary w-full justify-center mt-3 text-sm disabled:opacity-50">
+                className="btn-secondary w-full justify-center mt-2 text-sm disabled:opacity-50">
                 <Send size={14} />
-                {resendingContract ? "Sending..." : "Resend Signed Contract to Office"}
+                {resendingContract ? "Sending..." : "Send Signed Contract to Office"}
               </button>
               {contractResent && (
                 <p className="text-xs text-green-600 text-center mt-2">Sent to utahawnings@gmail.com</p>

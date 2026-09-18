@@ -37,6 +37,7 @@ export interface ContractData {
   depositAmount: number;
   balanceDue: number;
   totalJobSale: number;
+  discount: number;
   installDate: string;
   status: string;
   signedAt: string | null;
@@ -166,6 +167,7 @@ export function buildContractData(proposal: Record<string, unknown>): ContractDa
     depositAmount: (quote.deposit_amount as number) || 0,
     balanceDue: (quote.balance_due as number) || 0,
     totalJobSale: (quote.total_job_sale as number) || 0,
+    discount: Number(inputs.discount) || 0,
     installDate: quote.estimated_install_date
       ? new Date(quote.estimated_install_date as string).toLocaleDateString()
       : "TBD",
