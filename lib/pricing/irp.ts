@@ -60,7 +60,9 @@ export interface IRPInputs {
 
 // LRP hanger: pick correct stock piece based on beam length
 function lrpHangerRate(panelType: IRPType, beamLength: number): number {
-  if (panelType === "lrp_4_032") return RATES.lrp_4_hanger_20;
+  if (panelType === "lrp_4_032") {
+    return beamLength <= 18 ? RATES.lrp_4_hanger_20 : RATES.lrp_4_hanger_24;
+  }
   if (beamLength <= 14) return RATES.lrp_3_hanger_16;
   if (beamLength <= 18) return RATES.lrp_3_hanger_20;
   return RATES.lrp_3_hanger_24;

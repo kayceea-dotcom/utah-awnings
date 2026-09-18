@@ -5,6 +5,7 @@ import {
   li, nextStockLength, rollFormGutterStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, beamTypeLabel, anchorQty,
   wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen, deckHeightSurcharge,
   postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, END_CUT_LABELS,
+  extrudedGutterRate, extrudedFasciaQtyRate,
 } from "./shared";
 
 function panelRate(type: string): number {
@@ -57,11 +58,14 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   // the wall's angled path is longer, so the hanger needs a bigger allowance (+8 instead of +1). ──
   const splitHanger = hasSecondRun && inp.jogType === "house";
   const hangerAllowance = inp.bayWindowPopout ? 8 : 1;
-  function hangerRateFor(type: string): number {
-    if (type === "a_rail") return RATES.hanger_a_rail_ft;
-    if (type === "extruded") return RATES.hanger_extruded_ft;
-    if (type === "elevated_roof_mount") return RATES.hanger_elevated_roof_mount;
-    return RATES.hanger_roll_form_ft;
+  // Roll Form hangers are cut to length and priced per ft. A-Rail/Extruded
+  // are only sold in one fixed stock length (10ft/20ft) - one flat-fee piece
+  // per hanger run regardless of the run's actual needed length, same as
+  // elevated_roof_mount already was.
+  function hangerLineFor(type: string, neededFt: number): { length: number; rate: number; displayLength?: number } {
+    if (type === "a_rail") return { length: 0, rate: RATES.hanger_a_rail_10, displayLength: 10 };
+    if (type === "extruded") return { length: 0, rate: RATES.hanger_extruded_20, displayLength: 20 };
+    return { length: neededFt, rate: RATES.hanger_roll_form_ft };
   }
   const isFreestanding = inp.mountStyle === "freestanding";
   // Roof Mount: the house-side eave hanger is replaced by a real rear beam
@@ -74,10 +78,11 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   } else if (inp.hangerType === "elevated_roof_mount") {
     if (combinedWidth > 0) items.push(li("Hanger", 1, 0, RATES.hanger_elevated_roof_mount, "", inp.colorPans));
   } else if (splitHanger) {
-    if (inp.width1 > 0) items.push(li("Hanger #1", 1, inp.width1 + hangerAllowance, hangerRateFor(inp.hangerType), "", inp.colorPans));
-    if (inp.width2 > 0) items.push(li("Hanger #2", 1, inp.width2 + hangerAllowance, hangerRateFor(inp.hangerType), "", inp.colorPans));
+    if (inp.width1 > 0) { const h = hangerLineFor(inp.hangerType, inp.width1 + hangerAllowance); items.push(li("Hanger #1", 1, h.length, h.rate, "", inp.colorPans, h.displayLength)); }
+    if (inp.width2 > 0) { const h = hangerLineFor(inp.hangerType, inp.width2 + hangerAllowance); items.push(li("Hanger #2", 1, h.length, h.rate, "", inp.colorPans, h.displayLength)); }
   } else if (combinedWidth > 0) {
-    items.push(li("Hanger", 1, combinedWidth + hangerAllowance, hangerRateFor(inp.hangerType), "", inp.colorPans));
+    const h = hangerLineFor(inp.hangerType, combinedWidth + hangerAllowance);
+    items.push(li("Hanger", 1, h.length, h.rate, "", inp.colorPans, h.displayLength));
   }
 
   // ── GUTTER — combined into 1 piece, UNLESS the second run is a jog in the ground/deck,
@@ -86,22 +91,28 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   const gutterMultiplier = inp.hangerType === "elevated_roof_mount" ? 2 : 1;
   const splitGutter = hasSecondRun && inp.jogType === "ground";
   const gutterName = inp.gutterType === "roll_form" ? "Roll Form Gutter" : "Extruded Gutter";
-  const gutterRate = inp.gutterType === "roll_form" ? RATES.gutter_roll_form_ft : RATES.gutter_extruded_ft;
-  // Roll form gutter only ships in 30ft/36ft; extruded stays on the general stock ladder.
-  const gutterStockLength = (ft: number) =>
-    inp.gutterType === "roll_form" ? rollFormGutterStockLength(ft) : nextStockLength(ft);
+  // Roll form gutter is cut to length (30ft/36ft stock), priced per ft.
+  // Extruded gutter is only sold in 16'/20'/24' stock pieces - a flat fee per
+  // piece at whichever tier covers the needed length (see extrudedGutterRate).
+  function gutterLine(name: string, neededFt: number): LineItem {
+    if (inp.gutterType === "roll_form") {
+      return li(name, gutterMultiplier, rollFormGutterStockLength(neededFt), RATES.gutter_roll_form_ft, "", inp.colorGutterFascia);
+    }
+    const stockFt = neededFt <= 16 ? 16 : neededFt <= 20 ? 20 : 24;
+    return li(name, gutterMultiplier, 0, extrudedGutterRate(neededFt), "", inp.colorGutterFascia, stockFt);
+  }
   if (splitGutter) {
-    if (inp.width1 > 0) items.push(li(gutterName + " #1", gutterMultiplier, gutterStockLength(inp.width1), gutterRate, "", inp.colorGutterFascia));
-    if (inp.width2 > 0) items.push(li(gutterName + " #2", gutterMultiplier, gutterStockLength(inp.width2), gutterRate, "", inp.colorGutterFascia));
+    if (inp.width1 > 0) items.push(gutterLine(gutterName + " #1", inp.width1));
+    if (inp.width2 > 0) items.push(gutterLine(gutterName + " #2", inp.width2));
   } else if (combinedWidth > 0) {
-    items.push(li(gutterName, gutterMultiplier, gutterStockLength(combinedWidth), gutterRate, "", inp.colorGutterFascia));
+    items.push(gutterLine(gutterName, combinedWidth));
   }
   // Freestanding/Roof Mount - the rear beam is now a real finished edge (no
   // house wall to tuck under), so it gets its own gutter too, matching the
   // front (Roof Mount's mirrors the front gutter's own type/color, same as
   // Freestanding already does - there's no separate rear gutter selection).
   if ((isFreestanding || isRoofMount) && combinedWidth > 0) {
-    items.push(li(gutterName + " Rear", gutterMultiplier, gutterStockLength(combinedWidth), gutterRate, "", inp.colorGutterFascia));
+    items.push(gutterLine(gutterName + " Rear", combinedWidth));
   }
 
   // ── SIDE FASCIA — extruded gutter uses a generic extruded profile; roll form gutter
@@ -110,13 +121,13 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   // Length keyed off the DEEPER of the two projections either way. Rate is a single
   // fixed value, not split by wrap type. Up to a 12ft projection, 1 piece covers both
   // sides (cut in half); past that, 2 separate pieces. The 2x6 gets an extra 1ft past
-  // the projection to cut to fit on site - extruded stock rounding already leaves
-  // enough slack on its own. ──
+  // the projection to cut to fit on site. Extruded fascia is only sold in 16'/20'/24'
+  // stock pieces - a flat fee per piece, not cut to order (see extrudedFasciaQtyRate). ──
   const maxProjection = Math.max(inp.projection1, inp.projection2);
   if (inp.projection1 > 0 || inp.projection2 > 0) {
     if (inp.gutterType === "extruded") {
-      const { qty: fasciaQty, length: fasciaLen } = fasciaQtyLen(maxProjection);
-      items.push(li("Extruded Side Fascia", fasciaQty, fasciaLen, RATES.fascia_extruded_ft, "", inp.colorGutterFascia));
+      const { qty: fasciaQty, rate: fasciaRate, stockFt } = extrudedFasciaQtyRate(maxProjection);
+      items.push(li("Extruded Side Fascia", fasciaQty, 0, fasciaRate, "", inp.colorGutterFascia, stockFt));
     } else if (inp.gutterType === "roll_form") {
       const { qty: fasciaQty, length: fasciaLen } = fasciaQtyLen(maxProjection, 1);
       items.push(li("Side Fascia (2x6)", fasciaQty, fasciaLen, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
