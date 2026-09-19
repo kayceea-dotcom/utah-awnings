@@ -25,6 +25,9 @@ import { ChevronDown, ChevronUp, RefreshCw, DollarSign, Send } from "lucide-reac
 import { useProfile } from "@/lib/hooks/useProfile";
 import { useRouter } from "next/navigation";
 import SaveQuoteModal from "@/components/quote/SaveQuoteModal";
+import SnowLoadCard, { type SiteSnowLoad } from "@/components/quote/SnowLoadCard";
+import SpanWarning from "@/components/quote/SpanWarning";
+import { checkIrpPanelSpan } from "@/lib/spanTables/lookup";
 
 const COLORS = ["White","Siennawood","Slate","Driftwood","Beechwood","Maplewood","Ebony","Sandlewood"];
 const COLOR_OPTS = COLORS.map((c) => ({ value: c, label: c }));
@@ -315,6 +318,7 @@ export default function IRPQuotePage() {
   const [showMaterials, setShowMaterials] = useState(false);
   const [showPricePanel, setShowPricePanel] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [siteSnowLoad, setSiteSnowLoad] = useState<SiteSnowLoad | null>(null);
   const { profile } = useProfile();
   const router = useRouter();
 
@@ -419,11 +423,24 @@ export default function IRPQuotePage() {
               </SectionCard>
 
               <SectionCard id="dimensions" title="Dimensions" open={open.has("dimensions")} onToggle={toggleSection}>
+                <SnowLoadCard value={siteSnowLoad} onChange={setSiteSnowLoad} />
                 <SelectInput label="Panel Type" value={inp.panelType} onChange={(v) => setField("panelType", v as IRPType)} options={PANEL_TYPES} span={2} />
                 <NumInput label="Projection #1 (ft)" value={inp.projection1} onChange={(v) => setField("projection1", v)} hint="Depth of cover" />
                 <NumInput label="Width #1 (ft)" value={inp.width1} onChange={handleWidth1Change} hint="Along the house" />
                 <NumInput label="Projection #2 (ft)" value={inp.projection2} onChange={(v) => setField("projection2", v)} hint="0 if single run" />
                 <NumInput label="Width #2 (ft)" value={inp.width2} onChange={handleWidth2Change} />
+                <SpanWarning
+                  result={checkIrpPanelSpan(inp.panelType, inp.fanBeamQty > 0, siteSnowLoad?.designPsf ?? 0)}
+                  projectionFt={inp.projection1}
+                  designPsf={siteSnowLoad?.designPsf ?? null}
+                />
+                {inp.projection2 > 0 && (
+                  <SpanWarning
+                    result={checkIrpPanelSpan(inp.panelType, inp.fanBeamQty > 0, siteSnowLoad?.designPsf ?? 0)}
+                    projectionFt={inp.projection2}
+                    designPsf={siteSnowLoad?.designPsf ?? null}
+                  />
+                )}
                 <SelectInput label="Jog Type" value={inp.jogType} onChange={(v) => setField("jogType", v)}
                   options={JOG_TYPES} span={2} />
                 <NumInput label="Beam Length #1 (ft)" value={inp.beamLength1} onChange={(v) => setField("beamLength1", v)} hint="Width minus 6in" />

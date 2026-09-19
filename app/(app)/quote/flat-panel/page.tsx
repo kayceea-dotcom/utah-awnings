@@ -30,6 +30,9 @@ import DiscountOptionSelect from "@/components/quote/DiscountOptionSelect";
 import CustomTotalOverride from "@/components/quote/CustomTotalOverride";
 import HousePhotoUpload from "@/components/quote/HousePhotoUpload";
 import ProductSwitcher from "@/components/quote/ProductSwitcher";
+import SnowLoadCard, { type SiteSnowLoad } from "@/components/quote/SnowLoadCard";
+import SpanWarning from "@/components/quote/SpanWarning";
+import { checkNewportSpan } from "@/lib/spanTables/lookup";
 
 const Viewer3DPanel = dynamicImport(() => import("@/components/viewer3d/Viewer3DPanel"), {
   ssr: false,
@@ -430,6 +433,7 @@ export default function FlatPanelQuotePage() {
   const [showMaterials, setShowMaterials] = useState(false);
   const [showPricePanel, setShowPricePanel] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [siteSnowLoad, setSiteSnowLoad] = useState<SiteSnowLoad | null>(null);
   const { profile } = useProfile();
   const router = useRouter();
 
@@ -560,6 +564,7 @@ export default function FlatPanelQuotePage() {
               </SectionCard>
 
               <SectionCard id="dimensions" title="Dimensions" open={open.has("dimensions")} onToggle={toggleSection}>
+                <SnowLoadCard value={siteSnowLoad} onChange={setSiteSnowLoad} />
                 <NumInput label="Projection #1 (ft)" value={inp.projection1} onChange={(v) => setField("projection1", v)} hint="Depth of cover" />
                 <NumInput label="Width #1 (ft)" value={inp.width1} onChange={handleWidth1Change} hint="Along the house" />
                 <NumInput label="Projection #2 (ft)" value={inp.projection2} onChange={(v) => setField("projection2", v)} hint="0 if single run" />
@@ -569,6 +574,18 @@ export default function FlatPanelQuotePage() {
                 <SelectInput label="Panel Type #1" value={inp.panelType1} onChange={(v) => setField("panelType1", v as never)} options={PANEL_TYPES} />
                 <SelectInput label="Panel Type #2" value={inp.panelType2} onChange={(v) => setField("panelType2", v as never)}
                   options={[{ value: "", label: "None (single run)" }, ...PANEL_TYPES]} />
+                <SpanWarning
+                  result={checkNewportSpan(inp.panelType1, siteSnowLoad?.designPsf ?? 0)}
+                  projectionFt={inp.projection1}
+                  designPsf={siteSnowLoad?.designPsf ?? null}
+                />
+                {inp.panelType2 && (
+                  <SpanWarning
+                    result={checkNewportSpan(inp.panelType2, siteSnowLoad?.designPsf ?? 0)}
+                    projectionFt={inp.projection2}
+                    designPsf={siteSnowLoad?.designPsf ?? null}
+                  />
+                )}
                 <NumInput label="Beam Length #1 (ft)" value={inp.beamLength1} onChange={(v) => setField("beamLength1", v)} hint="Width minus 6in" />
                 <NumInput label="Beam Length #2 (ft)" value={inp.beamLength2} onChange={(v) => setField("beamLength2", v)} />
               </SectionCard>
