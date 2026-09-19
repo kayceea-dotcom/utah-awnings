@@ -37,7 +37,6 @@ export default function SpanWarning({ result, projectionFt, designPsf }: Props) 
     return (
       <p className="col-span-2 -mt-2 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
         {projectionFt}ft projection ({formatFeetInches(spanFt)} actual span after overhang/beam) exceeds the max allowable span ({formatFeetInches(result.maxSpanFt)}) for this panel at {result.tierPsfUsed} psf design snow load / 120mph Exp B wind.
-        Consider adding a second beam partway through the run to split it into two shorter spans.
       </p>
     );
   }
