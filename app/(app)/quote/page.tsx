@@ -12,6 +12,10 @@ const products = [
   { slug: "individual", label: "Individual Items", desc: "Custom line-item / mixed job" },
 ];
 
+const tools = [
+  { slug: "snow-load", label: "Snow Load Lookup", desc: "Ground snow load for an address, converted to our design tables" },
+];
+
 export default function QuotePage() {
   return (
     <>
@@ -34,6 +38,27 @@ export default function QuotePage() {
                 <div>
                   <p className="text-sm font-semibold text-slate-800 group-hover:text-blue-700 transition">{p.label}</p>
                   <p className="text-xs text-slate-500 mt-0.5">{p.desc}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <div className="section-heading mt-6">Tools</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {tools.map((t) => (
+              <Link
+                key={t.slug}
+                href={"/quote/" + t.slug}
+                className="card p-4 hover:border-blue-300 hover:shadow-md transition group flex gap-3 items-start"
+              >
+                <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-blue-600 text-xs font-bold">
+                    {t.label.slice(0, 2).toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-800 group-hover:text-blue-700 transition">{t.label}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{t.desc}</p>
                 </div>
               </Link>
             ))}
