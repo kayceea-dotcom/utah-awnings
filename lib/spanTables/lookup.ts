@@ -1,7 +1,17 @@
-import { T6_SPAN_120C, FLAT_PAN_SPAN_120C, DURAKING_SPAN_120C, ER505_TABLE2, ER505_TABLE3, ER505_TABLE5, type FlatSpanTable, type IrpSpanSection } from "./data";
+import { T6_SPAN_120B, FLAT_PAN_SPAN_120B, DURAKING_SPAN_120B, ER505_TABLE2, ER505_TABLE3, ER505_TABLE5, type FlatSpanTable, type IrpSpanSection } from "./data";
 import type { PanelType } from "@/lib/pricing/types";
 import type { WPanType } from "@/lib/pricing/wpan";
 import type { IRPType } from "@/lib/pricing/irp";
+
+// A run's actual structural span is shorter than its full projection - the
+// panel cantilevers ~12in past the front beam, and the beam itself (~3in)
+// eats into the clear span from the back support. 14ft projection -> 12ft9in
+// actual span. This is a "most of the time" default, not a per-job input.
+export const SPAN_DEDUCTION_FT = 15 / 12;
+
+export function effectiveSpanFt(projectionFt: number): number {
+  return Math.max(0, projectionFt - SPAN_DEDUCTION_FT);
+}
 
 export interface SpanCheckResult {
   maxSpanFt: number | null;
@@ -31,7 +41,7 @@ function roundUpTier(psf: number, tiers: number[]): number | null {
 }
 
 // ── Table 1 / 1C / 2 style lookups (T6, Flat Pan, DuraKing) - single span
-// value per GSL tier x gauge, already resolved to the fixed 120mph Exp C
+// value per GSL tier x gauge, already resolved to the fixed 120mph Exp B
 // wind column. ──
 function checkFlatTableSpan(table: FlatSpanTable, gauge: string, designPsf: number): SpanCheckResult {
   const tiers = table[gauge];
@@ -82,11 +92,11 @@ function checkIrpThickness(thicknessKey: "3.0" | "4.25" | "6.0", facingKey: "0.0
 export function checkNewportSpan(panelType: PanelType, designPsf: number): SpanCheckResult {
   if (panelType.startsWith("T6_")) {
     const gauge = "0." + panelType.split("_")[1];
-    return checkFlatTableSpan(T6_SPAN_120C, gauge, designPsf);
+    return checkFlatTableSpan(T6_SPAN_120B, gauge, designPsf);
   }
   if (panelType.startsWith("flat_8_")) {
     const gauge = "0." + panelType.split("_")[2];
-    return checkFlatTableSpan(FLAT_PAN_SPAN_120C, gauge, designPsf);
+    return checkFlatTableSpan(FLAT_PAN_SPAN_120B, gauge, designPsf);
   }
   return NO_TABLE;
 }
@@ -99,7 +109,7 @@ export function checkWPanSpan(panelType: WPanType, designPsf: number): SpanCheck
   // the same nominal facing as the table's .024 entry, just rounded
   // differently between documents, so it maps there.
   const gauge = panelType === "duraking_025" ? "0.024" : "0." + panelType.split("_")[1];
-  return checkFlatTableSpan(DURAKING_SPAN_120C, gauge, designPsf);
+  return checkFlatTableSpan(DURAKING_SPAN_120B, gauge, designPsf);
 }
 
 export function checkIrpPanelSpan(panelType: IRPType, hasFanBeam: boolean, designPsf: number): SpanCheckResult {
