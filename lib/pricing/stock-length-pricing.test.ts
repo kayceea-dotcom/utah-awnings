@@ -132,13 +132,15 @@ describe("Extruded gutter/fascia: flat fee per stock tier (16/20/24ft), not per 
     expect(gutter.displayLength).toBe(20);
   });
 
-  it("Newport: a run wider than 24ft is capped at the largest (24ft) gutter tier", () => {
+  it("Newport: a run over 24ft combines two pieces - 30ft picks the shortest 2-piece combo (two 16ft pieces)", () => {
     const inp = newportBase();
     inp.width1 = 30;
     const out = calcNewport(inp);
     const gutter = findItem(out.lineItems, "Extruded Gutter")!;
-    expect(gutter.rate).toBe(RATES.gutter_extruded_24);
-    expect(gutter.displayLength).toBe(24);
+    expect(gutter.rate).toBe(RATES.gutter_extruded_16);
+    expect(gutter.displayLength).toBe(16);
+    expect(gutter.qty).toBe(2);
+    expect(gutter.amount).toBe(2 * RATES.gutter_extruded_16);
   });
 
   it("Newport: side fascia under 12ft projection is one piece (cut in half) sized off double the projection", () => {
@@ -165,6 +167,76 @@ describe("Extruded gutter/fascia: flat fee per stock tier (16/20/24ft), not per 
     const out = calcWPan(inp);
     const gutter = findItem(out.lineItems, "Extruded Gutter 2.5in")!;
     expect(gutter.rate).toBe(RATES.gutter_extruded_16);
+  });
+});
+
+describe("Extruded gutter over 24ft combines two stock pieces (shortest combo that covers the run)", () => {
+  it("28ft needs two 16ft pieces (32ft total - the shortest 2-piece combo covering 28)", () => {
+    const inp = newportBase();
+    inp.width1 = 28;
+    const out = calcNewport(inp);
+    const gutter = findItem(out.lineItems, "Extruded Gutter")!;
+    expect(gutter.qty).toBe(2);
+    expect(gutter.rate).toBe(RATES.gutter_extruded_16);
+    expect(gutter.displayLength).toBe(16);
+  });
+
+  it("35ft needs a 16ft + a 20ft piece (36ft total) as two separate line items, not two 20s (40ft)", () => {
+    const inp = newportBase();
+    inp.width1 = 35;
+    const out = calcNewport(inp);
+    const piece16 = findItem(out.lineItems, "Extruded Gutter (16ft)")!;
+    const piece20 = findItem(out.lineItems, "Extruded Gutter (20ft)")!;
+    expect(piece16.qty).toBe(1);
+    expect(piece16.rate).toBe(RATES.gutter_extruded_16);
+    expect(piece20.qty).toBe(1);
+    expect(piece20.rate).toBe(RATES.gutter_extruded_20);
+    // Bare "Extruded Gutter" (no size suffix) shouldn't also exist once split.
+    expect(findItem(out.lineItems, "Extruded Gutter")).toBeUndefined();
+  });
+
+  it("42ft needs a 20ft + a 24ft piece (44ft total), not a 16+24 (40ft, which falls short)", () => {
+    const inp = newportBase();
+    inp.width1 = 42;
+    const out = calcNewport(inp);
+    const piece20 = findItem(out.lineItems, "Extruded Gutter (20ft)")!;
+    const piece24 = findItem(out.lineItems, "Extruded Gutter (24ft)")!;
+    expect(piece20.rate).toBe(RATES.gutter_extruded_20);
+    expect(piece24.rate).toBe(RATES.gutter_extruded_24);
+    expect(findItem(out.lineItems, "Extruded Gutter (16ft)")).toBeUndefined();
+  });
+
+  it("W-Pan: a run needing 35ft (after its own +1.5ft allowance) also splits into a 16ft + 20ft combo", () => {
+    const inp = wpanBase();
+    inp.width1 = 33.5; // + W-Pan's own 1.5ft gutter allowance = 35ft needed
+    const out = calcWPan(inp);
+    expect(findItem(out.lineItems, "Extruded Gutter 2.5in (16ft)")).toBeTruthy();
+    expect(findItem(out.lineItems, "Extruded Gutter 2.5in (20ft)")).toBeTruthy();
+  });
+});
+
+describe("Roll Form gutter only comes in 30ft pieces - runs over 30ft need multiple whole 30ft pieces", () => {
+  it("a run at or under 30ft is a single 30ft piece", () => {
+    const inp = newportBase();
+    inp.hangerType = "roll_form";
+    inp.gutterType = "roll_form";
+    inp.width1 = 25;
+    const out = calcNewport(inp);
+    const gutter = findItem(out.lineItems, "Roll Form Gutter")!;
+    expect(gutter.qty).toBe(1);
+    expect(gutter.length).toBe(30);
+  });
+
+  it("a run over 30ft doubles up on whole 30ft pieces, not a 36ft piece (no such stock size exists)", () => {
+    const inp = newportBase();
+    inp.hangerType = "roll_form";
+    inp.gutterType = "roll_form";
+    inp.width1 = 35;
+    const out = calcNewport(inp);
+    const gutter = findItem(out.lineItems, "Roll Form Gutter")!;
+    expect(gutter.qty).toBe(2);
+    expect(gutter.length).toBe(30);
+    expect(gutter.amount).toBe(2 * 30 * RATES.gutter_roll_form_ft);
   });
 });
 
