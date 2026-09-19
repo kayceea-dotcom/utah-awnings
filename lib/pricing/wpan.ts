@@ -2,9 +2,9 @@ import { RATES } from "./rates";
 import { CATALOG_BY_KEY } from "./catalog";
 import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, EndCut, EndCutSide, MountStyle } from "./types";
 import {
-  li, nextStockLength, rollFormGutterStockLength, wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen,
+  li, nextStockLength, rollFormGutterPieces, wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen,
   anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, beamTypeLabel,
-  END_CUT_LABELS, extrudedGutterRate,
+  END_CUT_LABELS, extrudedStockPieces, extrudedGutterRateForFt,
 } from "./shared";
 
 export type WPanType = "wpan_032" | "duraking_025" | "duraking_032" | "duraking_040";
@@ -146,29 +146,39 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   }
 
   // ── GUTTER ──
-  // Gutter spans combined width. Roll form gutter is cut to length (rounded
-  // to the next stock length); extruded gutter is only sold in 16'/20'/24'
-  // stock pieces - a flat fee per piece at whichever tier covers the needed
-  // width (see extrudedGutterRate).
+  // Gutter spans combined width. Roll form gutter only comes in 30ft pieces,
+  // priced per ft (see rollFormGutterPieces); extruded gutter is only sold in
+  // 16'/20'/24' stock pieces - a flat fee per piece, combining two pieces for
+  // a run over 24ft (see extrudedStockPieces). Distinct piece sizes get their
+  // own line; identical sizes collapse into one qty.
   const gutterNeededFt = totalWidth + 1.5;
-  const extrudedGutterStockFt = gutterNeededFt <= 16 ? 16 : gutterNeededFt <= 20 ? 20 : 24;
+  function extrudedGutterLines(name: string): LineItem[] {
+    const pieces = extrudedStockPieces(gutterNeededFt);
+    const counts = new Map<number, number>();
+    for (const p of pieces) counts.set(p, (counts.get(p) ?? 0) + 1);
+    return Array.from(counts.entries()).map(([stockFt, count]) =>
+      li(counts.size > 1 ? name + " (" + stockFt + "ft)" : name, count, 0,
+        extrudedGutterRateForFt(stockFt), "", inp.colorGutterFascia, stockFt)
+    );
+  }
   const maxProjection = Math.max(inp.projection1, inp.projection2 || 0);
   if (inp.gutterType === "roll_form") {
-    items.push(li("Roll Form Gutter", 1, rollFormGutterStockLength(totalWidth + 1.5), RATES.gutter_roll_form_ft, "", inp.colorGutterFascia));
+    const rollPieces = rollFormGutterPieces(totalWidth + 1.5);
+    items.push(li("Roll Form Gutter", rollPieces.qty, rollPieces.length, RATES.gutter_roll_form_ft, "", inp.colorGutterFascia));
     // Roll form gutter uses a 2x6 board as its side fascia, independent of
     // wrap kit selection - needed regardless of whether a 2x6/3x8 wrap was chosen.
     // Gets an extra 1ft past the projection to cut to fit on site.
     const { qty: rollFasciaQty, length: rollFasciaStockLen } = fasciaQtyLen(maxProjection, 1);
     items.push(li("Side Fascia (2x6)", rollFasciaQty, rollFasciaStockLen, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
     if (isFreestanding || isRoofMount) {
-      items.push(li("Roll Form Gutter Rear", 1, rollFormGutterStockLength(totalWidth + 1.5), RATES.gutter_roll_form_ft, "", inp.colorGutterFascia));
+      items.push(li("Roll Form Gutter Rear", rollPieces.qty, rollPieces.length, RATES.gutter_roll_form_ft, "", inp.colorGutterFascia));
     }
   } else {
-    items.push(li("Extruded Gutter 2.5in", 1, 0, extrudedGutterRate(gutterNeededFt), "", inp.colorGutterFascia, extrudedGutterStockFt));
+    items.push(...extrudedGutterLines("Extruded Gutter 2.5in"));
     const { qty: fasciaQty, length: fasciaStockLen } = fasciaQtyLen(maxProjection);
     items.push(li("Extruded Side Fascia", fasciaQty, fasciaStockLen, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
     if (isFreestanding || isRoofMount) {
-      items.push(li("Extruded Gutter 2.5in Rear", 1, 0, extrudedGutterRate(gutterNeededFt), "", inp.colorGutterFascia, extrudedGutterStockFt));
+      items.push(...extrudedGutterLines("Extruded Gutter 2.5in Rear"));
     }
   }
 

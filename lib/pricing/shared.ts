@@ -102,18 +102,18 @@ export function commissionBasisPrice(result: PricingSummary, isCashDiscount: boo
 // Real supplier stock lengths (not a uniform step) — smallest one that fits. 4/8ft
 // pieces are cut-offs the supplier still stocks (e.g. the 8ft left over cutting a
 // 16ft piece off a 24ft steel beam), not a separate short product line. Does NOT
-// apply to roll form gutter — see rollFormGutterStockLength below.
+// apply to roll form gutter — see rollFormGutterPieces below.
 const STOCK_LENGTHS = [4, 8, 16, 20, 24, 32, 40, 48, 60, 72, 80];
 export function nextStockLength(ft: number): number {
   return STOCK_LENGTHS.find((len) => ft <= len) ?? STOCK_LENGTHS[STOCK_LENGTHS.length - 1];
 }
 
-// Roll form gutter only ships in 2 lengths — 30ft and 36ft — a completely
-// different set than the general stock-length ladder above (which has neither
-// value). Extruded gutter stays on the general ladder.
-const ROLL_FORM_GUTTER_LENGTHS = [30, 36];
-export function rollFormGutterStockLength(ft: number): number {
-  return ROLL_FORM_GUTTER_LENGTHS.find((len) => ft <= len) ?? ROLL_FORM_GUTTER_LENGTHS[ROLL_FORM_GUTTER_LENGTHS.length - 1];
+// Roll form gutter only comes in one stock length - 30ft (there's no 36ft
+// stock option) - so a run longer than 30ft needs multiple whole 30ft
+// pieces, not a single longer custom-cut length.
+const ROLL_FORM_GUTTER_LENGTH = 30;
+export function rollFormGutterPieces(neededFt: number): { qty: number; length: number } {
+  return { qty: Math.max(1, Math.ceil(neededFt / ROLL_FORM_GUTTER_LENGTH)), length: ROLL_FORM_GUTTER_LENGTH };
 }
 
 // Extruded side fascia stock only goes up to 24ft. Up to a 12ft projection, one
@@ -136,21 +136,35 @@ export function fasciaQtyLen(maxProjection: number, extraPerSideFt = 0): { qty: 
 }
 
 // 2.5in extruded gutter/side fascia are only sold in 16'/20'/24' stock pieces
-// (not cut to order like roll form or the general stock-length ladder above),
-// so each run is priced as one flat-fee piece at whichever tier covers its
-// needed length - same tier-lookup rule LRP's own hanger/gutter/fascia
-// already use (see lrpHangerRate/lrpGutterRate/lrpFasciaRate in irp.ts).
-// Anything longer than 24ft is capped at the 24ft piece, the same
-// simplification LRP's own tiers already make.
-function extrudedStockFt(neededFt: number): number {
-  return neededFt <= 16 ? 16 : neededFt <= 20 ? 20 : 24;
+// (not cut to order like roll form or the general stock-length ladder above).
+// A run up to 24ft needs just one piece (whichever tier covers it); a longer
+// run needs two pieces combined - whichever 2-piece combination (repeats
+// allowed) has the SMALLEST total length that still covers the run, so the
+// least material gets bought rather than just doubling up on the largest
+// size every time. E.g. 28ft -> two 16ft pieces (32ft, the shortest 2-piece
+// combo that covers 28), 35ft -> a 16+20 (36ft), 42ft -> a 20+24 (44ft,
+// since 16+24=40 falls just short of 42). A run beyond the longest possible
+// 2-piece combo (48ft) falls back to that combo - the same "cap at the
+// largest tier" simplification LRP's own tiers already make, just extended
+// to two pieces instead of one.
+const EXTRUDED_STOCK_TIERS = [16, 20, 24];
+export function extrudedStockPieces(neededFt: number): number[] {
+  const singleFit = EXTRUDED_STOCK_TIERS.find((t) => neededFt <= t);
+  if (singleFit) return [singleFit];
+  let best: [number, number] = [24, 24];
+  let bestSum = 48;
+  for (const a of EXTRUDED_STOCK_TIERS) {
+    for (const b of EXTRUDED_STOCK_TIERS) {
+      const sum = a + b;
+      if (sum >= neededFt && sum < bestSum) { best = [a, b]; bestSum = sum; }
+    }
+  }
+  return best;
 }
-export function extrudedGutterRate(neededFt: number): number {
-  const stockFt = extrudedStockFt(neededFt);
+export function extrudedGutterRateForFt(stockFt: number): number {
   return stockFt === 16 ? RATES.gutter_extruded_16 : stockFt === 20 ? RATES.gutter_extruded_20 : RATES.gutter_extruded_24;
 }
-function extrudedFasciaRate(neededFt: number): number {
-  const stockFt = extrudedStockFt(neededFt);
+function extrudedFasciaRateForFt(stockFt: number): number {
   return stockFt === 16 ? RATES.fascia_extruded_16 : stockFt === 20 ? RATES.fascia_extruded_20 : RATES.fascia_extruded_24;
 }
 
@@ -159,11 +173,15 @@ function extrudedFasciaRate(neededFt: number): number {
 // instead of the general ladder, since extruded side fascia is only sold in
 // those 3 sizes. `stockFt` is exposed for the material list's Len column,
 // since amount is now qty x rate (a flat piece price), not qty x length x rate.
+// Unlike the gutter above, this stays capped at a single 24ft piece per side
+// rather than combining two stock pieces - a projection deep enough to need
+// that (over 24ft on its own, or over 12ft doubled) is rare enough it hasn't
+// come up; flag it if a job ever actually needs one.
 export function extrudedFasciaQtyRate(maxProjection: number): { qty: number; rate: number; stockFt: number } {
   const isOnePiece = maxProjection <= 12;
   const neededFt = isOnePiece ? 2 * maxProjection : maxProjection;
-  const stockFt = extrudedStockFt(neededFt);
-  return { qty: isOnePiece ? 1 : 2, rate: extrudedFasciaRate(neededFt), stockFt };
+  const stockFt = EXTRUDED_STOCK_TIERS.find((t) => neededFt <= t) ?? 24;
+  return { qty: isOnePiece ? 1 : 2, rate: extrudedFasciaRateForFt(stockFt), stockFt };
 }
 
 // "double_3x8" is two 3x8 beams mounted to the front and back of the posts

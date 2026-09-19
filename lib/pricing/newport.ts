@@ -2,10 +2,10 @@ import { RATES } from "./rates";
 import { CATALOG_BY_KEY } from "./catalog";
 import type { NewportInputs, LineItem, QuoteResult } from "./types";
 import {
-  li, nextStockLength, rollFormGutterStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, beamTypeLabel, anchorQty,
+  li, nextStockLength, rollFormGutterPieces, beamMaterialRate, steelInsertRate, beamEndcapRate, beamTypeLabel, anchorQty,
   wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen, deckHeightSurcharge,
   postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, END_CUT_LABELS,
-  extrudedGutterRate, extrudedFasciaQtyRate,
+  extrudedStockPieces, extrudedGutterRateForFt, extrudedFasciaQtyRate,
 } from "./shared";
 
 function panelRate(type: string): number {
@@ -91,28 +91,37 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   const gutterMultiplier = inp.hangerType === "elevated_roof_mount" ? 2 : 1;
   const splitGutter = hasSecondRun && inp.jogType === "ground";
   const gutterName = inp.gutterType === "roll_form" ? "Roll Form Gutter" : "Extruded Gutter";
-  // Roll form gutter is cut to length (30ft/36ft stock), priced per ft.
+  // Roll form gutter only comes in 30ft pieces, priced per ft - a run over
+  // 30ft needs multiple whole 30ft pieces (see rollFormGutterPieces).
   // Extruded gutter is only sold in 16'/20'/24' stock pieces - a flat fee per
-  // piece at whichever tier covers the needed length (see extrudedGutterRate).
-  function gutterLine(name: string, neededFt: number): LineItem {
+  // piece, combining two pieces for a run over 24ft (see extrudedStockPieces).
+  // Distinct piece sizes get their own line (so the order sheet shows exactly
+  // which stock pieces to pull); identical sizes collapse into one qty.
+  function gutterLine(name: string, neededFt: number): LineItem[] {
     if (inp.gutterType === "roll_form") {
-      return li(name, gutterMultiplier, rollFormGutterStockLength(neededFt), RATES.gutter_roll_form_ft, "", inp.colorGutterFascia);
+      const { qty, length } = rollFormGutterPieces(neededFt);
+      return [li(name, qty * gutterMultiplier, length, RATES.gutter_roll_form_ft, "", inp.colorGutterFascia)];
     }
-    const stockFt = neededFt <= 16 ? 16 : neededFt <= 20 ? 20 : 24;
-    return li(name, gutterMultiplier, 0, extrudedGutterRate(neededFt), "", inp.colorGutterFascia, stockFt);
+    const pieces = extrudedStockPieces(neededFt);
+    const counts = new Map<number, number>();
+    for (const p of pieces) counts.set(p, (counts.get(p) ?? 0) + 1);
+    return Array.from(counts.entries()).map(([stockFt, count]) =>
+      li(counts.size > 1 ? name + " (" + stockFt + "ft)" : name, count * gutterMultiplier, 0,
+        extrudedGutterRateForFt(stockFt), "", inp.colorGutterFascia, stockFt)
+    );
   }
   if (splitGutter) {
-    if (inp.width1 > 0) items.push(gutterLine(gutterName + " #1", inp.width1));
-    if (inp.width2 > 0) items.push(gutterLine(gutterName + " #2", inp.width2));
+    if (inp.width1 > 0) items.push(...gutterLine(gutterName + " #1", inp.width1));
+    if (inp.width2 > 0) items.push(...gutterLine(gutterName + " #2", inp.width2));
   } else if (combinedWidth > 0) {
-    items.push(gutterLine(gutterName, combinedWidth));
+    items.push(...gutterLine(gutterName, combinedWidth));
   }
   // Freestanding/Roof Mount - the rear beam is now a real finished edge (no
   // house wall to tuck under), so it gets its own gutter too, matching the
   // front (Roof Mount's mirrors the front gutter's own type/color, same as
   // Freestanding already does - there's no separate rear gutter selection).
   if ((isFreestanding || isRoofMount) && combinedWidth > 0) {
-    items.push(gutterLine(gutterName + " Rear", combinedWidth));
+    items.push(...gutterLine(gutterName + " Rear", combinedWidth));
   }
 
   // ── SIDE FASCIA — extruded gutter uses a generic extruded profile; roll form gutter
