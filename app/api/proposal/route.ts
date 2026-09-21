@@ -29,10 +29,11 @@ export async function POST(request: NextRequest) {
     const proposalUrl = `https://uaquotepro.com/p/${proposalToken}`;
     const logoUrl = company.logo_url as string || null;
     const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+    const recipients = [customer.email, customer.email2].filter(Boolean) as string[];
 
     await resend.emails.send({
       from: "Utah Awnings <noreply@uaquotepro.com>",
-      to: customer.email as string,
+      to: recipients,
       subject: "Your Utah Awnings Proposal - Ready to Review",
       html: `
 <!DOCTYPE html>

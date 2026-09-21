@@ -28,6 +28,7 @@ export default function SaveQuoteModal({
   const [zip, setZip] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [email2, setEmail2] = useState("");
   const [referredBy, setReferredBy] = useState("");
   const [canReference, setCanReference] = useState(false);
   const [installDate, setInstallDate] = useState("");
@@ -65,7 +66,7 @@ export default function SaveQuoteModal({
         .insert({
           company_id: company.id,
           name, address, city, state: "UT", zip,
-          phone, email, referred_by: referredBy,
+          phone, email, email2: email2 || null, referred_by: referredBy,
           can_reference: canReference,
         })
         .select()
@@ -165,6 +166,11 @@ export default function SaveQuoteModal({
                   <input type="email" className="input" placeholder="john@email.com"
                     value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
+              </div>
+              <div>
+                <label className="label">Email 2 (optional)</label>
+                <input type="email" className="input" placeholder="spouse@email.com - also gets every proposal/follow-up email"
+                  value={email2} onChange={(e) => setEmail2(e.target.value)} />
               </div>
               <div>
                 <label className="label">Address</label>
