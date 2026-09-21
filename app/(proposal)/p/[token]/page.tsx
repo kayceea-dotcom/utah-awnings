@@ -376,7 +376,7 @@ export default function ProposalPage() {
             </p>
             {discount > 0 && (
               <p className="mt-1 text-sm font-bold" style={{ color: "#2E7D32" }}>
-                You saved {fmt(discount)}
+                Discount Applied: -{fmt(discount)}
               </p>
             )}
             <p className="mt-3 text-xl sm:text-2xl font-bold" style={{ color: "#2E7D32" }}>
