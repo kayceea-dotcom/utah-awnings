@@ -62,9 +62,11 @@ export async function POST(request: NextRequest) {
       logoUrl: (company.logo_url as string) || null,
     }, typeof customBody === "string" && customBody.trim() ? customBody : undefined);
 
+    const recipients = [customer.email, customer.email2].filter(Boolean) as string[];
+
     await resend.emails.send({
       from: "Utah Awnings <noreply@uaquotepro.com>",
-      to: customer.email as string,
+      to: recipients,
       subject: step.subject,
       html,
     });

@@ -130,6 +130,9 @@ export default function CustomerDetailPage() {
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="flex items-center gap-2 text-gray-700"><Phone size={14} className="text-gray-400" /> {(c.phone as string) || "-"}</div>
               <div className="flex items-center gap-2 text-gray-700"><Mail size={14} className="text-gray-400" /> {(c.email as string) || "-"}</div>
+              {c.email2 ? (
+                <div className="flex items-center gap-2 text-gray-700"><Mail size={14} className="text-gray-400" /> {c.email2 as string}</div>
+              ) : null}
               <div className="flex items-center gap-2 text-gray-700 col-span-2">
                 <MapPin size={14} className="text-gray-400" />
                 {(c.address as string) || ""} {(c.city as string) || ""}{(c.city as string) ? "," : ""} {(c.state as string) || ""} {(c.zip as string) || ""}
