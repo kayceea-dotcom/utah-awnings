@@ -43,6 +43,7 @@ function irpBase(): IRPInputs {
     beamType1: "3x8", beamType2: "",
     posts1: 2, postHeight1: 10, posts2: 0, postHeight2: 10,
     colorPostsBeam: "White",
+    beams: [],
     wrapType: "none",
     rafterTails: true,
     fanBeamQty: 0, fanBeamLength: 16,

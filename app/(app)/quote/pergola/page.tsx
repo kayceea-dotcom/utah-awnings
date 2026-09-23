@@ -25,6 +25,7 @@ import HousePhotoUpload from "@/components/quote/HousePhotoUpload";
 import ProductSwitcher from "@/components/quote/ProductSwitcher";
 import { useRouter } from "next/navigation";
 import SaveQuoteModal from "@/components/quote/SaveQuoteModal";
+import AdditionalBeamsSection from "@/components/quote/AdditionalBeamsSection";
 
 const COLORS = ["White","Siennawood","Slate","Driftwood","Beechwood","Maplewood","Ebony","Sandlewood"];
 const COLOR_OPTS = COLORS.map((c) => ({ value: c, label: c }));
@@ -105,6 +106,7 @@ const DEFAULT: PergolaInputs = {
   rearBeamType: "3x8", rearBeamLength: 0,
   rearPosts: 0, rearPostHeight: 10, skyliftPosts: 0,
   shadeBeamQty: 0, shadeBeamLength: 16,
+  beams: [],
   discount: 0, customTotal: null, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
   markup: 1.8, taxRate: 0.0745,
 };
@@ -476,6 +478,14 @@ export default function PergolaQuotePage() {
                 <SelectInput label="Pergola Color" value={inp.colorPergola} onChange={(v) => setField("colorPergola", v as never)} options={COLOR_OPTS} span={2} />
               </SectionCard>
 
+              <AdditionalBeamsSection
+                beams={inp.beams}
+                onChange={(b) => setField("beams", b)}
+                beamTypeOptions={BEAM_TYPES}
+                numberOffset={2}
+                defaultLength={inp.width - 0.5 || 0}
+              />
+
               <SectionCard id="extras" title="Shade Beam" open={open.has("extras")} onToggle={toggleSection}>
                 <NumInput label="Shade Beam Qty" value={inp.shadeBeamQty} onChange={(v) => setField("shadeBeamQty", v)} />
                 <NumInput label="Shade Beam Length (ft)" value={inp.shadeBeamLength} onChange={(v) => setField("shadeBeamLength", v)} />
@@ -505,6 +515,7 @@ export default function PergolaQuotePage() {
                   projection1={inp.projection}
                   width1={inp.width}
                   posts1={inp.posts}
+                  beams={inp.beams}
                   beamType1={inp.beamType}
                   downspouts={0}
                   isLattice
@@ -563,6 +574,7 @@ export default function PergolaQuotePage() {
                 projection1={inp.projection}
                 width1={inp.width}
                 posts1={inp.posts}
+                beams={inp.beams}
                 beamType1={inp.beamType}
                 downspouts={0}
                 isLattice

@@ -25,6 +25,7 @@ import { ChevronDown, ChevronUp, RefreshCw, DollarSign, Send } from "lucide-reac
 import { useProfile } from "@/lib/hooks/useProfile";
 import { useRouter } from "next/navigation";
 import SaveQuoteModal from "@/components/quote/SaveQuoteModal";
+import AdditionalBeamsSection from "@/components/quote/AdditionalBeamsSection";
 import SnowLoadCard, { type SiteSnowLoad } from "@/components/quote/SnowLoadCard";
 import SpanWarning from "@/components/quote/SpanWarning";
 import { checkIrpPanelSpan } from "@/lib/spanTables/lookup";
@@ -106,6 +107,7 @@ const DEFAULT: IRPInputs = {
   rearPosts: 0, rearPostHeight: 10, skyliftPosts: 0,
   fanBeamQty: 0, fanBeamLength: 16,
   shadeBeamQty: 0, shadeBeamLength: 16,
+  beams: [],
   discount: 0, customTotal: null, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
   markup: 2.0, taxRate: 0.0745,
 };
@@ -510,6 +512,14 @@ export default function IRPQuotePage() {
                 <SelectInput label="Posts / Beam Color" value={inp.colorPostsBeam} onChange={(v) => setField("colorPostsBeam", v)} options={COLOR_OPTS} span={2} />
               </SectionCard>
 
+              <AdditionalBeamsSection
+                beams={inp.beams}
+                onChange={(b) => setField("beams", b)}
+                beamTypeOptions={BEAM_TYPES}
+                numberOffset={3}
+                defaultLength={inp.width1 - 0.5 || 0}
+              />
+
               <SectionCard id="extras" title="Fan Beam / Shade Beam" open={open.has("extras")} onToggle={toggleSection}>
                 <NumInput label="Fan Beam Qty" value={inp.fanBeamQty} onChange={(v) => setField("fanBeamQty", v)} />
                 <NumInput label="Fan Beam Length (ft)" value={inp.fanBeamLength} onChange={(v) => setField("fanBeamLength", v)} />
@@ -549,6 +559,7 @@ export default function IRPQuotePage() {
                   downspouts={inp.downspouts}
                   downspoutSide={inp.downspoutSide}
                   showRafterTails={false}
+                  beams={inp.beams}
                   beamType1={inp.beamType1}
                   beamType2={inp.beamType2}
                   mountStyle={inp.mountStyle}
@@ -607,6 +618,7 @@ export default function IRPQuotePage() {
                 downspouts={inp.downspouts}
                 downspoutSide={inp.downspoutSide}
                 showRafterTails={false}
+                beams={inp.beams}
                 beamType1={inp.beamType1}
                 beamType2={inp.beamType2}
                 mountStyle={inp.mountStyle}
