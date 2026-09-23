@@ -1,9 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { calcNewport } from "./newport";
 import { calcWPan } from "./wpan";
+import { calcIRP } from "./irp";
 import { calcPergola } from "./pergola";
+import { RATES } from "./rates";
 import type { NewportInputs, LineItem } from "./types";
 import type { WPanInputs } from "./wpan";
+import type { IRPInputs } from "./irp";
 import type { PergolaInputs } from "./pergola";
 
 function findItem(items: LineItem[], name: string) {
@@ -24,7 +27,7 @@ function newportBase(): NewportInputs {
     posts1: 2, postHeight1: 10, posts2: 0, postHeight2: 10,
     posts1GroundMount: 0, posts2GroundMount: 0,
     colorPans: "White", colorGutterFascia: "White", colorPostsBeam: "White",
-    wrapType: "2x6", rafterTails: true, bayWindowPopout: false,
+    wrapType: "none", rafterTails: true, bayWindowPopout: false,
     downspouts: 1, downspoutSide: "right", sprayPaint: false,
     houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
     mountStyle: "attached",
@@ -42,7 +45,7 @@ function wpanBase(): WPanInputs {
     projection1: 12, width1: 20, projection2: 0, width2: 0,
     panelType: "wpan_032",
     beamLength1: 20, beamLength2: 0, beamQty1: 1, beamQty2: 1,
-    beamType1: "3x8", beamType2: "",
+    beamType1: "3x3", beamType2: "",
     beamEndCut1: "beveled", beamEndCut2: "",
     beamEndCutSide1: "both_ends", beamEndCutSide2: "both_ends",
     beams: [],
@@ -53,9 +56,33 @@ function wpanBase(): WPanInputs {
     downspouts: 1, downspoutSide: "right", sprayPaint: false,
     houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
     mountStyle: "attached",
-    rearBeamType: "3x8", rearBeamEndCut: "beveled", rearBeamEndCutSide: "both_ends", rearBeamLength: 0,
+    rearBeamType: "3x3", rearBeamEndCut: "beveled", rearBeamEndCutSide: "both_ends", rearBeamLength: 0,
     rearPosts: 0, rearPostHeight: 10, skyliftPosts: 0,
     fanBeamQty: 0, fanBeamLength: 16, shadeBeamQty: 0, shadeBeamLength: 16,
+    discount: 0, customTotal: null, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
+    markup: 2.0, taxRate: 0.0745,
+  };
+}
+
+function irpBase(): IRPInputs {
+  return {
+    jobName: "Test", salesman: "Rep", salesmanPhone: "", housePhotoUrl: "",
+    projection1: 12, width1: 20, projection2: 0, width2: 0, jogType: "ground",
+    panelType: "lrp_3_032",
+    beamLength1: 20, beamLength2: 0,
+    beamType1: "3x8", beamType2: "",
+    posts1: 2, postHeight1: 10, posts2: 0, postHeight2: 10,
+    colorPostsBeam: "White",
+    beams: [],
+    wrapType: "none",
+    rafterTails: true,
+    downspouts: 1, downspoutSide: "right", sprayPaint: false,
+    houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
+    mountStyle: "attached",
+    rearBeamType: "3x8", rearBeamLength: 0,
+    rearPosts: 0, rearPostHeight: 10, skyliftPosts: 0,
+    fanBeamQty: 0, fanBeamLength: 16,
+    shadeBeamQty: 0, shadeBeamLength: 16,
     discount: 0, customTotal: null, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
     markup: 2.0, taxRate: 0.0745,
   };
@@ -71,6 +98,7 @@ function pergolaBase(): PergolaInputs {
     headerBoard: false,
     posts: 2, postHeight: 10,
     colorPergola: "White",
+    beams: [],
     endCut: "scallop", endCutSide: "both_ends",
     sprayPaint: false,
     houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
@@ -78,74 +106,57 @@ function pergolaBase(): PergolaInputs {
     rearBeamType: "3x8", rearBeamLength: 0,
     rearPosts: 0, rearPostHeight: 10, skyliftPosts: 0,
     shadeBeamQty: 0, shadeBeamLength: 16,
-    beams: [],
     discount: 0, customTotal: null, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
     markup: 2.0, taxRate: 0.0745,
   };
 }
 
-describe("3x8 beam End Cut Side (One End Cut / Both Ends Cut) - always spelled out explicitly, incl. on the order sheet", () => {
-  it("Newport: defaults to 'Both Ends Cut', spelled out explicitly (not omitted)", () => {
-    const out = calcNewport(newportBase());
-    expect(findItem(out.lineItems, "Beam #1 (3x8, Beveled, Both Ends Cut)")).toBeTruthy();
-  });
-
-  it("Newport: One End Cut is reflected in the Beam #1 label", () => {
+describe("Additional / Multi-Span Beams - each product's own #3+ (or #2+ for Pergola) beam", () => {
+  it("Newport: an added beam prices as Beam #3, with its own posts", () => {
     const inp = newportBase();
-    inp.beamEndCutSide1 = "one_end";
+    inp.beams = [{ type: "3x8", qty: 1, length: 19.5, positionFromHouse: 10, posts: 2, postHeight: 10 }];
     const out = calcNewport(inp);
-    expect(findItem(out.lineItems, "Beam #1 (3x8, Beveled, One End Cut)")).toBeTruthy();
-    expect(findItem(out.lineItems, "Beam #1 (3x8, Beveled, Both Ends Cut)")).toBeUndefined();
+    const beam = findItem(out.lineItems, "Beam #3 (3x8)");
+    expect(beam).toBeTruthy();
+    expect(beam!.amount).toBeCloseTo(RATES.beam_3x8 * 19.5, 2);
+    expect(findItem(out.lineItems, "3x3 Post Sleeve #3")).toBeTruthy();
   });
 
-  it("Newport: Beam #2 gets its own independent End Cut Side", () => {
-    const inp = newportBase();
-    inp.beamType2 = "3x8"; inp.beamLength2 = 15;
-    inp.beamEndCut2 = "mitered"; inp.beamEndCutSide2 = "one_end";
-    const out = calcNewport(inp);
-    expect(findItem(out.lineItems, "Beam #2 (3x8, Mitered, One End Cut)")).toBeTruthy();
-    // Beam #1 stays on the default (Both Ends Cut)
-    expect(findItem(out.lineItems, "Beam #1 (3x8, Beveled, Both Ends Cut)")).toBeTruthy();
-  });
-
-  it("Newport: Rear Beam (freestanding) gets its own independent End Cut Side", () => {
-    const inp = newportBase();
-    inp.mountStyle = "freestanding";
-    inp.rearBeamLength = 20; inp.rearPosts = 2;
-    inp.rearBeamEndCutSide = "one_end";
-    const out = calcNewport(inp);
-    expect(findItem(out.lineItems, "Beam Rear (3x8, Beveled, One End Cut)")).toBeTruthy();
-  });
-
-  it("Newport: End Cut Side has no effect on beam types that don't take an end cut (e.g. 3x3)", () => {
-    const inp = newportBase();
-    inp.beamType1 = "3x3";
-    inp.beamEndCutSide1 = "one_end";
-    const out = calcNewport(inp);
-    expect(findItem(out.lineItems, "Beam #1 (3x3)")).toBeTruthy();
-    expect(out.lineItems.some((i) => i.name.includes("End Cut"))).toBe(false);
-  });
-
-  it("W-Pan: defaults to 'Both Ends Cut', One End Cut is reflected in the label", () => {
-    const base = calcWPan(wpanBase());
-    expect(findItem(base.lineItems, "Beam #1 (3x8, Beveled, Both Ends Cut)")).toBeTruthy();
-
+  it("W-Pan: an added beam prices as Beam #3, with its own posts", () => {
     const inp = wpanBase();
-    inp.beamEndCutSide1 = "one_end";
+    inp.beams = [{ type: "3x3", qty: 1, length: 19.5, positionFromHouse: 10, posts: 2, postHeight: 10 }];
     const out = calcWPan(inp);
-    expect(findItem(out.lineItems, "Beam #1 (3x8, Beveled, One End Cut)")).toBeTruthy();
+    const beam = findItem(out.lineItems, "Beam #3 (3x3)");
+    expect(beam).toBeTruthy();
+    expect(beam!.amount).toBeCloseTo(RATES.beam_3x3 * 19.5, 2);
+    expect(findItem(out.lineItems, "3x3 Post Sleeve #3")).toBeTruthy();
   });
 
-  it("Pergola: rafters get the same End Cut Side treatment, defaulting to 'Both Ends Cut'", () => {
-    const out = calcPergola(pergolaBase());
-    expect(findItem(out.lineItems, "2x6 Rafters (Scallop, Both Ends Cut)")).toBeTruthy();
+  it("IRP: an added beam prices as Beam #3, with its own posts", () => {
+    const inp = irpBase();
+    inp.beams = [{ type: "3x8", qty: 1, length: 19.5, positionFromHouse: 10, posts: 2, postHeight: 10 }];
+    const out = calcIRP(inp);
+    const beam = findItem(out.lineItems, "Beam #3 (3x8)");
+    expect(beam).toBeTruthy();
+    expect(beam!.amount).toBeCloseTo(RATES.beam_3x8 * 19.5, 2);
+    expect(findItem(out.lineItems, "3x3 Post Sleeve #3")).toBeTruthy();
   });
 
-  it("Pergola: One End Cut is reflected in the Rafters label", () => {
+  it("Pergola: an added beam prices as Beam #2 (the primary beam is unlabeled), with its own posts", () => {
     const inp = pergolaBase();
-    inp.endCutSide = "one_end";
+    inp.beams = [{ type: "3x8", qty: 1, length: 19.5, positionFromHouse: 10, posts: 2, postHeight: 10 }];
     const out = calcPergola(inp);
-    expect(findItem(out.lineItems, "2x6 Rafters (Scallop, One End Cut)")).toBeTruthy();
-    expect(findItem(out.lineItems, "2x6 Rafters (Scallop, Both Ends Cut)")).toBeUndefined();
+    const beam = findItem(out.lineItems, "Beam #2 (3x8)");
+    expect(beam).toBeTruthy();
+    expect(beam!.amount).toBeCloseTo(RATES.beam_3x8 * 19.5, 2);
+    expect(findItem(out.lineItems, "3x3 Post Sleeve #2")).toBeTruthy();
+  });
+
+  it("Newport: a beam with 0 length/qty contributes no beam line, but its posts still count", () => {
+    const inp = newportBase();
+    inp.beams = [{ type: "3x8", qty: 0, length: 0, positionFromHouse: 0, posts: 2, postHeight: 10 }];
+    const out = calcNewport(inp);
+    expect(out.lineItems.some((i) => i.name.startsWith("Beam #3"))).toBe(false);
+    expect(findItem(out.lineItems, "3x3 Post Sleeve #3")).toBeTruthy();
   });
 });

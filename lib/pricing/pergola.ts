@@ -1,5 +1,5 @@
 import { RATES } from "./rates";
-import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, MountStyle } from "./types";
+import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, MountStyle, BeamConfig } from "./types";
 import {
   li, nextStockLength, anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge,
   finalizePricing, shadeBeamItems, beamTypeLabel, END_CUT_LABELS,
@@ -46,6 +46,7 @@ export interface PergolaInputs {
   skyliftPosts: number;
   shadeBeamQty: number;
   shadeBeamLength: number;
+  beams: BeamConfig[];
   discount: number;
   customTotal: number | null;
   footings: number;
@@ -122,7 +123,8 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
 
   // ── POSTS ──
   const rearPosts = isFreestanding ? inp.rearPosts : 0;
-  const totalPosts = inp.posts + rearPosts;
+  const multiSpanPosts = (inp.beams || []).reduce((s, b) => s + (b.posts || 0), 0);
+  const totalPosts = inp.posts + rearPosts + multiSpanPosts;
   if (inp.posts > 0) {
     const postLen = postMaterialLength(inp.postHeight, inp.groundAttachment);
     items.push(li("3x3 Post Sleeve", inp.posts, postLen, RATES.post_3x3_sleeve_ft, "", inp.colorPergola));
@@ -143,6 +145,26 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
   if (isRoofMount && inp.skyliftPosts > 0) {
     items.push(li("SkyLift Post", inp.skyliftPosts, 0, RATES.skylift_post));
   }
+
+  // ── MULTI-SPAN BEAMS — additional beams beyond the primary + rear beam,
+  // each with its own posts. Numbered #2, #3... continuing from the
+  // (unlabeled) primary beam, matching the builder UI's "Beam {idx+2}" label. ──
+  (inp.beams || []).forEach((beam, idx) => {
+    const num = idx + 2;
+    if (beam.length > 0 && beam.qty > 0 && beam.type !== "none") {
+      items.push(li("Beam #" + num + " (" + beamTypeLabel(beam.type) + ")", beam.qty, beam.length, RATES.beam_3x8, "", inp.colorPergola));
+      if (beam.type !== "3x8_no_insert") {
+        items.push(li("Steel Insert #" + num, beam.qty, nextStockLength(beam.length), RATES.steel_3x8_14ga_ft));
+      }
+      items.push(li("3x8 Beam End Caps #" + num, beam.qty * 2, 0, RATES.endcap_3x8, "", inp.colorPergola));
+    }
+    if (beam.posts > 0) {
+      const lenN = postMaterialLength(beam.postHeight, inp.groundAttachment);
+      items.push(li("3x3 Post Sleeve #" + num, beam.posts, lenN, RATES.post_3x3_sleeve_ft, "", inp.colorPergola));
+      items.push(li("3x3 Steel Post #" + num,  beam.posts, lenN, RATES.post_3x3_steel_ft));
+      items.push(li("2x6 Post Plates #" + num + " (Mitered)", beam.posts * 2, beam.postHeight + 1, RATES.post_plate_2x6_ft, "", inp.colorPergola));
+    }
+  });
 
   // ── MITERED CAPS ──
   if (totalPosts > 0) {

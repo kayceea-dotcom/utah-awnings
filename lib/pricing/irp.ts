@@ -1,5 +1,5 @@
 import { RATES } from "./rates";
-import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, MountStyle } from "./types";
+import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, MountStyle, BeamConfig } from "./types";
 import {
   li, nextStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, beamTypeLabel, anchorQty,
   wrapKitRates, wrapKitFinishingItems, deckHeightSurcharge, postMaterialLength, groundMountSurcharge,
@@ -48,6 +48,7 @@ export interface IRPInputs {
   skyliftPosts: number;
   shadeBeamQty: number;
   shadeBeamLength: number;
+  beams: BeamConfig[];
   discount: number;
   customTotal: number | null;
   footings: number;
@@ -212,7 +213,8 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
 
   // ── POSTS ──
   const rearPosts = isFreestanding ? inp.rearPosts : 0;
-  const totalPosts = inp.posts1 + inp.posts2 + rearPosts;
+  const multiSpanPosts = (inp.beams || []).reduce((s, b) => s + (b.posts || 0), 0);
+  const totalPosts = inp.posts1 + inp.posts2 + rearPosts + multiSpanPosts;
   if (inp.posts1 > 0) {
     const len1 = postMaterialLength(inp.postHeight1, inp.groundAttachment);
     items.push(li("3x3 Post Sleeve #1", inp.posts1, len1, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
@@ -235,6 +237,26 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
   if (isRoofMount && inp.skyliftPosts > 0) {
     items.push(li("SkyLift Post", inp.skyliftPosts, 0, RATES.skylift_post));
   }
+
+  // ── MULTI-SPAN BEAMS — additional beams beyond the two primary runs (Additional /
+  // Multi-Span Beams section), each with its own posts. Numbered #3, #4... to
+  // continue from the two primary beams, matching the builder UI's "Beam {idx+3}" label. ──
+  (inp.beams || []).forEach((beam, idx) => {
+    const num = idx + 3;
+    if (beam.length > 0 && beam.qty > 0) {
+      items.push(li("Beam #" + num + " (" + beamTypeLabel(beam.type) + ")", beam.qty, beam.length, beamMaterialRate(beam.type), "", inp.colorPostsBeam));
+      const steelRateN = steelInsertRate(beam.type);
+      if (steelRateN > 0) {
+        items.push(li("Steel Insert #" + num, beam.qty, nextStockLength(beam.length), steelRateN));
+      }
+      items.push(li("Beam End Caps #" + num, beam.qty * 2, 0, beamEndcapRate(beam.type), "", inp.colorPostsBeam));
+    }
+    if (beam.posts > 0) {
+      const lenN = postMaterialLength(beam.postHeight, inp.groundAttachment);
+      items.push(li("3x3 Post Sleeve #" + num, beam.posts, lenN, RATES.post_3x3_sleeve_ft, "", inp.colorPostsBeam));
+      items.push(li("3x3 Steel Post #" + num,  beam.posts, lenN, RATES.post_3x3_steel_ft));
+    }
+  });
 
   // ── WRAP KIT — post plates, sideplates, mitered caps, foam inserts, end caps, plugs.
   // IRP keeps its own dedicated LRP hanger/gutter/fascia regardless, so unlike Flat Panel
