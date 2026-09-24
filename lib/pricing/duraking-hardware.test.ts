@@ -33,6 +33,32 @@ function wpanBase(): WPanInputs {
   };
 }
 
+describe("V-Panel/DuraKing gutter and hanger never run longer than the job's own total width", () => {
+  it("a 24ft-wide DuraKing job needs a single 24ft gutter, not two 16ft pieces", () => {
+    const inp = wpanBase();
+    inp.panelType = "duraking_025";
+    inp.hangerType = "duraking_hanger";
+    inp.width1 = 24;
+    const out = calcWPan(inp);
+    const gutter = findItem(out.lineItems, "DuraKing Gutter");
+    expect(gutter).toBeTruthy();
+    expect(gutter!.qty).toBe(1);
+    expect(gutter!.amount).toBeCloseTo(RATES.duraking_gutter_24, 2);
+    expect(out.lineItems.some((i) => i.name.startsWith("DuraKing Gutter ("))).toBe(false);
+  });
+
+  it("a 24ft-wide Tri-V job needs a single 24ft gutter too", () => {
+    const inp = wpanBase();
+    inp.width1 = 24;
+    inp.gutterType = "extruded";
+    const out = calcWPan(inp);
+    const gutter = findItem(out.lineItems, "Extruded Gutter 2.5in");
+    expect(gutter).toBeTruthy();
+    expect(gutter!.qty).toBe(1);
+    expect(gutter!.amount).toBeCloseTo(RATES.gutter_extruded_24, 2);
+  });
+});
+
 describe("DuraKing hanger/gutter/fascia - its own hardware, distinct from Tri-V's 2.5in extruded line", () => {
   it("Tri-V: extruded gutter/fascia use the real extruded stock-piece rates (matches Flat Panel)", () => {
     const inp = wpanBase();
@@ -40,9 +66,9 @@ describe("DuraKing hanger/gutter/fascia - its own hardware, distinct from Tri-V'
     const out = calcWPan(inp);
     const gutter = findItem(out.lineItems, "Extruded Gutter 2.5in");
     const fascia = findItem(out.lineItems, "Extruded Side Fascia");
-    // width1=20 -> gutterNeededFt=21.5 -> 24ft tier; projection1=12 -> one-piece fascia, neededFt=24 -> 24ft tier
+    // width1=20 -> gutterNeededFt=20 -> 20ft tier; projection1=12 -> one-piece fascia, neededFt=24 -> 24ft tier
     expect(gutter).toBeTruthy();
-    expect(gutter!.amount).toBeCloseTo(RATES.gutter_extruded_24, 2);
+    expect(gutter!.amount).toBeCloseTo(RATES.gutter_extruded_20, 2);
     expect(fascia).toBeTruthy();
     expect(fascia!.rate).toBeCloseTo(RATES.fascia_extruded_24, 2);
   });
@@ -89,9 +115,9 @@ describe("DuraKing hanger/gutter/fascia - its own hardware, distinct from Tri-V'
     const jHanger = calcWPan({ ...base, hangerType: "duraking_j_hanger" });
     const aRail = calcWPan({ ...base, hangerType: "a_rail" });
 
-    // width1=20 -> hangerLen=21.5 -> over the 20ft tier -> 24ft tier
-    expect(findItem(plain.lineItems, "DuraKing Hanger")!.rate).toBeCloseTo(RATES.duraking_hanger_24, 2);
-    expect(findItem(jHanger.lineItems, "DuraKing J-Hanger")!.rate).toBeCloseTo(RATES.duraking_j_hanger_24, 2);
+    // width1=20 -> hangerLen=20 -> exactly the 20ft tier
+    expect(findItem(plain.lineItems, "DuraKing Hanger")!.rate).toBeCloseTo(RATES.duraking_hanger_20, 2);
+    expect(findItem(jHanger.lineItems, "DuraKing J-Hanger")!.rate).toBeCloseTo(RATES.duraking_j_hanger_20, 2);
     expect(findItem(aRail.lineItems, "DuraKing A-Rail")!.rate).toBeCloseTo(RATES.hanger_a_rail_10, 2);
   });
 });
