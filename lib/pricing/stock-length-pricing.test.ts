@@ -208,9 +208,9 @@ describe("Extruded gutter over 24ft combines two stock pieces (shortest combo th
     expect(findItem(out.lineItems, "Extruded Gutter (16ft)")).toBeUndefined();
   });
 
-  it("W-Pan: a run needing 35ft (after its own +1.5ft allowance) also splits into a 16ft + 20ft combo", () => {
+  it("W-Pan: a run needing 33.5ft also splits into a 16ft + 20ft combo", () => {
     const inp = wpanBase();
-    inp.width1 = 33.5; // + W-Pan's own 1.5ft gutter allowance = 35ft needed
+    inp.width1 = 33.5; // V-Panel gutter never runs longer than the total width - no allowance added
     const out = calcWPan(inp);
     expect(findItem(out.lineItems, "Extruded Gutter 2.5in (16ft)")).toBeTruthy();
     expect(findItem(out.lineItems, "Extruded Gutter 2.5in (20ft)")).toBeTruthy();

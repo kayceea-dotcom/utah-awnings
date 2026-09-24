@@ -143,9 +143,11 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   // length, priced per ft; A-Rail is only sold in one fixed 10ft stock length
   // - a flat fee per piece regardless of the run's actual needed length.
   // DuraKing has no roll-form hanger at all - just Hanger/J-Hanger (both
-  // 20'/24' stock pieces) or A-Rail.
+  // 20'/24' stock pieces) or A-Rail. Unlike Flat Panel's hanger (which gets a
+  // deliberate cut-to-fit allowance past the width), V-Panel/DuraKing hanger
+  // and gutter never need to run longer than the job's own total width.
   const totalWidth = inp.width1 + (inp.width2 > 0 ? inp.width2 : 0);
-  const hangerLen = totalWidth > 0 ? totalWidth + 1.5 : 0;
+  const hangerLen = totalWidth;
   const isARail = inp.hangerType === "a_rail";
   if (!isFreestanding && !isRoofMount && hangerLen > 0) {
     if (isDuraKing) {
@@ -167,7 +169,7 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   // own line; identical sizes collapse into one qty. DuraKing has no
   // roll-form gutter either - it's always the stock-piece system below, off
   // its own DuraKing gutter tiers, regardless of the Gutter Type dropdown.
-  const gutterNeededFt = totalWidth + 1.5;
+  const gutterNeededFt = totalWidth;
   function extrudedGutterLines(name: string): LineItem[] {
     const pieces = extrudedStockPieces(gutterNeededFt);
     const counts = new Map<number, number>();
@@ -182,7 +184,7 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   const gutterName = isDuraKing ? "DuraKing Gutter" : "Extruded Gutter 2.5in";
   const fasciaName = isDuraKing ? "DuraKing Fascia" : "Extruded Side Fascia";
   if (!isDuraKing && inp.gutterType === "roll_form") {
-    const rollPieces = rollFormGutterPieces(totalWidth + 1.5);
+    const rollPieces = rollFormGutterPieces(totalWidth);
     items.push(li("Roll Form Gutter", rollPieces.qty, rollPieces.length, RATES.gutter_roll_form_ft, "", inp.colorGutterFascia));
     // Roll form gutter uses a 2x6 board as its side fascia, independent of
     // wrap kit selection - needed regardless of whether a 2x6/3x8 wrap was chosen.
