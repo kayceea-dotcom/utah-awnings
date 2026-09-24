@@ -55,6 +55,16 @@ export const CATALOG: CatalogEntry[] = [
   { key: "fascia_extruded_24", label: "Fascia - Extruded (24ft)", category: "Gutters", unit: "ea" },
   { key: "fascia_extruded_2x6_ft", label: "Fascia - Extruded 2x6 (V-Panel)", category: "Gutters", unit: "ft" },
   { key: "fascia_extruded_3x8_ft", label: "Fascia - Extruded 3x8", category: "Gutters", unit: "ft" },
+  { key: "duraking_hanger_20", label: "DuraKing Hanger (20ft)", category: "Hangers", unit: "ea" },
+  { key: "duraking_hanger_24", label: "DuraKing Hanger (24ft)", category: "Hangers", unit: "ea" },
+  { key: "duraking_j_hanger_20", label: "DuraKing J-Hanger (20ft)", category: "Hangers", unit: "ea" },
+  { key: "duraking_j_hanger_24", label: "DuraKing J-Hanger (24ft)", category: "Hangers", unit: "ea" },
+  { key: "duraking_gutter_16", label: "DuraKing Gutter (16ft)", category: "Gutters", unit: "ea" },
+  { key: "duraking_gutter_20", label: "DuraKing Gutter (20ft)", category: "Gutters", unit: "ea" },
+  { key: "duraking_gutter_24", label: "DuraKing Gutter (24ft)", category: "Gutters", unit: "ea" },
+  { key: "duraking_fascia_16", label: "DuraKing Fascia (16ft)", category: "Gutters", unit: "ea" },
+  { key: "duraking_fascia_20", label: "DuraKing Fascia (20ft)", category: "Gutters", unit: "ea" },
+  { key: "duraking_fascia_24", label: "DuraKing Fascia (24ft)", category: "Gutters", unit: "ea" },
 
   // Post Plates / Brackets / Caps
   { key: "post_plate_3x8_ft", label: "Post Plate 3x8", category: "Post Plates / Brackets / Caps", unit: "ft" },

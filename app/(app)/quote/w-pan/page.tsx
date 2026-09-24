@@ -75,6 +75,13 @@ const HANGERS = [
   { value: "a_rail",    label: "A-Rail" },
 ];
 
+// DuraKing has no roll-form hanger - just its own two stock-piece hangers, or A-Rail.
+const DURAKING_HANGERS = [
+  { value: "duraking_hanger",   label: "DuraKing Hanger" },
+  { value: "duraking_j_hanger", label: "DuraKing J-Hanger" },
+  { value: "a_rail",            label: "A-Rail" },
+];
+
 const GUTTERS = [
   { value: "extruded",  label: "Extruded" },
   { value: "roll_form", label: "Roll Form" },
@@ -418,6 +425,19 @@ export default function WPanQuotePage() {
     setInp((p) => ({ ...p, posts1: front, rearPosts: rear }));
   }
 
+  // DuraKing and Tri-V don't share a hanger type (DuraKing has no roll-form
+  // hanger, Tri-V has no DuraKing/J-Hanger) - crossing that line resets to
+  // each family's own default rather than carrying over an invalid value.
+  function handlePanelTypeChange(v: string) {
+    const wasDuraKing = inp.panelType !== "wpan_032";
+    const isDuraKingNow = v !== "wpan_032";
+    if (wasDuraKing !== isDuraKingNow) {
+      setInp((p) => ({ ...p, panelType: v as WPanType, hangerType: isDuraKingNow ? "duraking_hanger" : "roll_form" }));
+    } else {
+      setField("panelType", v as WPanType);
+    }
+  }
+
   function handleWidth1Change(v: number) {
     setInp((p) => {
       const newBeam1 = p.jogType === "house"
@@ -474,7 +494,7 @@ export default function WPanQuotePage() {
                 <NumInput label="Width #1 (ft)" value={inp.width1} onChange={handleWidth1Change} hint="Along the house" />
                 <NumInput label="Projection #2 (ft)" value={inp.projection2} onChange={(v) => setField("projection2", v)} hint="0 if single run" />
                 <NumInput label="Width #2 (ft)" value={inp.width2} onChange={handleWidth2Change} />
-                <SelectInput label="Panel Type" value={inp.panelType} onChange={(v) => setField("panelType", v as WPanType)} options={PANEL_TYPES} span={2} />
+                <SelectInput label="Panel Type" value={inp.panelType} onChange={handlePanelTypeChange} options={PANEL_TYPES} span={2} />
                 <SpanWarning
                   result={checkWPanSpan(inp.panelType, siteSnowLoad?.designPsf ?? 0)}
                   projectionFt={inp.projection1}
@@ -508,8 +528,11 @@ export default function WPanQuotePage() {
                 )}
                 <NumInput label="Beam #2 Qty" value={inp.beamQty2} onChange={(v) => setField("beamQty2", v)} hint="2 for double beam" />
                 <NumInput label="Beam Length #2 (ft)" value={inp.beamLength2} onChange={(v) => setField("beamLength2", v)} />
-                <SelectInput label="Hanger Type" value={inp.hangerType} onChange={(v) => setField("hangerType", v)} options={HANGERS} />
-                <SelectInput label="Gutter Type" value={inp.gutterType} onChange={(v) => setField("gutterType", v)} options={GUTTERS} />
+                <SelectInput label="Hanger Type" value={inp.hangerType} onChange={(v) => setField("hangerType", v)}
+                  options={inp.panelType === "wpan_032" ? HANGERS : DURAKING_HANGERS} />
+                {inp.panelType === "wpan_032" && (
+                  <SelectInput label="Gutter Type" value={inp.gutterType} onChange={(v) => setField("gutterType", v)} options={GUTTERS} />
+                )}
                 <SelectInput label="Wrap Type" value={inp.wrapType} onChange={(v) => setField("wrapType", v)} options={WRAPS} />
                 <ToggleInput label="Rafter Tails" value={inp.rafterTails} onChange={(v) => setField("rafterTails", v)} />
               </SectionCard>

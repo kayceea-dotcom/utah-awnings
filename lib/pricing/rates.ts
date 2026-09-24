@@ -51,6 +51,20 @@ export const RATES = {
   fascia_extruded_20:  109.43,
   fascia_extruded_24:  131.35,
 
+  // DuraKing is 4in tall (vs Tri-V's 2.5in) - its own gutter/fascia/hanger,
+  // also flat per-stock-piece like the 2.5in extruded line above. A-Rail is
+  // the same physical 10ft A-Rail as everywhere else (hanger_a_rail_10).
+  duraking_hanger_20:  138.94,
+  duraking_hanger_24:  166.70,
+  duraking_j_hanger_20: 178.01,
+  duraking_j_hanger_24: 213.61,
+  duraking_gutter_16:  236.56,
+  duraking_gutter_20:  295.68,
+  duraking_gutter_24:  354.78,
+  duraking_fascia_16:  113.90,
+  duraking_fascia_20:  142.35,
+  duraking_fascia_24:  170.80,
+
   // Post plates / brackets / caps
   post_plate_3x8_ft:   10.10,
   post_plate_2x6_ft:    6.59,

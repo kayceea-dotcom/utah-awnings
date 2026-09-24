@@ -168,6 +168,15 @@ function extrudedFasciaRateForFt(stockFt: number): number {
   return stockFt === 16 ? RATES.fascia_extruded_16 : stockFt === 20 ? RATES.fascia_extruded_20 : RATES.fascia_extruded_24;
 }
 
+// DuraKing is 4in tall (vs Tri-V's 2.5in extruded line above) - its own
+// gutter/fascia product, same 16'/20'/24' stock-piece pattern.
+export function durakingGutterRateForFt(stockFt: number): number {
+  return stockFt === 16 ? RATES.duraking_gutter_16 : stockFt === 20 ? RATES.duraking_gutter_20 : RATES.duraking_gutter_24;
+}
+function durakingFasciaRateForFt(stockFt: number): number {
+  return stockFt === 16 ? RATES.duraking_fascia_16 : stockFt === 20 ? RATES.duraking_fascia_20 : RATES.duraking_fascia_24;
+}
+
 // Same 1-piece-cut-in-half-for-both-sides (projection <= 12ft) vs 2-separate-
 // pieces split as fasciaQtyLen, but priced off the 16'/20'/24' stock tiers
 // instead of the general ladder, since extruded side fascia is only sold in
@@ -182,6 +191,23 @@ export function extrudedFasciaQtyRate(maxProjection: number): { qty: number; rat
   const neededFt = isOnePiece ? 2 * maxProjection : maxProjection;
   const stockFt = EXTRUDED_STOCK_TIERS.find((t) => neededFt <= t) ?? 24;
   return { qty: isOnePiece ? 1 : 2, rate: extrudedFasciaRateForFt(stockFt), stockFt };
+}
+
+// Same shape as extrudedFasciaQtyRate above, priced off DuraKing's own fascia tiers.
+export function durakingFasciaQtyRate(maxProjection: number): { qty: number; rate: number; stockFt: number } {
+  const isOnePiece = maxProjection <= 12;
+  const neededFt = isOnePiece ? 2 * maxProjection : maxProjection;
+  const stockFt = EXTRUDED_STOCK_TIERS.find((t) => neededFt <= t) ?? 24;
+  return { qty: isOnePiece ? 1 : 2, rate: durakingFasciaRateForFt(stockFt), stockFt };
+}
+
+// DuraKing hanger: plain Hanger, J-Hanger (both 20'/24' stock pieces sized to
+// the run), or A-Rail (same physical 10ft A-Rail used everywhere else).
+export function durakingHangerRate(hangerType: string, hangerLen: number): number {
+  if (hangerType === "a_rail") return RATES.hanger_a_rail_10;
+  const tier20 = hangerLen <= 20;
+  if (hangerType === "duraking_j_hanger") return tier20 ? RATES.duraking_j_hanger_20 : RATES.duraking_j_hanger_24;
+  return tier20 ? RATES.duraking_hanger_20 : RATES.duraking_hanger_24;
 }
 
 // "double_3x8" is two 3x8 beams mounted to the front and back of the posts
