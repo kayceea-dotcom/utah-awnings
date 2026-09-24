@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     <table style="width: 100%; font-size: 14px; margin-bottom: 24px;">
       <tr><td style="padding: 4px 0; color: #666;">Salesman</td><td style="padding: 4px 0; text-align: right;"><strong>${salesman}</strong></td></tr>
       <tr><td style="padding: 4px 0; color: #666;">Contract Total</td><td style="padding: 4px 0; text-align: right;"><strong>${fmt(total)}</strong></td></tr>
-      <tr><td style="padding: 4px 0; color: #666;">Signed</td><td style="padding: 4px 0; text-align: right;"><strong>${new Date().toLocaleString()}</strong></td></tr>
+      <tr><td style="padding: 4px 0; color: #666;">Signed</td><td style="padding: 4px 0; text-align: right;"><strong>${new Date((proposal.signed_at as string) || Date.now()).toLocaleString()}</strong></td></tr>
     </table>
     <div style="text-align: center;">
       <a href="${proposalUrl}"
