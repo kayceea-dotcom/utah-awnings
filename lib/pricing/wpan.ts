@@ -4,7 +4,8 @@ import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, 
 import {
   li, nextStockLength, rollFormGutterPieces, wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen,
   anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, beamTypeLabel,
-  END_CUT_LABELS, extrudedStockPieces, extrudedGutterRateForFt,
+  END_CUT_LABELS, extrudedStockPieces, extrudedGutterRateForFt, extrudedFasciaQtyRate,
+  durakingGutterRateForFt, durakingFasciaQtyRate, durakingHangerRate,
 } from "./shared";
 
 export type WPanType = "wpan_032" | "duraking_025" | "duraking_032" | "duraking_040";
@@ -130,6 +131,10 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     items.push(li("V-Panel #2 (" + panelLabel(inp.panelType) + ")", p2Qty, inp.projection2, rate, "sq ft", inp.colorPans));
   }
 
+  // DuraKing is 4in tall (vs Tri-V's 2.5in) - its own hanger/gutter/fascia
+  // products throughout below, not Tri-V's extruded 2.5in line.
+  const isDuraKing = inp.panelType !== "wpan_032";
+
   // ── HANGER — skipped when freestanding or roof mount, replaced by a rear
   // beam + posts/SkyLift risers below ──
   const isFreestanding = inp.mountStyle === "freestanding";
@@ -137,13 +142,21 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   // For two-run jobs hanger spans combined width. Roll Form hanger is cut to
   // length, priced per ft; A-Rail is only sold in one fixed 10ft stock length
   // - a flat fee per piece regardless of the run's actual needed length.
+  // DuraKing has no roll-form hanger at all - just Hanger/J-Hanger (both
+  // 20'/24' stock pieces) or A-Rail.
   const totalWidth = inp.width1 + (inp.width2 > 0 ? inp.width2 : 0);
   const hangerLen = totalWidth > 0 ? totalWidth + 1.5 : 0;
   const isARail = inp.hangerType === "a_rail";
   if (!isFreestanding && !isRoofMount && hangerLen > 0) {
-    items.push(isARail
-      ? li("Hanger 2.5in", 1, 0, RATES.hanger_a_rail_10, "", inp.colorPans, 10)
-      : li("Hanger 2.5in", 1, hangerLen, RATES.hanger_roll_form_ft, "", inp.colorPans));
+    if (isDuraKing) {
+      const label = isARail ? "DuraKing A-Rail" : inp.hangerType === "duraking_j_hanger" ? "DuraKing J-Hanger" : "DuraKing Hanger";
+      const tier = isARail ? 10 : hangerLen <= 20 ? 20 : 24;
+      items.push(li(label, 1, 0, durakingHangerRate(inp.hangerType, hangerLen), "", inp.colorPans, tier));
+    } else {
+      items.push(isARail
+        ? li("Hanger 2.5in", 1, 0, RATES.hanger_a_rail_10, "", inp.colorPans, 10)
+        : li("Hanger 2.5in", 1, hangerLen, RATES.hanger_roll_form_ft, "", inp.colorPans));
+    }
   }
 
   // ── GUTTER ──
@@ -151,19 +164,24 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   // priced per ft (see rollFormGutterPieces); extruded gutter is only sold in
   // 16'/20'/24' stock pieces - a flat fee per piece, combining two pieces for
   // a run over 24ft (see extrudedStockPieces). Distinct piece sizes get their
-  // own line; identical sizes collapse into one qty.
+  // own line; identical sizes collapse into one qty. DuraKing has no
+  // roll-form gutter either - it's always the stock-piece system below, off
+  // its own DuraKing gutter tiers, regardless of the Gutter Type dropdown.
   const gutterNeededFt = totalWidth + 1.5;
   function extrudedGutterLines(name: string): LineItem[] {
     const pieces = extrudedStockPieces(gutterNeededFt);
     const counts = new Map<number, number>();
     for (const p of pieces) counts.set(p, (counts.get(p) ?? 0) + 1);
+    const rateForFt = isDuraKing ? durakingGutterRateForFt : extrudedGutterRateForFt;
     return Array.from(counts.entries()).map(([stockFt, count]) =>
       li(counts.size > 1 ? name + " (" + stockFt + "ft)" : name, count, 0,
-        extrudedGutterRateForFt(stockFt), "", inp.colorGutterFascia, stockFt)
+        rateForFt(stockFt), "", inp.colorGutterFascia, stockFt)
     );
   }
   const maxProjection = Math.max(inp.projection1, inp.projection2 || 0);
-  if (inp.gutterType === "roll_form") {
+  const gutterName = isDuraKing ? "DuraKing Gutter" : "Extruded Gutter 2.5in";
+  const fasciaName = isDuraKing ? "DuraKing Fascia" : "Extruded Side Fascia";
+  if (!isDuraKing && inp.gutterType === "roll_form") {
     const rollPieces = rollFormGutterPieces(totalWidth + 1.5);
     items.push(li("Roll Form Gutter", rollPieces.qty, rollPieces.length, RATES.gutter_roll_form_ft, "", inp.colorGutterFascia));
     // Roll form gutter uses a 2x6 board as its side fascia, independent of
@@ -175,11 +193,12 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
       items.push(li("Roll Form Gutter Rear", rollPieces.qty, rollPieces.length, RATES.gutter_roll_form_ft, "", inp.colorGutterFascia));
     }
   } else {
-    items.push(...extrudedGutterLines("Extruded Gutter 2.5in"));
-    const { qty: fasciaQty, length: fasciaStockLen } = fasciaQtyLen(maxProjection);
-    items.push(li("Extruded Side Fascia", fasciaQty, fasciaStockLen, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
+    items.push(...extrudedGutterLines(gutterName));
+    const { qty: fasciaQty, rate: fasciaRate, stockFt: fasciaStockFt } =
+      isDuraKing ? durakingFasciaQtyRate(maxProjection) : extrudedFasciaQtyRate(maxProjection);
+    items.push(li(fasciaName, fasciaQty, 0, fasciaRate, "", inp.colorGutterFascia, fasciaStockFt));
     if (isFreestanding || isRoofMount) {
-      items.push(...extrudedGutterLines("Extruded Gutter 2.5in Rear"));
+      items.push(...extrudedGutterLines(gutterName + " Rear"));
     }
   }
 
