@@ -29,8 +29,12 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/accept-invite");
 
   // The customer-facing proposal link (/p/[token]) is public - homeowners
-  // never have an account, they just click the link from their email.
-  const isPublicPage = request.nextUrl.pathname.startsWith("/p/");
+  // never have an account, they just click the link from their email. The
+  // signed-notification route is called from that same page, by that same
+  // anonymous customer's browser, right after they sign - it needs the same
+  // exemption or it 307s to /login and the rep never finds out.
+  const isPublicPage = request.nextUrl.pathname.startsWith("/p/") ||
+    request.nextUrl.pathname === "/api/proposal/signed-notification";
 
   // If not logged in and not on an auth page or public page, redirect to login
   if (!user && !isAuthPage && !isPublicPage) {
