@@ -2,6 +2,7 @@
 
 import { computeSideProfileGeometry } from "@/lib/sideProfileGeometry";
 import { endCutProfilePath } from "@/lib/endCutProfiles";
+import type { WallConfig } from "@/lib/pricing/types";
 
 interface SideProfileDiagramProps {
   projection: number;
@@ -21,6 +22,7 @@ interface SideProfileDiagramProps {
   rearPostHeight?: number;
   rearBeamType?: string;
   rearEndCut?: string;
+  walls?: WallConfig[];
   className?: string;
 }
 
@@ -54,6 +56,7 @@ export default function SideProfileDiagram({
   rearPostHeight,
   rearBeamType,
   rearEndCut,
+  walls = [],
   className = "",
 }: SideProfileDiagramProps) {
   const geo = computeSideProfileGeometry({
@@ -211,6 +214,21 @@ export default function SideProfileDiagram({
               </>
             );
           })()}
+
+          {/* Side wall(s) - schematic only (not to scale with the wall's own
+              length), sitting on the ground between the house and the post,
+              up to its own height. "Front"/"back" walls aren't drawn here -
+              they're a plan-view concept, already shown in the Cover
+              Diagram's top view. */}
+          {walls.filter((w) => w.position === "side").map((wall, i) => {
+            const wallX1 = Math.min(houseX, postX);
+            const wallX2 = Math.max(houseX, postX);
+            const wallTopY = groundY - wall.height * scale - i * 4;
+            return (
+              <rect key={"wall-" + i} x={wallX1} y={wallTopY} width={wallX2 - wallX1} height={groundY - wallTopY}
+                fill="#fef3c7" stroke="#d97706" strokeWidth="1.5" opacity={0.85} />
+            );
+          })}
 
           {/* Footing (concrete/deck) or embedded post (ground mount) */}
           {isGroundMount ? (

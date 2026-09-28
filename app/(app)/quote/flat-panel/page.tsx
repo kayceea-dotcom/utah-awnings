@@ -764,6 +764,7 @@ export default function FlatPanelQuotePage() {
                   rearPostHeight={inp.rearPostHeight}
                   rearBeamType={inp.rearBeamType}
                   rearEndCut={inp.rearBeamEndCut}
+                  walls={inp.walls}
                 />
               </div>
 
@@ -860,6 +861,7 @@ export default function FlatPanelQuotePage() {
                   rearPostHeight={inp.rearPostHeight}
                   rearBeamType={inp.rearBeamType}
                   rearEndCut={inp.rearBeamEndCut}
+                  walls={inp.walls}
                 />
               )}
               <PriceSummaryPanel result={result} />
