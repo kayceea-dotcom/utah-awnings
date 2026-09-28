@@ -2,6 +2,7 @@
 
 import { computeSideProfileGeometry } from "@/lib/sideProfileGeometry";
 import { endCutProfilePath } from "@/lib/endCutProfiles";
+import { wallBoardPattern } from "@/lib/pricing/shared";
 import type { WallConfig } from "@/lib/pricing/types";
 
 interface SideProfileDiagramProps {
@@ -216,17 +217,30 @@ export default function SideProfileDiagram({
           })()}
 
           {/* Side wall(s) - schematic only (not to scale with the wall's own
-              length), sitting on the ground between the house and the post,
-              up to its own height. "Front"/"back" walls aren't drawn here -
-              they're a plan-view concept, already shown in the Cover
-              Diagram's top view. */}
-          {walls.filter((w) => w.position === "side").map((wall, i) => {
-            const wallX1 = Math.min(houseX, postX);
-            const wallX2 = Math.max(houseX, postX);
-            const wallTopY = groundY - wall.height * scale - i * 4;
+              length), each drawn as its own real board pattern (same counts
+              as the material list, via wallBoardPattern) rather than a
+              solid block, hanging from the beam down - most walls are built
+              top-down off the beam, not built up from the ground. "Front"/
+              "back" walls aren't drawn here - they're a plan-view concept,
+              already shown in the Cover Diagram's top view. */}
+          {walls.filter((w) => w.position === "side").map((wall, wi) => {
+            const wallX1 = Math.min(houseX, postX) + wi * 4;
+            const wallX2 = Math.max(houseX, postX) - wi * 4;
+            const gapPx = ((wall.gapIn || 0) / 12) * scale;
+            const pattern = wallBoardPattern(wall);
+            let y = beamTopY;
             return (
-              <rect key={"wall-" + i} x={wallX1} y={wallTopY} width={wallX2 - wallX1} height={groundY - wallTopY}
-                fill="#fef3c7" stroke="#d97706" strokeWidth="1.5" opacity={0.85} />
+              <g key={"wall-" + wi}>
+                {pattern.map((board, bi) => {
+                  const boardHpx = board.heightFt * scale;
+                  const boardY = y;
+                  y += boardHpx + gapPx;
+                  return (
+                    <rect key={bi} x={wallX1} y={boardY} width={wallX2 - wallX1} height={boardHpx}
+                      fill={board.type === "6" ? "#d97706" : "#f59e0b"} stroke="#92400e" strokeWidth="0.5" />
+                  );
+                })}
+              </g>
             );
           })}
 
