@@ -4,7 +4,7 @@
 // others instead of silently drifting out of sync.
 
 import { RATES } from "./rates";
-import type { LineItem } from "./types";
+import type { LineItem, WallConfig } from "./types";
 
 export function li(
   name: string, qty: number, length: number, rate: number,
@@ -339,6 +339,41 @@ export function shadeBeamItems(qty: number, length: number, color = ""): LineIte
     li("Shade Beam Sleeve", qty, length, RATES.post_3x3_sleeve_ft, "", color),
     li("Shade Beam Brackets", qty * 2, 0, RATES.outside_brkt_3x8, "", color),
   ];
+}
+
+// Horizontal-2x6-board wall - fills the gap between the house wall and a
+// post, or between two posts, on the side/front/back of the cover. Boards
+// run the wall's own length (a rep-entered gap, not the run's own width/
+// projection); the bracket here is a distinct full-length piece (2 per
+// wall, running that same length), not the small per-rafter-tail
+// outside_brkt_2x6 hardware used elsewhere. Board face height matches the
+// stock name exactly (2x6 = 6in, 2x3 = 3in), not true dimensional sizing.
+const WALL_BOARD_6_FT = 0.5;
+const WALL_BOARD_3_FT = 0.25;
+
+export function wallItems(walls: WallConfig[]): LineItem[] {
+  const items: LineItem[] = [];
+  (walls || []).forEach((wall, idx) => {
+    if (wall.length <= 0 || wall.height <= 0) return;
+    const num = idx + 1;
+    const gapFt = (wall.gapIn || 0) / 12;
+
+    // "Fence board" count: N boards + (N-1) gaps fill the wall's height.
+    // Alternating 2x6/2x3 repeats every (one of each + 2 gaps) instead.
+    const unit6 = WALL_BOARD_6_FT + gapFt;
+    const unit6and3 = WALL_BOARD_6_FT + WALL_BOARD_3_FT + 2 * gapFt;
+    const count6 = wall.alternating2x3
+      ? Math.max(1, Math.ceil((wall.height + gapFt) / unit6and3))
+      : Math.max(1, Math.ceil((wall.height + gapFt) / unit6));
+    const count3 = wall.alternating2x3 ? count6 : 0;
+
+    items.push(li("Wall #" + num + " - 2x6 Boards", count6, wall.length, RATES.rafter_2x6_032_ft, "ft", wall.color));
+    if (wall.alternating2x3) {
+      items.push(li("Wall #" + num + " - 2x3 Boards", count3, wall.length, RATES.lattice_2x3_ft, "ft", wall.color));
+    }
+    items.push(li("Wall #" + num + " - Outside Brackets", 2, wall.length, RATES.wall_outside_brkt_2x6_ft, "ft", wall.color));
+  });
+  return items;
 }
 
 // Post/beam finishing pieces every wrap-kit product gets: post plates, sideplates,

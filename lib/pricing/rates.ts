@@ -128,6 +128,12 @@ export const RATES = {
   outside_brkt_2x6:    2.36,
   foam_insert_pergola: 5.05,
 
+  // Wall (horizontal 2x6/2x3 board wall, any product) - the bracket here is
+  // a full-length structural piece running the wall's own length (2 per
+  // wall), NOT the small per-rafter-tail outside_brkt_2x6 hardware above.
+  // Board material reuses rafter_2x6_032_ft/lattice_2x3_ft.
+  wall_outside_brkt_2x6_ft: 4.84,
+
   // W-Pan
   wpan_sqft:           4.48,
   duraking_025_ft:     5.23,

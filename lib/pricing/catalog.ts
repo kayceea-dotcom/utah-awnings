@@ -123,6 +123,9 @@ export const CATALOG: CatalogEntry[] = [
   { key: "endcap_2x3", label: "End Cap 2x3 (Lattice)", category: "Pergola", unit: "ea" },
   { key: "foam_insert_pergola", label: "Foam Insert (Pergola)", category: "Pergola", unit: "ea" },
 
+  // Wall
+  { key: "wall_outside_brkt_2x6_ft", label: "Wall Outside Bracket 2x6 (full length)", category: "Wall", unit: "ft" },
+
   // V-Panel
   { key: "wpan_sqft", label: "Tri-V .032 Panel", category: "V-Panel", unit: "sq ft" },
   { key: "duraking_025_ft", label: "DuraKing 4x12 .025 Panel", category: "V-Panel", unit: "ft" },

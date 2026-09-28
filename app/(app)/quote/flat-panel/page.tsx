@@ -31,6 +31,7 @@ import CustomTotalOverride from "@/components/quote/CustomTotalOverride";
 import HousePhotoUpload from "@/components/quote/HousePhotoUpload";
 import ProductSwitcher from "@/components/quote/ProductSwitcher";
 import AdditionalBeamsSection from "@/components/quote/AdditionalBeamsSection";
+import WallsSection from "@/components/quote/WallsSection";
 import SnowLoadCard, { type SiteSnowLoad } from "@/components/quote/SnowLoadCard";
 import SpanWarning from "@/components/quote/SpanWarning";
 import { checkNewportSpan } from "@/lib/spanTables/lookup";
@@ -161,7 +162,7 @@ const DEFAULT: NewportInputs = {
   shadeBeamQty: 0, shadeBeamLength: 16,
   discount: 0, customTotal: null, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
   markup: 1.8, taxRate: 0.0745,
-  beams: [],
+  beams: [], walls: [],
 };
 
 type SectionId = "job" | "dimensions" | "structure" | "attachment" | "posts" | "colors" | "extras" | "pricing";
@@ -695,6 +696,8 @@ export default function FlatPanelQuotePage() {
                 defaultLength={inp.width1 - 0.5 || 0}
               />
 
+              <WallsSection walls={inp.walls} onChange={(w) => setField("walls", w)} />
+
               <SectionCard id="extras" title="Fan Beam / Shade Beam" open={open.has("extras")} onToggle={toggleSection}>
                 <NumInput label="Fan Beam Qty" value={inp.fanBeamQty} onChange={(v) => setField("fanBeamQty", v)} />
                 <NumInput label="Fan Beam Length (ft)" value={inp.fanBeamLength} onChange={(v) => setField("fanBeamLength", v)} />
@@ -741,6 +744,7 @@ export default function FlatPanelQuotePage() {
                   downspoutSide={inp.downspoutSide}
                   showRafterTails={inp.wrapType !== "none" && inp.rafterTails}
                   beams={inp.beams}
+                  walls={inp.walls}
                   beamType1={inp.beamType1}
                   beamType2={inp.beamType2}
                   mountStyle={inp.mountStyle}
@@ -829,6 +833,7 @@ export default function FlatPanelQuotePage() {
                   downspoutSide={inp.downspoutSide}
                   showRafterTails={inp.wrapType !== "none" && inp.rafterTails}
                   beams={inp.beams}
+                  walls={inp.walls}
                   beamType1={inp.beamType1}
                   beamType2={inp.beamType2}
                   mountStyle={inp.mountStyle}

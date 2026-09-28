@@ -1,9 +1,9 @@
 import { RATES } from "./rates";
-import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, MountStyle, BeamConfig } from "./types";
+import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, MountStyle, BeamConfig, WallConfig } from "./types";
 import {
   li, nextStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, beamTypeLabel, anchorQty,
   wrapKitRates, wrapKitFinishingItems, deckHeightSurcharge, postMaterialLength, groundMountSurcharge,
-  finalizePricing, shadeBeamItems,
+  finalizePricing, shadeBeamItems, wallItems,
 } from "./shared";
 
 export type IRPType = "lrp_3_024" | "lrp_3_032" | "lrp_4_032";
@@ -49,6 +49,7 @@ export interface IRPInputs {
   shadeBeamQty: number;
   shadeBeamLength: number;
   beams: BeamConfig[];
+  walls: WallConfig[];
   discount: number;
   customTotal: number | null;
   footings: number;
@@ -352,6 +353,9 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
 
   // ── SHADE BEAM ──
   items.push(...shadeBeamItems(inp.shadeBeamQty, inp.shadeBeamLength, inp.colorPostsBeam));
+
+  // ── WALLS ──
+  items.push(...wallItems(inp.walls));
 
   // ── PRICING SUMMARY ──
   const misc = inp.misc + deckHeightSurcharge(inp.groundAttachment, inp.deckHeight)

@@ -1,8 +1,8 @@
 import { RATES } from "./rates";
-import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, MountStyle, BeamConfig } from "./types";
+import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, MountStyle, BeamConfig, WallConfig } from "./types";
 import {
   li, nextStockLength, anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge,
-  finalizePricing, shadeBeamItems, beamTypeLabel, END_CUT_LABELS,
+  finalizePricing, shadeBeamItems, wallItems, beamTypeLabel, END_CUT_LABELS,
 } from "./shared";
 
 // Mirrors newport.ts/wpan.ts's beamLabel() - the side is always spelled out
@@ -47,6 +47,7 @@ export interface PergolaInputs {
   shadeBeamQty: number;
   shadeBeamLength: number;
   beams: BeamConfig[];
+  walls: WallConfig[];
   discount: number;
   customTotal: number | null;
   footings: number;
@@ -253,6 +254,9 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
 
   // ── SHADE BEAM ──
   items.push(...shadeBeamItems(inp.shadeBeamQty, inp.shadeBeamLength, inp.colorPergola));
+
+  // ── WALLS ──
+  items.push(...wallItems(inp.walls));
 
   // ── PRICING SUMMARY ──
   const misc = inp.misc + deckHeightSurcharge(inp.groundAttachment, inp.deckHeight)

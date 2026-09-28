@@ -1,9 +1,9 @@
 import { RATES } from "./rates";
 import { CATALOG_BY_KEY } from "./catalog";
-import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, EndCut, EndCutSide, MountStyle, BeamConfig } from "./types";
+import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, EndCut, EndCutSide, MountStyle, BeamConfig, WallConfig } from "./types";
 import {
   li, nextStockLength, rollFormGutterPieces, wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen,
-  anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, beamTypeLabel,
+  anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, wallItems, beamTypeLabel,
   END_CUT_LABELS, extrudedStockPieces, extrudedGutterRateForFt, extrudedFasciaQtyRate,
   durakingGutterRateForFt, durakingFasciaQtyRate, durakingHangerRate,
 } from "./shared";
@@ -61,6 +61,7 @@ export interface WPanInputs {
   shadeBeamQty: number;
   shadeBeamLength: number;
   beams: BeamConfig[];
+  walls: WallConfig[];
   discount: number;
   customTotal: number | null;
   footings: number;
@@ -416,6 +417,9 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
 
   // ── SHADE BEAM ──
   items.push(...shadeBeamItems(inp.shadeBeamQty, inp.shadeBeamLength, inp.colorPostsBeam));
+
+  // ── WALLS ──
+  items.push(...wallItems(inp.walls));
 
   // ── PRICING SUMMARY ──
   const misc = inp.misc + deckHeightSurcharge(inp.groundAttachment, inp.deckHeight)

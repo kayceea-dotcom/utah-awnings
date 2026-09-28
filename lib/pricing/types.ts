@@ -40,6 +40,21 @@ export interface BeamConfig {
   postHeight: number;
 }
 
+// Optional horizontal-2x6-board privacy wall, filling the gap between the
+// house wall and a post, or between two posts - on the side, front, or back
+// of the cover. Rep enters length/height directly (usually the actual gap
+// between whatever it's landing between); length isn't derived from the
+// job's own projection/width since a wall doesn't have to span the full run.
+export type WallPosition = "side" | "front" | "back";
+export interface WallConfig {
+  position: WallPosition;
+  length: number;
+  height: number;
+  gapIn: number;
+  alternating2x3: boolean;
+  color: string;
+}
+
 export interface NewportInputs {
   jobName: string;
   salesman: string;
@@ -61,6 +76,7 @@ export interface NewportInputs {
   beamEndCutSide1: EndCutSide;
   beamEndCutSide2: EndCutSide;
   beams: BeamConfig[];
+  walls: WallConfig[];
   gutterType: GutterType;
   hangerType: HangerType;
   posts1: number;
