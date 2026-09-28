@@ -348,24 +348,44 @@ export function shadeBeamItems(qty: number, length: number, color = ""): LineIte
 // wall, running that same length), not the small per-rafter-tail
 // outside_brkt_2x6 hardware used elsewhere. Board face height matches the
 // stock name exactly (2x6 = 6in, 2x3 = 3in), not true dimensional sizing.
-const WALL_BOARD_6_FT = 0.5;
-const WALL_BOARD_3_FT = 0.25;
+export const WALL_BOARD_6_FT = 0.5;
+export const WALL_BOARD_3_FT = 0.25;
+
+export interface WallBoard {
+  type: "6" | "3";
+  heightFt: number;
+}
+
+// Ordered top-to-bottom board pattern for one wall - the single source of
+// truth for both pricing (wallItems below) and the diagram, so they can
+// never disagree on how many boards or which alternate where. "Fence
+// board" count: N boards + (N-1) gaps fill the wall's height; alternating
+// repeats every (one 2x6 + one 2x3 + 2 gaps) instead of just (one 2x6 + 1 gap).
+export function wallBoardPattern(wall: WallConfig): WallBoard[] {
+  const gapFt = (wall.gapIn || 0) / 12;
+  if (!wall.alternating2x3) {
+    const unit = WALL_BOARD_6_FT + gapFt;
+    const count = Math.max(1, Math.ceil((wall.height + gapFt) / unit));
+    return Array.from({ length: count }, () => ({ type: "6" as const, heightFt: WALL_BOARD_6_FT }));
+  }
+  const unit = WALL_BOARD_6_FT + WALL_BOARD_3_FT + 2 * gapFt;
+  const pairCount = Math.max(1, Math.ceil((wall.height + gapFt) / unit));
+  const pattern: WallBoard[] = [];
+  for (let i = 0; i < pairCount; i++) {
+    pattern.push({ type: "6", heightFt: WALL_BOARD_6_FT });
+    pattern.push({ type: "3", heightFt: WALL_BOARD_3_FT });
+  }
+  return pattern;
+}
 
 export function wallItems(walls: WallConfig[]): LineItem[] {
   const items: LineItem[] = [];
   (walls || []).forEach((wall, idx) => {
     if (wall.length <= 0 || wall.height <= 0) return;
     const num = idx + 1;
-    const gapFt = (wall.gapIn || 0) / 12;
-
-    // "Fence board" count: N boards + (N-1) gaps fill the wall's height.
-    // Alternating 2x6/2x3 repeats every (one of each + 2 gaps) instead.
-    const unit6 = WALL_BOARD_6_FT + gapFt;
-    const unit6and3 = WALL_BOARD_6_FT + WALL_BOARD_3_FT + 2 * gapFt;
-    const count6 = wall.alternating2x3
-      ? Math.max(1, Math.ceil((wall.height + gapFt) / unit6and3))
-      : Math.max(1, Math.ceil((wall.height + gapFt) / unit6));
-    const count3 = wall.alternating2x3 ? count6 : 0;
+    const pattern = wallBoardPattern(wall);
+    const count6 = pattern.filter((b) => b.type === "6").length;
+    const count3 = pattern.filter((b) => b.type === "3").length;
 
     items.push(li("Wall #" + num + " - 2x6 Boards", count6, wall.length, RATES.rafter_2x6_032_ft, "ft", wall.color));
     if (wall.alternating2x3) {
