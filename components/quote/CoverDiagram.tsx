@@ -1,6 +1,6 @@
 "use client";
 
-import type { BeamConfig } from "@/lib/pricing/types";
+import type { BeamConfig, WallConfig } from "@/lib/pricing/types";
 import { computeCoverDiagramGeometry } from "@/lib/coverDiagramGeometry";
 
 interface CoverDiagramProps {
@@ -15,6 +15,7 @@ interface CoverDiagramProps {
   showRafterTails?: boolean;
   jogType?: string;
   beams?: BeamConfig[];
+  walls?: WallConfig[];
   beamType1?: string;
   beamType2?: string;
   isLattice?: boolean;
@@ -35,6 +36,7 @@ export default function CoverDiagram({
   showRafterTails = true,
   jogType = "ground",
   beams = [],
+  walls = [],
   beamType1 = "3x8",
   beamType2 = "3x8",
   isLattice = false,
@@ -364,6 +366,26 @@ export default function CoverDiagram({
             {width1 * projection1} sq ft
           </text>
 
+          {/* Walls - schematic only (not to scale with the wall's own length/
+              height), just enough to show where each one sits. "Back" runs
+              along the house-side edge, "front" along the gutter-side edge,
+              "side" along the left side plate - each subsequent wall in the
+              same position offset a few px so they don't overlap exactly. */}
+          {walls.map((wall, i) => {
+            const sameBefore = walls.slice(0, i).filter((w) => w.position === wall.position).length;
+            const offset = sameBefore * 5;
+            if (wall.position === "back") {
+              const y = run1TopY - 3 - offset;
+              return <line key={"wall-" + i} x1={ox} y1={y} x2={ox + coverW1} y2={y} stroke="#d97706" strokeWidth="4" strokeLinecap="round" />;
+            }
+            if (wall.position === "front") {
+              const y = run1FrontY + 3 + offset;
+              return <line key={"wall-" + i} x1={ox} y1={y} x2={ox + coverW1} y2={y} stroke="#d97706" strokeWidth="4" strokeLinecap="round" />;
+            }
+            const x = ox - 3 - offset;
+            return <line key={"wall-" + i} x1={x} y1={run1TopY} x2={x} y2={run1FrontY} stroke="#d97706" strokeWidth="4" strokeLinecap="round" />;
+          })}
+
           {/* Legend */}
           <rect x={ox} y={svgH - 16} width={8} height={8} fill="#1e293b" rx="1" />
           <text x={ox + 12} y={svgH - 8} fontSize="9" fill="#475569">Post</text>
@@ -377,6 +399,13 @@ export default function CoverDiagram({
               <line x1={ox + 162} y1={svgH - 12} x2={ox + 174} y2={svgH - 12}
                 stroke="#7c3aed" strokeWidth="3" strokeDasharray="8,3" />
               <text x={ox + 178} y={svgH - 8} fontSize="9" fill="#475569">Multi-Span Beam</text>
+            </>
+          )}
+          {walls.length > 0 && (
+            <>
+              <line x1={ox + (multiSpanBeams.length > 0 ? 280 : 162)} y1={svgH - 12} x2={ox + (multiSpanBeams.length > 0 ? 292 : 174)} y2={svgH - 12}
+                stroke="#d97706" strokeWidth="4" strokeLinecap="round" />
+              <text x={ox + (multiSpanBeams.length > 0 ? 296 : 178)} y={svgH - 8} fontSize="9" fill="#475569">Wall</text>
             </>
           )}
         </svg>

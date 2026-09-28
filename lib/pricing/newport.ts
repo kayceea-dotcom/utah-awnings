@@ -4,7 +4,7 @@ import type { NewportInputs, LineItem, QuoteResult } from "./types";
 import {
   li, nextStockLength, rollFormGutterPieces, beamMaterialRate, steelInsertRate, beamEndcapRate, beamTypeLabel, anchorQty,
   wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen, deckHeightSurcharge,
-  postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, END_CUT_LABELS,
+  postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, wallItems, END_CUT_LABELS,
   extrudedStockPieces, extrudedGutterRateForFt, extrudedFasciaQtyRate,
 } from "./shared";
 
@@ -373,6 +373,9 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
 
   // ── SHADE BEAM ──
   items.push(...shadeBeamItems(inp.shadeBeamQty, inp.shadeBeamLength, inp.colorPostsBeam));
+
+  // ── WALLS ──
+  items.push(...wallItems(inp.walls));
 
   // ── PRICING SUMMARY ──
   const misc = inp.misc + deckHeightSurcharge(inp.groundAttachment, inp.deckHeight)

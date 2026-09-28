@@ -17,7 +17,7 @@ function wpanBase(): WPanInputs {
     beamType1: "3x3", beamType2: "",
     beamEndCut1: "beveled", beamEndCut2: "",
     beamEndCutSide1: "both_ends", beamEndCutSide2: "both_ends",
-    beams: [],
+    beams: [], walls: [],
     jogType: "none", hangerType: "roll_form", gutterType: "extruded",
     posts1: 2, postHeight1: 10, posts2: 0, postHeight2: 10,
     colorPans: "White", colorGutterFascia: "White", colorPostsBeam: "White",
