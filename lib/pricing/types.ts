@@ -46,8 +46,13 @@ export interface BeamConfig {
 // between whatever it's landing between); length isn't derived from the
 // job's own projection/width since a wall doesn't have to span the full run.
 export type WallPosition = "side" | "front" | "back";
+// Only meaningful when position is "side" - which end of the cover's width
+// the wall sits at (same left/right convention as downspoutSide). Undefined
+// on older saved quotes and treated as "left" for backward compatibility.
+export type WallSide = "left" | "right";
 export interface WallConfig {
   position: WallPosition;
+  side?: WallSide;
   length: number;
   height: number;
   gapIn: number;
