@@ -376,14 +376,14 @@ export default function CoverDiagram({
             const offset = sameBefore * 5;
             if (wall.position === "back") {
               const y = run1TopY - 3 - offset;
-              return <line key={"wall-" + i} x1={ox} y1={y} x2={ox + coverW1} y2={y} stroke="#d97706" strokeWidth="4" strokeLinecap="round" />;
+              return <line key={"wall-" + i} x1={ox} y1={y} x2={ox + coverW1} y2={y} stroke="#9ca3af" strokeWidth="4" strokeLinecap="round" />;
             }
             if (wall.position === "front") {
               const y = run1FrontY + 3 + offset;
-              return <line key={"wall-" + i} x1={ox} y1={y} x2={ox + coverW1} y2={y} stroke="#d97706" strokeWidth="4" strokeLinecap="round" />;
+              return <line key={"wall-" + i} x1={ox} y1={y} x2={ox + coverW1} y2={y} stroke="#9ca3af" strokeWidth="4" strokeLinecap="round" />;
             }
             const x = ox - 3 - offset;
-            return <line key={"wall-" + i} x1={x} y1={run1TopY} x2={x} y2={run1FrontY} stroke="#d97706" strokeWidth="4" strokeLinecap="round" />;
+            return <line key={"wall-" + i} x1={x} y1={run1TopY} x2={x} y2={run1FrontY} stroke="#9ca3af" strokeWidth="4" strokeLinecap="round" />;
           })}
 
           {/* Legend */}
@@ -404,7 +404,7 @@ export default function CoverDiagram({
           {walls.length > 0 && (
             <>
               <line x1={ox + (multiSpanBeams.length > 0 ? 280 : 162)} y1={svgH - 12} x2={ox + (multiSpanBeams.length > 0 ? 292 : 174)} y2={svgH - 12}
-                stroke="#d97706" strokeWidth="4" strokeLinecap="round" />
+                stroke="#9ca3af" strokeWidth="4" strokeLinecap="round" />
               <text x={ox + (multiSpanBeams.length > 0 ? 296 : 178)} y={svgH - 8} fontSize="9" fill="#475569">Wall</text>
             </>
           )}
