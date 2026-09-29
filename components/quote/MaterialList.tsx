@@ -5,6 +5,7 @@ import { Trash2, Plus } from "lucide-react";
 import type { LineItem } from "@/lib/pricing/types";
 import { CATALOG, CATALOG_BY_KEY, CATEGORIES } from "@/lib/pricing/catalog";
 import { RATES } from "@/lib/pricing/rates";
+import { consolidateLineItems } from "@/lib/pricing/shared";
 
 const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
@@ -46,6 +47,11 @@ export default function MaterialList({ items, editable = false, onItemsChange }:
 
   if (!items.length && !editable) return null;
 
+  // Editing works off the raw, uncombined items (so row edits/removals map
+  // to real indices) - the combined view is display-only, for read-only
+  // Material List / order sheet use.
+  const displayItems = editable ? items : consolidateLineItems(items);
+
   function updateItem(i: number, patch: Partial<LineItem>) {
     if (!onItemsChange) return;
     onItemsChange(items.map((item, idx) => (idx === i ? recalcAmount({ ...item, ...patch }) : item)));
@@ -81,7 +87,7 @@ export default function MaterialList({ items, editable = false, onItemsChange }:
   return (
     <div className="card overflow-hidden">
       <div className="px-5 py-4 border-b border-slate-100">
-        <h2 className="section-heading">Material List ({items.length} items)</h2>
+        <h2 className="section-heading">Material List ({displayItems.length} items)</h2>
       </div>
 
       {editable && (
@@ -136,7 +142,7 @@ export default function MaterialList({ items, editable = false, onItemsChange }:
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {items.map((item, i) => (
+            {displayItems.map((item, i) => (
               <tr key={i} className="hover:bg-slate-50 transition">
                 <td className="px-4 py-2 text-slate-800 font-medium min-w-[160px]">
                   {editable ? (
@@ -189,7 +195,7 @@ export default function MaterialList({ items, editable = false, onItemsChange }:
                 Material Cost
               </td>
               <td className="px-4 py-3 font-mono font-bold text-slate-900">
-                {fmt(items.reduce((s, i) => s + i.amount, 0))}
+                {fmt(displayItems.reduce((s, i) => s + i.amount, 0))}
               </td>
               {editable && <td />}
             </tr>

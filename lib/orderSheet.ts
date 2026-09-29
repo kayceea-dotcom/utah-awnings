@@ -1,3 +1,6 @@
+import { consolidateLineItems } from "./pricing/shared";
+import type { LineItem } from "./pricing/types";
+
 export interface OrderSheetItem {
   name: string;
   qty: number;
@@ -24,7 +27,7 @@ export interface OrderSheetData {
 export function buildOrderSheetData(proposal: Record<string, unknown>): OrderSheetData {
   const quote = proposal.quotes as Record<string, unknown>;
   const customer = quote.customers as Record<string, unknown>;
-  const lineItems = (quote.line_items as Record<string, unknown>[]) || [];
+  const lineItems = consolidateLineItems((quote.line_items as LineItem[]) || []);
   const inputs = quote.inputs as Record<string, unknown>;
 
   const jobName = (inputs?.jobName as string) || (customer.name as string) || "Unknown Job";
@@ -35,10 +38,10 @@ export function buildOrderSheetData(proposal: Record<string, unknown>): OrderShe
     : "TBD";
 
   const items: OrderSheetItem[] = lineItems.map((item) => ({
-    name: (item.name as string) || "",
-    qty: (item.qty as number) ?? 0,
-    length: (item.displayLength as number) ?? (item.length as number) ?? null,
-    color: (item.color as string) || "",
+    name: item.name || "",
+    qty: item.qty ?? 0,
+    length: item.displayLength ?? item.length ?? null,
+    color: item.color || "",
   }));
 
   return {

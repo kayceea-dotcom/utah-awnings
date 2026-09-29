@@ -362,7 +362,11 @@ export default function PergolaQuotePage() {
   function handleMountStyleChange(v: string) {
     if (v === "freestanding" && inp.mountStyle !== "freestanding") {
       const { front, rear } = splitPostsEvenly(inp.posts + inp.rearPosts);
-      setInp((p) => ({ ...p, mountStyle: v as never, posts: front, rearPosts: rear }));
+      // Rear beam defaults to match the front beam's own length - it's a
+      // real finished edge now, not just posts, and needs a nonzero length
+      // to actually price (never overwrites a length the rep already set).
+      setInp((p) => ({ ...p, mountStyle: v as never, posts: front, rearPosts: rear,
+        rearBeamLength: p.rearBeamLength > 0 ? p.rearBeamLength : p.beamLength }));
     } else if (v !== "freestanding" && inp.mountStyle === "freestanding") {
       setInp((p) => ({ ...p, mountStyle: v as never, posts: p.posts + p.rearPosts, rearPosts: 0 }));
     } else if (v === "roof_mount" && inp.mountStyle !== "roof_mount") {
@@ -370,8 +374,10 @@ export default function PergolaQuotePage() {
       // ground posts - front posts are untouched (any freestanding rear
       // ground posts merge back to the front, same as leaving freestanding
       // outright). Rear beam defaults to 3x3 (the usual SkyLift beam size,
-      // even when the main beam is 3x8) but is still overridable below.
-      setInp((p) => ({ ...p, mountStyle: v as never, posts: p.posts + p.rearPosts, rearPosts: 0, rearBeamType: "3x3" }));
+      // even when the main beam is 3x8) but is still overridable below,
+      // and to the front beam's own length for the same reason as above.
+      setInp((p) => ({ ...p, mountStyle: v as never, posts: p.posts + p.rearPosts, rearPosts: 0, rearBeamType: "3x3",
+        rearBeamLength: p.rearBeamLength > 0 ? p.rearBeamLength : p.beamLength }));
     } else {
       setField("mountStyle", v as never);
     }
