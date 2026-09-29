@@ -13,6 +13,49 @@ export function li(
   return { name, qty, length, unit, rate, amount: qty * (length || 1) * rate, color, displayLength };
 }
 
+// Strips positional labels ("#1", "#2", "Rear") off a line item name so two
+// rows for the same physical material - e.g. "Beam #1 (3x8, Beveled)" (front)
+// and "Beam Rear (3x8, Beveled)" - collapse to the same grouping key. The
+// spec in parens (beam type, end cut, board size, etc.) is left untouched,
+// so this only ever unifies things that were already the same product.
+function canonicalizeLineName(name: string): string {
+  return name
+    .replace(/\s#\d+(?=\s|\(|$)/, "")
+    .replace(/\bRear\b\s*/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Combines material-list rows that are the exact same purchasable item -
+// same spec (via the canonical name), length, rate, unit and color - into
+// one row with the quantities summed, so an order sheet doesn't show a
+// front and a rear line for what's really just "2 of the same board". Rows
+// with nothing to merge with keep their original (non-canonicalized) name;
+// only an actual merge renames the row to the shared canonical form.
+export function consolidateLineItems(items: LineItem[]): LineItem[] {
+  const groups = new Map<string, LineItem[]>();
+  const order: string[] = [];
+  for (const item of items) {
+    const key = [
+      canonicalizeLineName(item.name),
+      item.displayLength ?? item.length,
+      item.rate, item.unit, item.color ?? "",
+    ].join("|");
+    if (!groups.has(key)) { groups.set(key, []); order.push(key); }
+    groups.get(key)!.push(item);
+  }
+  return order.map((key) => {
+    const group = groups.get(key)!;
+    if (group.length === 1) return group[0];
+    return {
+      ...group[0],
+      name: canonicalizeLineName(group[0].name),
+      qty: group.reduce((s, i) => s + i.qty, 0),
+      amount: group.reduce((s, i) => s + i.amount, 0),
+    };
+  });
+}
+
 export interface PricingSummaryOpts {
   taxRate: number;
   discount: number;
