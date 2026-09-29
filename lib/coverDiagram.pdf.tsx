@@ -1,5 +1,16 @@
-import { Svg, Rect, Line, Text, G, View, StyleSheet } from "@react-pdf/renderer";
+import { Svg, Rect, Line, Polygon, Text, G, View, StyleSheet } from "@react-pdf/renderer";
 import { computeCoverDiagramGeometry, type CoverDiagramGeometryInput } from "./coverDiagramGeometry";
+
+// Small triangular arrowhead for a dimension line, pointing outward (away
+// from the measured span) at whichever end it's drawn on. `dir` is -1 for
+// the left/top end, +1 for the right/bottom end. Kept in sync with the
+// on-screen version in components/quote/CoverDiagram.tsx.
+function hArrowPoints(x: number, y: number, dir: -1 | 1): string {
+  return (x + dir * 6) + "," + y + " " + x + "," + (y - 3) + " " + x + "," + (y + 3);
+}
+function vArrowPoints(x: number, y: number, dir: -1 | 1): string {
+  return x + "," + (y + dir * 6) + " " + (x - 3) + "," + y + " " + (x + 3) + "," + y;
+}
 
 const styles = StyleSheet.create({
   wrap: { borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 4, marginTop: 2, marginBottom: 2 },
@@ -209,18 +220,28 @@ export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170
             <Rect key={i} x={p.x - 4} y={p.y - 4} width={8} height={8} fill="#0ea5e9" rx={1} />
           ))}
 
-          {/* Width dimension */}
+          {/* Width dimension - double-headed arrow + WIDTH label so the
+              customer signing the contract can tell which measurement is
+              which. Kept in sync with the on-screen version. */}
           <Line x1={ox} y1={oy - HOUSE_H - 8} x2={ox + coverW1} y2={oy - HOUSE_H - 8} stroke="#64748b" strokeWidth={1} />
-          <Line x1={ox} y1={oy - HOUSE_H - 12} x2={ox} y2={oy - HOUSE_H - 4} stroke="#64748b" strokeWidth={1} />
-          <Line x1={ox + coverW1} y1={oy - HOUSE_H - 12} x2={ox + coverW1} y2={oy - HOUSE_H - 4} stroke="#64748b" strokeWidth={1} />
+          <Polygon points={hArrowPoints(ox, oy - HOUSE_H - 8, -1)} fill="#64748b" />
+          <Polygon points={hArrowPoints(ox + coverW1, oy - HOUSE_H - 8, 1)} fill="#64748b" />
+          <Text x={ox + coverW1 / 2} y={oy - HOUSE_H - 24} textAnchor="middle" fill="#64748b" style={{ ...bold, fontSize: 8 }}>
+            WIDTH
+          </Text>
           <Text x={ox + coverW1 / 2} y={oy - HOUSE_H - 12} textAnchor="middle" fill="#1e293b" style={{ ...bold, fontSize: 16 }}>
             {width1}&apos;
           </Text>
 
-          {/* Projection dimension (rotated label) */}
+          {/* Projection dimension (rotated label) - double-headed arrow + DEPTH label */}
           <Line x1={ox + coverW1 + 10} y1={run1TopY} x2={ox + coverW1 + 10} y2={run1FrontY} stroke="#CC2229" strokeWidth={1.5} />
-          <Line x1={ox + coverW1 + 6} y1={run1TopY} x2={ox + coverW1 + 14} y2={run1TopY} stroke="#CC2229" strokeWidth={1.5} />
-          <Line x1={ox + coverW1 + 6} y1={run1FrontY} x2={ox + coverW1 + 14} y2={run1FrontY} stroke="#CC2229" strokeWidth={1.5} />
+          <Polygon points={vArrowPoints(ox + coverW1 + 10, run1TopY, -1)} fill="#CC2229" />
+          <Polygon points={vArrowPoints(ox + coverW1 + 10, run1FrontY, 1)} fill="#CC2229" />
+          <Text x={ox + coverW1 + 38} y={(run1TopY + run1FrontY) / 2 + 4} textAnchor="middle" fill="#CC2229"
+            style={{ ...bold, fontSize: 8 }}
+            transform={"rotate(90," + (ox + coverW1 + 38) + "," + (run1TopY + run1FrontY) / 2 + ")"}>
+            DEPTH
+          </Text>
           <Text x={ox + coverW1 + 22} y={(run1TopY + run1FrontY) / 2 + 4} textAnchor="middle" fill="#CC2229"
             style={{ ...bold, fontSize: 16 }}
             transform={"rotate(90," + (ox + coverW1 + 22) + "," + (run1TopY + run1FrontY) / 2 + ")"}>
@@ -231,8 +252,11 @@ export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170
           {hasRun2 && (
             <G>
               <Line x1={ox + coverW1} y1={oy - HOUSE_H - 8} x2={ox + coverW1 + coverW2} y2={oy - HOUSE_H - 8} stroke="#64748b" strokeWidth={1} />
-              <Line x1={ox + coverW1} y1={oy - HOUSE_H - 12} x2={ox + coverW1} y2={oy - HOUSE_H - 4} stroke="#64748b" strokeWidth={1} />
-              <Line x1={ox + coverW1 + coverW2} y1={oy - HOUSE_H - 12} x2={ox + coverW1 + coverW2} y2={oy - HOUSE_H - 4} stroke="#64748b" strokeWidth={1} />
+              <Polygon points={hArrowPoints(ox + coverW1, oy - HOUSE_H - 8, -1)} fill="#64748b" />
+              <Polygon points={hArrowPoints(ox + coverW1 + coverW2, oy - HOUSE_H - 8, 1)} fill="#64748b" />
+              <Text x={ox + coverW1 + coverW2 / 2} y={oy - HOUSE_H - 24} textAnchor="middle" fill="#64748b" style={{ ...bold, fontSize: 8 }}>
+                WIDTH
+              </Text>
               <Text x={ox + coverW1 + coverW2 / 2} y={oy - HOUSE_H - 12} textAnchor="middle" fill="#1e293b" style={{ ...bold, fontSize: 16 }}>
                 {width2}&apos;
               </Text>
@@ -243,8 +267,13 @@ export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170
           {hasRun2 && (
             <G>
               <Line x1={ox + coverW1 + coverW2 + 10} y1={run2TopY} x2={ox + coverW1 + coverW2 + 10} y2={run2FrontY} stroke="#CC2229" strokeWidth={1.5} />
-              <Line x1={ox + coverW1 + coverW2 + 6} y1={run2TopY} x2={ox + coverW1 + coverW2 + 14} y2={run2TopY} stroke="#CC2229" strokeWidth={1.5} />
-              <Line x1={ox + coverW1 + coverW2 + 6} y1={run2FrontY} x2={ox + coverW1 + coverW2 + 14} y2={run2FrontY} stroke="#CC2229" strokeWidth={1.5} />
+              <Polygon points={vArrowPoints(ox + coverW1 + coverW2 + 10, run2TopY, -1)} fill="#CC2229" />
+              <Polygon points={vArrowPoints(ox + coverW1 + coverW2 + 10, run2FrontY, 1)} fill="#CC2229" />
+              <Text x={ox + coverW1 + coverW2 + 38} y={(run2TopY + run2FrontY) / 2 + 4} textAnchor="middle" fill="#CC2229"
+                style={{ ...bold, fontSize: 8 }}
+                transform={"rotate(90," + (ox + coverW1 + coverW2 + 38) + "," + (run2TopY + run2FrontY) / 2 + ")"}>
+                DEPTH
+              </Text>
               <Text x={ox + coverW1 + coverW2 + 22} y={(run2TopY + run2FrontY) / 2 + 4} textAnchor="middle" fill="#CC2229"
                 style={{ ...bold, fontSize: 16 }}
                 transform={"rotate(90," + (ox + coverW1 + coverW2 + 22) + "," + (run2TopY + run2FrontY) / 2 + ")"}>
