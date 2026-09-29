@@ -3,6 +3,16 @@
 import type { BeamConfig, WallConfig } from "@/lib/pricing/types";
 import { computeCoverDiagramGeometry } from "@/lib/coverDiagramGeometry";
 
+// Small triangular arrowhead for a dimension line, pointing outward (away
+// from the measured span) at whichever end it's drawn on. `dir` is -1 for
+// the left/top end, +1 for the right/bottom end.
+function hArrowPoints(x: number, y: number, dir: -1 | 1): string {
+  return (x + dir * 6) + "," + y + " " + x + "," + (y - 3) + " " + x + "," + (y + 3);
+}
+function vArrowPoints(x: number, y: number, dir: -1 | 1): string {
+  return x + "," + (y + dir * 6) + " " + (x - 3) + "," + y + " " + (x + 3) + "," + y;
+}
+
 interface CoverDiagramProps {
   projection1: number;
   width1: number;
@@ -294,25 +304,32 @@ export default function CoverDiagram({
               fill="#0ea5e9" rx="1" />
           ))}
 
-          {/* Width dimension (top) */}
+          {/* Width dimension (top) - double-headed arrow + WIDTH label so it's
+              clear which measurement is which (this diagram is also printed
+              on the contract the customer signs, via CoverDiagramPdf). */}
           <line x1={ox} y1={oy - HOUSE_H - 8} x2={ox + coverW1} y2={oy - HOUSE_H - 8}
             stroke="#64748b" strokeWidth="1" />
-          <line x1={ox} y1={oy - HOUSE_H - 12} x2={ox} y2={oy - HOUSE_H - 4}
-            stroke="#64748b" strokeWidth="1" />
-          <line x1={ox + coverW1} y1={oy - HOUSE_H - 12} x2={ox + coverW1} y2={oy - HOUSE_H - 4}
-            stroke="#64748b" strokeWidth="1" />
+          <polygon points={hArrowPoints(ox, oy - HOUSE_H - 8, -1)} fill="#64748b" />
+          <polygon points={hArrowPoints(ox + coverW1, oy - HOUSE_H - 8, 1)} fill="#64748b" />
+          <text x={ox + coverW1 / 2} y={oy - HOUSE_H - 22}
+            textAnchor="middle" fontSize="7" fontWeight="700" letterSpacing="0.5" fill="#64748b">
+            WIDTH
+          </text>
           <text x={ox + coverW1 / 2} y={oy - HOUSE_H - 12}
             textAnchor="middle" fontSize="13" fontWeight="700" fill="#1e293b">
             {width1}{"'"}
           </text>
 
-          {/* Projection dimension (right side, red) */}
+          {/* Projection dimension (right side, red) - double-headed arrow + DEPTH label */}
           <line x1={ox + coverW1 + 10} y1={run1TopY} x2={ox + coverW1 + 10} y2={run1FrontY}
             stroke="#CC2229" strokeWidth="1.5" />
-          <line x1={ox + coverW1 + 6} y1={run1TopY} x2={ox + coverW1 + 14} y2={run1TopY}
-            stroke="#CC2229" strokeWidth="1.5" />
-          <line x1={ox + coverW1 + 6} y1={run1FrontY} x2={ox + coverW1 + 14} y2={run1FrontY}
-            stroke="#CC2229" strokeWidth="1.5" />
+          <polygon points={vArrowPoints(ox + coverW1 + 10, run1TopY, -1)} fill="#CC2229" />
+          <polygon points={vArrowPoints(ox + coverW1 + 10, run1FrontY, 1)} fill="#CC2229" />
+          <text x={ox + coverW1 + 34} y={(run1TopY + run1FrontY) / 2 + 4}
+            textAnchor="middle" fontSize="7" fontWeight="700" letterSpacing="0.5" fill="#CC2229"
+            transform={"rotate(90," + (ox + coverW1 + 34) + "," + (run1TopY + run1FrontY) / 2 + ")"}>
+            DEPTH
+          </text>
           <text x={ox + coverW1 + 22} y={(run1TopY + run1FrontY) / 2 + 4}
             textAnchor="middle" fontSize="13" fontWeight="700" fill="#CC2229"
             transform={"rotate(90," + (ox + coverW1 + 22) + "," + (run1TopY + run1FrontY) / 2 + ")"}>
@@ -324,10 +341,12 @@ export default function CoverDiagram({
             <>
               <line x1={ox + coverW1} y1={oy - HOUSE_H - 8} x2={ox + coverW1 + coverW2} y2={oy - HOUSE_H - 8}
                 stroke="#64748b" strokeWidth="1" />
-              <line x1={ox + coverW1} y1={oy - HOUSE_H - 12} x2={ox + coverW1} y2={oy - HOUSE_H - 4}
-                stroke="#64748b" strokeWidth="1" />
-              <line x1={ox + coverW1 + coverW2} y1={oy - HOUSE_H - 12} x2={ox + coverW1 + coverW2} y2={oy - HOUSE_H - 4}
-                stroke="#64748b" strokeWidth="1" />
+              <polygon points={hArrowPoints(ox + coverW1, oy - HOUSE_H - 8, -1)} fill="#64748b" />
+              <polygon points={hArrowPoints(ox + coverW1 + coverW2, oy - HOUSE_H - 8, 1)} fill="#64748b" />
+              <text x={ox + coverW1 + coverW2 / 2} y={oy - HOUSE_H - 22}
+                textAnchor="middle" fontSize="7" fontWeight="700" letterSpacing="0.5" fill="#64748b">
+                WIDTH
+              </text>
               <text x={ox + coverW1 + coverW2 / 2} y={oy - HOUSE_H - 12}
                 textAnchor="middle" fontSize="13" fontWeight="700" fill="#1e293b">
                 {width2}{"'"}
@@ -340,10 +359,13 @@ export default function CoverDiagram({
             <>
               <line x1={ox + coverW1 + coverW2 + 10} y1={run2TopY} x2={ox + coverW1 + coverW2 + 10} y2={run2FrontY}
                 stroke="#CC2229" strokeWidth="1.5" />
-              <line x1={ox + coverW1 + coverW2 + 6} y1={run2TopY} x2={ox + coverW1 + coverW2 + 14} y2={run2TopY}
-                stroke="#CC2229" strokeWidth="1.5" />
-              <line x1={ox + coverW1 + coverW2 + 6} y1={run2FrontY} x2={ox + coverW1 + coverW2 + 14} y2={run2FrontY}
-                stroke="#CC2229" strokeWidth="1.5" />
+              <polygon points={vArrowPoints(ox + coverW1 + coverW2 + 10, run2TopY, -1)} fill="#CC2229" />
+              <polygon points={vArrowPoints(ox + coverW1 + coverW2 + 10, run2FrontY, 1)} fill="#CC2229" />
+              <text x={ox + coverW1 + coverW2 + 34} y={(run2TopY + run2FrontY) / 2 + 4}
+                textAnchor="middle" fontSize="7" fontWeight="700" letterSpacing="0.5" fill="#CC2229"
+                transform={"rotate(90," + (ox + coverW1 + coverW2 + 34) + "," + (run2TopY + run2FrontY) / 2 + ")"}>
+                DEPTH
+              </text>
               <text x={ox + coverW1 + coverW2 + 22} y={(run2TopY + run2FrontY) / 2 + 4}
                 textAnchor="middle" fontSize="13" fontWeight="700" fill="#CC2229"
                 transform={"rotate(90," + (ox + coverW1 + coverW2 + 22) + "," + (run2TopY + run2FrontY) / 2 + ")"}>
