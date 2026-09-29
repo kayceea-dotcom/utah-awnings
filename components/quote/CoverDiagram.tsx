@@ -369,10 +369,13 @@ export default function CoverDiagram({
           {/* Walls - schematic only (not to scale with the wall's own length/
               height), just enough to show where each one sits. "Back" runs
               along the house-side edge, "front" along the gutter-side edge,
-              "side" along the left side plate - each subsequent wall in the
-              same position offset a few px so they don't overlap exactly. */}
+              "side" along the left or right side plate per the wall's own
+              side - each subsequent wall in the same position (and same side,
+              for side walls) offset a few px so they don't overlap exactly. */}
           {walls.map((wall, i) => {
-            const sameBefore = walls.slice(0, i).filter((w) => w.position === wall.position).length;
+            const groupKey = wall.position === "side" ? wall.position + (wall.side || "left") : wall.position;
+            const sameBefore = walls.slice(0, i).filter((w) =>
+              (w.position === "side" ? w.position + (w.side || "left") : w.position) === groupKey).length;
             const offset = sameBefore * 5;
             if (wall.position === "back") {
               const y = run1TopY - 3 - offset;
@@ -382,7 +385,7 @@ export default function CoverDiagram({
               const y = run1FrontY + 3 + offset;
               return <line key={"wall-" + i} x1={ox} y1={y} x2={ox + coverW1} y2={y} stroke="#9ca3af" strokeWidth="4" strokeLinecap="round" />;
             }
-            const x = ox - 3 - offset;
+            const x = wall.side === "right" ? ox + coverW1 + 3 + offset : ox - 3 - offset;
             return <line key={"wall-" + i} x1={x} y1={run1TopY} x2={x} y2={run1FrontY} stroke="#9ca3af" strokeWidth="4" strokeLinecap="round" />;
           })}
 

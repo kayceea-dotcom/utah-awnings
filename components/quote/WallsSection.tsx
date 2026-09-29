@@ -10,6 +10,11 @@ const POSITIONS = [
   { value: "back", label: "Back" },
 ];
 
+const SIDES = [
+  { value: "left", label: "Left" },
+  { value: "right", label: "Right" },
+];
+
 const COLORS = ["White", "Siennawood", "Slate", "Driftwood", "Beechwood", "Maplewood", "Ebony", "Sandlewood"];
 
 interface Props {
@@ -22,7 +27,7 @@ interface Props {
 // front, or back of the cover.
 export default function WallsSection({ walls, onChange }: Props) {
   function addWall() {
-    const newWall: WallConfig = { position: "side", length: 0, height: 0, gapIn: 1, alternating2x3: false, color: "White" };
+    const newWall: WallConfig = { position: "side", side: "left", length: 0, height: 0, gapIn: 1, alternating2x3: false, color: "White" };
     onChange([...(walls || []), newWall]);
   }
   function updateWall(idx: number, patch: Partial<WallConfig>) {
@@ -53,7 +58,10 @@ export default function WallsSection({ walls, onChange }: Props) {
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Position">
                   <div className="relative">
-                    <select className="select pr-8" value={wall.position} onChange={(e) => updateWall(idx, { position: e.target.value as WallConfig["position"] })}>
+                    <select className="select pr-8" value={wall.position} onChange={(e) => {
+                      const position = e.target.value as WallConfig["position"];
+                      updateWall(idx, position === "side" && !wall.side ? { position, side: "left" } : { position });
+                    }}>
                       {POSITIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </select>
                     <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
@@ -61,6 +69,18 @@ export default function WallsSection({ walls, onChange }: Props) {
                     </div>
                   </div>
                 </Field>
+                {wall.position === "side" && (
+                  <Field label="Side" hint="Which end of the cover this wall is on">
+                    <div className="relative">
+                      <select className="select pr-8" value={wall.side || "left"} onChange={(e) => updateWall(idx, { side: e.target.value as WallConfig["side"] })}>
+                        {SIDES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                      <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+                        <ChevronDown size={14} className="text-gray-400" />
+                      </div>
+                    </div>
+                  </Field>
+                )}
                 <Field label="Color">
                   <div className="relative">
                     <select className="select pr-8" value={wall.color} onChange={(e) => updateWall(idx, { color: e.target.value })}>
