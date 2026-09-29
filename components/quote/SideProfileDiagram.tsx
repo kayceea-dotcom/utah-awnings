@@ -237,7 +237,7 @@ export default function SideProfileDiagram({
                   y += boardHpx + gapPx;
                   return (
                     <rect key={bi} x={wallX1} y={boardY} width={wallX2 - wallX1} height={boardHpx}
-                      fill={board.type === "6" ? "#d97706" : "#f59e0b"} stroke="#92400e" strokeWidth="0.5" />
+                      fill={board.type === "6" ? "#9ca3af" : "#d1d5db"} stroke="#6b7280" strokeWidth="0.5" />
                   );
                 })}
               </g>
