@@ -18,7 +18,7 @@ function formatFeetInches(ft: number): string {
 // projection is entered - this never nags on a blank/in-progress quote.
 export default function SpanWarning({ result, projectionFt, designPsf }: Props) {
   if (designPsf === null || projectionFt <= 0) return null;
-  if (result.noTableForPanel) return null; // e.g. Tri-V - no table to check against
+  if (result.noTableForPanel) return null; // panel has no engineering table at all
 
   // The structural span is shorter than the raw projection - the panel
   // cantilevers past the front beam and the beam itself eats into the clear

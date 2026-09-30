@@ -28,6 +28,15 @@ export const FLAT_PAN_SPAN_120B: FlatSpanTable = {
   "0.040": { 10: "17'-7\"", 20: "14'-6\"", 25: "12'-3\"", 30: "11'-7\"", 40: "10'-7\"", 50: "9'-9\"" },
 };
 
+// Table 1A - Tri-V Panel (24") - max span at 120mph Exposure B, by GSL tier x
+// gauge. Only published up to a 30psf GSL tier (no 40+ rows in the source
+// table) - a heavier site correctly falls through to "exceeds table" below.
+export const TRIV_SPAN_120B: FlatSpanTable = {
+  "0.018": { 10: "10'-3\"", 20: "8'-4\"", 25: "7'-3\"", 30: "6'-7\"" },
+  "0.024": { 10: "12'-3\"", 20: "10'-1\"", 25: "8'-9\"", 30: "8'-3\"" },
+  "0.032": { 10: "14'-3\"", 20: "12'-1\"", 25: "9'-8\"", 30: "9'-1\"" },
+};
+
 // Table 2 - DuraKing Panel - max span at 120mph Exposure B, by GSL tier x gauge.
 export const DURAKING_SPAN_120B: FlatSpanTable = {
   "0.020": { 10: "14'-10\"", 20: "13'-7\"", 25: "13'-7\"", 30: "12'-7\"", 40: "10'-3\"", 50: "8'-3\"", 60: "6'-11\"", 72: "5'-10\"", 84: "5'-0\"" },
