@@ -1,4 +1,4 @@
-import { T6_SPAN_120B, FLAT_PAN_SPAN_120B, DURAKING_SPAN_120B, ER505_TABLE2, ER505_TABLE3, ER505_TABLE5, type FlatSpanTable, type IrpSpanSection } from "./data";
+import { T6_SPAN_120B, FLAT_PAN_SPAN_120B, TRIV_SPAN_120B, DURAKING_SPAN_120B, ER505_TABLE2, ER505_TABLE3, ER505_TABLE5, type FlatSpanTable, type IrpSpanSection } from "./data";
 import type { PanelType } from "@/lib/pricing/types";
 import type { WPanType } from "@/lib/pricing/wpan";
 import type { IRPType } from "@/lib/pricing/irp";
@@ -102,8 +102,8 @@ export function checkNewportSpan(panelType: PanelType, designPsf: number): SpanC
 }
 
 export function checkWPanSpan(panelType: WPanType, designPsf: number): SpanCheckResult {
-  // Tri-V ("wpan_032") has no per-gauge rate and no matching span table.
-  if (panelType === "wpan_032") return NO_TABLE;
+  // Tri-V ("wpan_032") is always the .032 gauge - the only one this app offers.
+  if (panelType === "wpan_032") return checkFlatTableSpan(TRIV_SPAN_120B, "0.032", designPsf);
   // DuraKing's rated gauges are .025/.032/.040; the span table (transcribed
   // from the manufacturer's evaluation report) lists .024/.032/.040 - .025 is
   // the same nominal facing as the table's .024 entry, just rounded
