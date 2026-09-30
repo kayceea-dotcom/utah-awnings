@@ -2,7 +2,7 @@ import { beamTypeLabel } from "./pricing/shared";
 import { TERMS } from "./contractTerms";
 import type { CoverDiagramGeometryInput } from "./coverDiagramGeometry";
 import type { SideProfileGeometryInput } from "./sideProfileGeometry";
-import type { BeamConfig } from "./pricing/types";
+import type { BeamConfig, WallConfig } from "./pricing/types";
 
 export interface ContractData {
   companyName: string;
@@ -45,6 +45,7 @@ export interface ContractData {
   signatureData: string | null;
   terms: string[];
   diagramInput: CoverDiagramGeometryInput | null;
+  walls: WallConfig[];
   sideProfileInput: SideProfileGeometryInput | null;
 }
 
@@ -89,6 +90,8 @@ export function buildContractData(proposal: Record<string, unknown>): ContractDa
           rearPosts: inputs.mountStyle === "roof_mount" ? Number(inputs.skyliftPosts) || 0 : Number(inputs.rearPosts) || 0,
         }
       : null;
+
+  const walls: WallConfig[] = (inputs.walls as WallConfig[]) || [];
 
   const sideProfileInput: SideProfileGeometryInput | null =
     inputs.projection1 && inputs.postHeight1
@@ -177,6 +180,7 @@ export function buildContractData(proposal: Record<string, unknown>): ContractDa
     signatureData: (proposal.signature_data as string) || null,
     terms: TERMS,
     diagramInput,
+    walls,
     sideProfileInput,
   };
 }

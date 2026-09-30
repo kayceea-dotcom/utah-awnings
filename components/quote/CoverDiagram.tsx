@@ -394,8 +394,8 @@ export default function CoverDiagram({
               "side" along the left or right side plate per the wall's own
               side - each subsequent wall in the same position (and same side,
               for side walls) offset a few px so they don't overlap exactly.
-              Each one also gets an arrow + its own real length labeled
-              (matching the material list's "Wall #N"), placed just inside
+              Each one also gets an arrow + its own real length x height
+              labeled (matching the material list's "Wall #N"), placed just inside
               the box so it never collides with the house band, the overall
               WIDTH/DEPTH dimensions, or the downspout/rafter-tail markers
               outside the box. */}
@@ -404,7 +404,7 @@ export default function CoverDiagram({
             const sameBefore = walls.slice(0, i).filter((w) =>
               (w.position === "side" ? w.position + (w.side || "left") : w.position) === groupKey).length;
             const offset = sameBefore * 5;
-            const wallLabel = "WALL " + (i + 1) + " • " + wall.length + "'";
+            const wallLabel = "WALL " + (i + 1) + " • " + wall.length + "' x " + wall.height + "'H";
             if (wall.position === "back") {
               const y = run1TopY - 3 - offset;
               return (

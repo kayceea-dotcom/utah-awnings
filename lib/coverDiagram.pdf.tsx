@@ -1,5 +1,6 @@
 import { Svg, Rect, Line, Polygon, Text, G, View, StyleSheet } from "@react-pdf/renderer";
 import { computeCoverDiagramGeometry, type CoverDiagramGeometryInput } from "./coverDiagramGeometry";
+import type { WallConfig } from "./pricing/types";
 
 // Small triangular arrowhead for a dimension line, pointing outward (away
 // from the measured span) at whichever end it's drawn on. `dir` is -1 for
@@ -26,7 +27,7 @@ const bold = { fontFamily: "Helvetica-Bold" };
 // customer actually saw. @react-pdf's SVG support has no <pattern> fill, so
 // the hatched house wall becomes a flat gray fill here - everything else
 // (lines, rects, text, rotated labels) maps directly to real SVG primitives.
-export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170 }: { input: CoverDiagramGeometryInput; maxWidth?: number; maxHeight?: number }) {
+export default function CoverDiagramPdf({ input, walls = [], maxWidth = 220, maxHeight = 170 }: { input: CoverDiagramGeometryInput; walls?: WallConfig[]; maxWidth?: number; maxHeight?: number }) {
   const geo = computeCoverDiagramGeometry(input);
 
   if (!geo) return null;
@@ -294,6 +295,59 @@ export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170
             </Text>
           )}
 
+          {/* Walls - schematic only (not to scale with the wall's own length/
+              height), just enough to show where each one sits. Kept in sync
+              with the on-screen version in components/quote/CoverDiagram.tsx. */}
+          {walls.map((wall, i) => {
+            const groupKey = wall.position === "side" ? wall.position + (wall.side || "left") : wall.position;
+            const sameBefore = walls.slice(0, i).filter((w) =>
+              (w.position === "side" ? w.position + (w.side || "left") : w.position) === groupKey).length;
+            const offset = sameBefore * 5;
+            const wallLabel = "WALL " + (i + 1) + " • " + wall.length + "' x " + wall.height + "'H";
+            if (wall.position === "back") {
+              const y = run1TopY - 3 - offset;
+              return (
+                <G key={"wall-" + i}>
+                  <Line x1={ox} y1={y} x2={ox + coverW1} y2={y} stroke="#9ca3af" strokeWidth={4} strokeLinecap="round" />
+                  <Polygon points={hArrowPoints(ox, y, -1)} fill="#6b7280" />
+                  <Polygon points={hArrowPoints(ox + coverW1, y, 1)} fill="#6b7280" />
+                  <Text x={ox + coverW1 / 2} y={run1TopY + 10 + offset} textAnchor="middle" fill="#6b7280" style={{ ...bold, fontSize: 7 }}>
+                    {wallLabel}
+                  </Text>
+                </G>
+              );
+            }
+            if (wall.position === "front") {
+              const y = run1FrontY + 3 + offset;
+              return (
+                <G key={"wall-" + i}>
+                  <Line x1={ox} y1={y} x2={ox + coverW1} y2={y} stroke="#9ca3af" strokeWidth={4} strokeLinecap="round" />
+                  <Polygon points={hArrowPoints(ox, y, -1)} fill="#6b7280" />
+                  <Polygon points={hArrowPoints(ox + coverW1, y, 1)} fill="#6b7280" />
+                  <Text x={ox + coverW1 / 2} y={run1FrontY - 6 - offset} textAnchor="middle" fill="#6b7280" style={{ ...bold, fontSize: 7 }}>
+                    {wallLabel}
+                  </Text>
+                </G>
+              );
+            }
+            const isRight = wall.side === "right";
+            const x = isRight ? ox + coverW1 + 3 + offset : ox - 3 - offset;
+            const labelX = isRight ? x - 10 - offset : x + 10 + offset;
+            const midY = (run1TopY + run1FrontY) / 2;
+            return (
+              <G key={"wall-" + i}>
+                <Line x1={x} y1={run1TopY} x2={x} y2={run1FrontY} stroke="#9ca3af" strokeWidth={4} strokeLinecap="round" />
+                <Polygon points={vArrowPoints(x, run1TopY, -1)} fill="#6b7280" />
+                <Polygon points={vArrowPoints(x, run1FrontY, 1)} fill="#6b7280" />
+                <Text x={labelX} y={midY} textAnchor="middle" fill="#6b7280"
+                  style={{ ...bold, fontSize: 7 }}
+                  transform={"rotate(90," + labelX + "," + midY + ")"}>
+                  {wallLabel}
+                </Text>
+              </G>
+            );
+          })}
+
           {/* Legend */}
           <Rect x={ox} y={svgH - 16} width={8} height={8} fill="#1e293b" rx={1} />
           <Text x={ox + 12} y={svgH - 8} fill="#475569" style={{ fontSize: 9 }}>Post</Text>
@@ -305,6 +359,13 @@ export default function CoverDiagramPdf({ input, maxWidth = 220, maxHeight = 170
             <G>
               <Line x1={ox + 162} y1={svgH - 12} x2={ox + 174} y2={svgH - 12} stroke="#7c3aed" strokeWidth={3} strokeDasharray="8,3" />
               <Text x={ox + 178} y={svgH - 8} fill="#475569" style={{ fontSize: 9 }}>Multi-Span Beam</Text>
+            </G>
+          )}
+          {walls.length > 0 && (
+            <G>
+              <Line x1={ox + (multiSpanBeams.length > 0 ? 280 : 162)} y1={svgH - 12} x2={ox + (multiSpanBeams.length > 0 ? 292 : 174)} y2={svgH - 12}
+                stroke="#9ca3af" strokeWidth={4} strokeLinecap="round" />
+              <Text x={ox + (multiSpanBeams.length > 0 ? 296 : 178)} y={svgH - 8} fill="#475569" style={{ fontSize: 9 }}>Wall</Text>
             </G>
           )}
         </Svg>

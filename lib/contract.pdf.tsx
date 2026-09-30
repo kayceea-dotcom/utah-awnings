@@ -137,7 +137,7 @@ export default function ContractPdf({ data }: { data: ContractData }) {
           <View style={styles.diagramRow}>
             {data.diagramInput && (
               <View style={styles.diagramCol}>
-                <CoverDiagramPdf input={data.diagramInput} maxWidth={250} maxHeight={200} />
+                <CoverDiagramPdf input={data.diagramInput} walls={data.walls} maxWidth={250} maxHeight={200} />
               </View>
             )}
             {data.sideProfileInput && (
