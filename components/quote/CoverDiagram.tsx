@@ -393,22 +393,62 @@ export default function CoverDiagram({
               along the house-side edge, "front" along the gutter-side edge,
               "side" along the left or right side plate per the wall's own
               side - each subsequent wall in the same position (and same side,
-              for side walls) offset a few px so they don't overlap exactly. */}
+              for side walls) offset a few px so they don't overlap exactly.
+              Each one also gets an arrow + its own real length labeled
+              (matching the material list's "Wall #N"), placed just inside
+              the box so it never collides with the house band, the overall
+              WIDTH/DEPTH dimensions, or the downspout/rafter-tail markers
+              outside the box. */}
           {walls.map((wall, i) => {
             const groupKey = wall.position === "side" ? wall.position + (wall.side || "left") : wall.position;
             const sameBefore = walls.slice(0, i).filter((w) =>
               (w.position === "side" ? w.position + (w.side || "left") : w.position) === groupKey).length;
             const offset = sameBefore * 5;
+            const wallLabel = "WALL " + (i + 1) + " • " + wall.length + "'";
             if (wall.position === "back") {
               const y = run1TopY - 3 - offset;
-              return <line key={"wall-" + i} x1={ox} y1={y} x2={ox + coverW1} y2={y} stroke="#9ca3af" strokeWidth="4" strokeLinecap="round" />;
+              return (
+                <g key={"wall-" + i}>
+                  <line x1={ox} y1={y} x2={ox + coverW1} y2={y} stroke="#9ca3af" strokeWidth="4" strokeLinecap="round" />
+                  <polygon points={hArrowPoints(ox, y, -1)} fill="#6b7280" />
+                  <polygon points={hArrowPoints(ox + coverW1, y, 1)} fill="#6b7280" />
+                  <text x={ox + coverW1 / 2} y={run1TopY + 10 + offset}
+                    textAnchor="middle" fontSize="7" fontWeight="700" fill="#6b7280">
+                    {wallLabel}
+                  </text>
+                </g>
+              );
             }
             if (wall.position === "front") {
               const y = run1FrontY + 3 + offset;
-              return <line key={"wall-" + i} x1={ox} y1={y} x2={ox + coverW1} y2={y} stroke="#9ca3af" strokeWidth="4" strokeLinecap="round" />;
+              return (
+                <g key={"wall-" + i}>
+                  <line x1={ox} y1={y} x2={ox + coverW1} y2={y} stroke="#9ca3af" strokeWidth="4" strokeLinecap="round" />
+                  <polygon points={hArrowPoints(ox, y, -1)} fill="#6b7280" />
+                  <polygon points={hArrowPoints(ox + coverW1, y, 1)} fill="#6b7280" />
+                  <text x={ox + coverW1 / 2} y={run1FrontY - 6 - offset}
+                    textAnchor="middle" fontSize="7" fontWeight="700" fill="#6b7280">
+                    {wallLabel}
+                  </text>
+                </g>
+              );
             }
-            const x = wall.side === "right" ? ox + coverW1 + 3 + offset : ox - 3 - offset;
-            return <line key={"wall-" + i} x1={x} y1={run1TopY} x2={x} y2={run1FrontY} stroke="#9ca3af" strokeWidth="4" strokeLinecap="round" />;
+            const isRight = wall.side === "right";
+            const x = isRight ? ox + coverW1 + 3 + offset : ox - 3 - offset;
+            const labelX = isRight ? x - 10 - offset : x + 10 + offset;
+            const midY = (run1TopY + run1FrontY) / 2;
+            return (
+              <g key={"wall-" + i}>
+                <line x1={x} y1={run1TopY} x2={x} y2={run1FrontY} stroke="#9ca3af" strokeWidth="4" strokeLinecap="round" />
+                <polygon points={vArrowPoints(x, run1TopY, -1)} fill="#6b7280" />
+                <polygon points={vArrowPoints(x, run1FrontY, 1)} fill="#6b7280" />
+                <text x={labelX} y={midY}
+                  textAnchor="middle" fontSize="7" fontWeight="700" fill="#6b7280"
+                  transform={"rotate(90," + labelX + "," + midY + ")"}>
+                  {wallLabel}
+                </text>
+              </g>
+            );
           })}
 
           {/* Legend */}
