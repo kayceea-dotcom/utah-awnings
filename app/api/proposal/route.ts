@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
     const recipients = [customer.email, customer.email2].filter(Boolean) as string[];
 
-    await resend.emails.send({
+    const { error: sendError } = await resend.emails.send({
       from: "Utah Awnings <noreply@uaquotepro.com>",
       to: recipients,
       subject: "Your Utah Awnings Proposal - Ready to Review",
@@ -97,6 +97,16 @@ export async function POST(request: NextRequest) {
       `,
     });
 
+    // Resend's SDK never throws on a failed send (bad/blocked recipient,
+    // rate limit, etc.) - it always resolves with { error } instead - so
+    // this has to be checked explicitly, or a rejected send silently looks
+    // identical to a successful one: the rep sees "sent", the status flips
+    // to "sent", and the customer never gets anything with no trace of why.
+    if (sendError) {
+      console.error("Proposal email send error:", sendError);
+      return NextResponse.json({ error: "Failed to send email: " + sendError.message }, { status: 502 });
+    }
+
     // Update proposal status to sent, and stamp the initial follow-up
     // timestamp the first time only (resends must not reset the follow-up clock)
     const updates: Record<string, unknown> = { status: "sent" };
@@ -109,7 +119,8 @@ export async function POST(request: NextRequest) {
       .eq("token", proposalToken);
 
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (err) {
+    console.error("Proposal send error:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     const pdfBuffer = await renderToBuffer(<OrderSheetPdf data={data} />);
 
     // Send to Wholesale Patio Supply, with a printable PDF copy attached
-    await resend.emails.send({
+    const { error: sendError } = await resend.emails.send({
       from: "Utah Awnings Orders <noreply@uaquotepro.com>",
       to: "sales@wpatio.com",
       cc: ["info@utahawnings.com", "utahawnings@gmail.com"],
@@ -78,6 +78,11 @@ export async function POST(request: NextRequest) {
         { filename: "Order-" + data.poNumber + ".pdf", content: pdfBuffer },
       ],
     });
+
+    if (sendError) {
+      console.error("Order sheet email send error:", sendError);
+      return NextResponse.json({ error: "Failed to send order: " + sendError.message }, { status: 502 });
+    }
 
     // Update proposal status
     await supabase

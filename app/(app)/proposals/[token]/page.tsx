@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import TopBar from "@/components/TopBar";
-import { Send, ExternalLink, CheckCircle, Clock, Eye, X, FileDown, Pencil, Save, Upload, Trash2 } from "lucide-react";
+import { Send, ExternalLink, CheckCircle, Clock, Eye, X, FileDown, Printer, Pencil, Save, Upload, Trash2 } from "lucide-react";
 import { getFollowUpStatus } from "@/lib/followups/engine";
 import type { ProposalFollowUpTimestamps } from "@/lib/followups/types";
 import FollowUpBadge from "@/components/FollowUpBadge";
@@ -199,6 +199,8 @@ export default function ProposalPreviewPage() {
   const [previewing, setPreviewing] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [previewError, setPreviewError] = useState("");
+  const [printingContract, setPrintingContract] = useState(false);
+  const [printingOrder, setPrintingOrder] = useState(false);
   const [sendingFollowUp, setSendingFollowUp] = useState(false);
   const [followUpError, setFollowUpError] = useState("");
   const [followUpStep, setFollowUpStep] = useState<{ key: string; label: string; actionLabel: string } | null>(null);
@@ -440,6 +442,66 @@ export default function ProposalPreviewPage() {
     await load();
     setEditingMaterials(false);
     setSavingMaterials(false);
+  }
+
+  // Hands the PDF to the device's native share sheet (which on iOS/Android
+  // includes a direct "Print" action) instead of just downloading it - a rep
+  // on a phone otherwise has to download the file first, then separately
+  // open it, before they can even find a print option.
+  //
+  // Falls back to opening the already-fetched PDF in a new tab wherever file
+  // sharing isn't supported (desktop browsers, older phones), the user
+  // cancels the share sheet, or the browser rejects it. That fallback uses a
+  // synthetic <a> click on an object URL rather than window.open(url) -
+  // window.open() made after an `await` (as this fetch requires) gets
+  // silently popup-blocked in several browsers because the click's user-
+  // activation has already expired by the time it runs; a direct anchor
+  // click doesn't hit the same restriction.
+  async function printOrDownloadPdf(url: string, filename: string) {
+    let blob: Blob;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("fetch failed");
+      blob = await res.blob();
+    } catch {
+      window.open(url, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    const file = new File([blob], filename, { type: "application/pdf" });
+    const nav = navigator as Navigator & { canShare?: (data: { files: File[] }) => boolean };
+    if (nav.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: filename } as ShareData);
+        return;
+      } catch {
+        // User cancelled the share sheet, or the browser rejected it - fall
+        // through to just opening the PDF below instead of doing nothing.
+      }
+    }
+
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+  }
+
+  async function handlePrintContract() {
+    setPrintingContract(true);
+    const isSigned = status === "signed" || status === "accepted" || status === "pending_payment" || status === "ordered";
+    await printOrDownloadPdf("/api/contract?token=" + token, (isSigned ? "Contract-" : "Quote-") + (c.name as string).replace(/\s+/g, "-") + ".pdf");
+    setPrintingContract(false);
+  }
+
+  async function handlePrintOrderSheet() {
+    setPrintingOrder(true);
+    await printOrDownloadPdf("/api/order-sheet?token=" + token, "Order-" + (c.name as string).replace(/\s+/g, "-") + ".pdf");
+    setPrintingOrder(false);
   }
 
   async function handlePreviewOrder() {
@@ -1292,10 +1354,10 @@ export default function ProposalPreviewPage() {
               <ExternalLink size={15} />
               Preview Customer View
             </a>
-            <a href={"/api/contract?token=" + token} target="_blank" rel="noopener noreferrer" className="btn-secondary w-full justify-center">
-              <FileDown size={15} />
-              {status === "signed" || status === "accepted" || status === "pending_payment" || status === "ordered" ? "Download Contract PDF" : "Download Quote PDF"}
-            </a>
+            <button onClick={handlePrintContract} disabled={printingContract} className="btn-secondary w-full justify-center disabled:opacity-50">
+              <Printer size={15} />
+              {printingContract ? "Opening..." : (status === "signed" || status === "accepted" || status === "pending_payment" || status === "ordered" ? "Print / Download Contract PDF" : "Print / Download Quote PDF")}
+            </button>
             <button onClick={handleSend} disabled={sending} className={sent ? "btn-secondary w-full disabled:opacity-50" : "btn-primary w-full disabled:opacity-50"}>
               <Send size={15} />
               {sending ? "Sending..." : sent ? "Resend Email" : "Email Proposal to " + (c.name as string)}
@@ -1360,10 +1422,10 @@ export default function ProposalPreviewPage() {
             </div>
             <iframe srcDoc={previewHtml} sandbox="" className="flex-1 w-full" style={{ minHeight: "60vh" }} />
             <div className="px-5 py-4 border-t border-gray-100 space-y-2">
-              <a href={"/api/order-sheet?token=" + token} target="_blank" rel="noopener noreferrer" className="btn-secondary w-full justify-center">
-                <FileDown size={15} />
-                Download PDF
-              </a>
+              <button onClick={handlePrintOrderSheet} disabled={printingOrder} className="btn-secondary w-full justify-center disabled:opacity-50">
+                <Printer size={15} />
+                {printingOrder ? "Opening..." : "Print / Download PDF"}
+              </button>
               <div className="flex gap-3">
                 <button onClick={() => setPreviewHtml(null)} className="btn-secondary flex-1 justify-center">
                   Cancel
