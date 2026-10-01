@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       : "Sales Rep";
 
     // Send our own branded email via Resend
-    await resend.emails.send({
+    const { error: sendError } = await resend.emails.send({
       from: "Utah Awnings <noreply@uaquotepro.com>",
       to: email,
       subject: "You're invited to join Utah Awnings Sales Platform",
@@ -130,6 +130,11 @@ export async function POST(request: NextRequest) {
 </html>
       `,
     });
+
+    if (sendError) {
+      console.error("Invite email send error:", sendError);
+      return NextResponse.json({ error: "Failed to send invite email: " + sendError.message }, { status: 502 });
+    }
 
     return NextResponse.json({ success: true });
   } catch {

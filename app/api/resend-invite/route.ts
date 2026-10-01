@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    await resend.emails.send({
+    const { error: sendError } = await resend.emails.send({
       from: "Utah Awnings <noreply@uaquotepro.com>",
       to: email,
       subject: "Set up your Utah Awnings Sales Platform account",
@@ -96,8 +96,14 @@ export async function POST(request: NextRequest) {
       `,
     });
 
+    if (sendError) {
+      console.error("Resend-invite email send error:", sendError);
+      return NextResponse.json({ error: "Failed to send email: " + sendError.message }, { status: 502 });
+    }
+
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (err) {
+    console.error("Resend-invite error:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

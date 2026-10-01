@@ -64,12 +64,20 @@ export async function POST(request: NextRequest) {
 
     const recipients = [customer.email, customer.email2].filter(Boolean) as string[];
 
-    await resend.emails.send({
+    const { error: sendError } = await resend.emails.send({
       from: "Utah Awnings <noreply@uaquotepro.com>",
       to: recipients,
       subject: step.subject,
       html,
     });
+
+    // Resend's SDK never throws on a failed send - it resolves with
+    // { error } instead - so this has to be checked explicitly, or a
+    // rejected send silently looks identical to a successful one.
+    if (sendError) {
+      console.error("Follow-up email send error:", sendError);
+      return NextResponse.json({ error: "Failed to send email: " + sendError.message }, { status: 502 });
+    }
 
     await supabase
       .from("proposals")
@@ -77,7 +85,8 @@ export async function POST(request: NextRequest) {
       .eq("token", proposalToken);
 
     return NextResponse.json({ success: true, step: step.key });
-  } catch {
+  } catch (err) {
+    console.error("Follow-up send error:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

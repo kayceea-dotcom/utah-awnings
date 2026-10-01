@@ -23,7 +23,8 @@ export async function POST(request: NextRequest) {
     const html = buildOrderSheetHtml(data);
 
     return NextResponse.json({ html, poNumber: data.poNumber });
-  } catch {
+  } catch (err) {
+    console.error("Order sheet preview error:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

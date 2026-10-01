@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     // entirely on the rare quote with no resolvable creator, rather than
     // calling Resend with an empty `to` list.
     if (recipients.size > 0) {
-    await resend.emails.send({
+    const { error: sendError } = await resend.emails.send({
       from: "Utah Awnings <noreply@uaquotepro.com>",
       to: Array.from(recipients),
       subject: "Contract Signed - " + (customer.name as string) + " (" + jobName + ")",
@@ -107,6 +107,10 @@ export async function POST(request: NextRequest) {
 </html>
       `,
     });
+    // Best-effort, same as the push notification below - logged but never
+    // fails the request, since this fires from the customer's own signing
+    // page and a notification hiccup shouldn't block their confirmation.
+    if (sendError) console.error("Signed-notification email send error:", sendError);
     }
 
     // Push the rep's own device(s), if they've enabled it - a separate,

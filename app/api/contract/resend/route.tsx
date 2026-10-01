@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     const pdfBuffer = await renderToBuffer(<ContractPdf data={data} />);
     const filename = "Contract-" + data.jobName.replace(/\s+/g, "-") + ".pdf";
 
-    await resend.emails.send({
+    const { error: sendError } = await resend.emails.send({
       from: "Utah Awnings <noreply@uaquotepro.com>",
       to: OFFICE_EMAIL,
       subject: "Signed Contract - " + data.customerName + " (" + data.jobName + ")",
@@ -53,6 +53,11 @@ export async function POST(request: NextRequest) {
       `,
       attachments: [{ filename, content: pdfBuffer }],
     });
+
+    if (sendError) {
+      console.error("Contract resend email send error:", sendError);
+      return NextResponse.json({ error: "Failed to send email: " + sendError.message }, { status: 502 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {
