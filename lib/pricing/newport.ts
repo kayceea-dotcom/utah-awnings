@@ -5,7 +5,7 @@ import {
   li, nextStockLength, rollFormGutterPieces, beamMaterialRate, steelInsertRate, beamEndcapRate, beamTypeLabel, anchorQty,
   wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen, deckHeightSurcharge,
   postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, wallItems, END_CUT_LABELS,
-  extrudedStockPieces, extrudedGutterRateForFt, extrudedFasciaQtyRate,
+  extrudedStockPieces, extrudedGutterRateForFt, extrudedFasciaQtyRate, roundUpToBag,
 } from "./shared";
 
 function panelRate(type: string): number {
@@ -316,12 +316,12 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   const fastenerQty = combinedWidth * 2;
   if (fastenerQty > 0) {
     items.push(li("Lag Screws",            fastenerQty, 0, RATES.lag_screw));
-    items.push(li("#14x1 Colored Screws",  fastenerQty, 0, RATES.screw_14x1_colored,  "", inp.colorPostsBeam));
-    items.push(li("#14x1 Washered Screws", fastenerQty, 0, RATES.screw_14x1_washered, "", inp.colorPostsBeam));
+    items.push(li("#14x1 Colored Screws",  roundUpToBag(fastenerQty), 0, RATES.screw_14x1_colored,  "", inp.colorPostsBeam));
+    items.push(li("#14x1 Washered Screws", roundUpToBag(fastenerQty), 0, RATES.screw_14x1_washered, "", inp.colorPostsBeam));
   }
 
   // ── PAN SCREWS — combined width * 10, rounded up to the nearest 100 ──
-  const panScrewQty = Math.ceil((combinedWidth * 10) / 100) * 100;
+  const panScrewQty = roundUpToBag(combinedWidth * 10);
   if (panScrewQty > 0) {
     items.push(li("#8x1/2 Pan Color",  panScrewQty, 0, RATES.screw_8x0_5_color,    "", inp.colorPans));
     items.push(li("#8x1/2 Extruded",   panScrewQty, 0, RATES.screw_8x0_5_extruded, "", inp.colorPostsBeam));

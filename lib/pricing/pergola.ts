@@ -2,7 +2,7 @@ import { RATES } from "./rates";
 import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, MountStyle, BeamConfig, WallConfig } from "./types";
 import {
   li, nextStockLength, anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge,
-  finalizePricing, shadeBeamItems, wallItems, beamTypeLabel, END_CUT_LABELS,
+  finalizePricing, shadeBeamItems, wallItems, beamTypeLabel, END_CUT_LABELS, roundUpToBag,
 } from "./shared";
 
 // Mirrors newport.ts/wpan.ts's beamLabel() - the side is always spelled out
@@ -219,7 +219,7 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
   // ── LAGS — one per rafter ──
   if (rafterQty > 0) {
     items.push(li("Lag Screws", rafterQty, 0, RATES.lag_screw));
-    items.push(li("#14x1 Colored Screws", rafterQty * 10, 0, RATES.screw_14x1_colored, "", inp.colorPergola));
+    items.push(li("#14x1 Colored Screws", roundUpToBag(rafterQty * 10), 0, RATES.screw_14x1_colored, "", inp.colorPergola));
   }
 
   // ── LATTICE SCREWS — sheet: 324 screws for 36 lattice pieces = 9 per piece ──
