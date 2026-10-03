@@ -4,7 +4,7 @@ import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, 
 import {
   li, nextStockLength, rollFormGutterPieces, wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen,
   anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, wallItems, beamTypeLabel,
-  END_CUT_LABELS, extrudedStockPieces, extrudedGutterRateForFt, extrudedFasciaQtyRate,
+  END_CUT_LABELS, extrudedStockPieces, extrudedGutterRateForFt, extrudedFasciaQtyRate, roundUpToBag,
   durakingGutterRateForFt, durakingFasciaQtyRate, durakingHangerRate,
 } from "./shared";
 
@@ -368,9 +368,9 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   if (totalPanels > 0) {
     const lagQty = totalPanels * 4;
     items.push(li("Lag Screws",            lagQty, 0, RATES.lag_screw));
-    items.push(li("#14x1 Colored Screws",  lagQty, 0, RATES.screw_14x1_colored,  "", inp.colorPostsBeam));
-    items.push(li("#14x1 Washered Screws", lagQty, 0, RATES.screw_14x1_washered, "", inp.colorPostsBeam));
-    const panScrewQty = Math.ceil(totalPanels * 20 / 50) * 50;
+    items.push(li("#14x1 Colored Screws",  roundUpToBag(lagQty), 0, RATES.screw_14x1_colored,  "", inp.colorPostsBeam));
+    items.push(li("#14x1 Washered Screws", roundUpToBag(lagQty), 0, RATES.screw_14x1_washered, "", inp.colorPostsBeam));
+    const panScrewQty = roundUpToBag(totalPanels * 20);
     items.push(li("#8x1/2 Pan Color",  panScrewQty, 0, RATES.screw_8x0_5_color,    "", inp.colorPans));
     items.push(li("#8x1/2 Extruded",   panScrewQty, 0, RATES.screw_8x0_5_extruded, "", inp.colorPostsBeam));
   }

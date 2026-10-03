@@ -191,6 +191,18 @@ export function fasciaQtyLen(maxProjection: number, extraPerSideFt = 0): { qty: 
 // largest tier" simplification LRP's own tiers already make, just extended
 // to two pieces instead of one.
 const EXTRUDED_STOCK_TIERS = [16, 20, 24];
+
+// At a 12ft projection, one 24ft piece cut in half leaves zero slack on either
+// side - too tight in practice - so 12ft and up buys two separate pieces (two
+// 16ft at exactly 12ft) instead. Only applies to the extruded/DuraKing stock-
+// piece fascia below, not the 2x6 board fascia in fasciaQtyLen.
+const ONE_PIECE_FASCIA_MAX_PROJECTION_FT = 12;
+
+// Screws are only sold in bags of 100, so a quantity has to round up to the
+// next full bag.
+export function roundUpToBag(qty: number, bagSize = 100): number {
+  return Math.ceil(qty / bagSize) * bagSize;
+}
 export function extrudedStockPieces(neededFt: number): number[] {
   const singleFit = EXTRUDED_STOCK_TIERS.find((t) => neededFt <= t);
   if (singleFit) return [singleFit];
@@ -220,7 +232,7 @@ function durakingFasciaRateForFt(stockFt: number): number {
   return stockFt === 16 ? RATES.duraking_fascia_16 : stockFt === 20 ? RATES.duraking_fascia_20 : RATES.duraking_fascia_24;
 }
 
-// Same 1-piece-cut-in-half-for-both-sides (projection <= 12ft) vs 2-separate-
+// Same 1-piece-cut-in-half-for-both-sides (projection under 12ft) vs 2-separate-
 // pieces split as fasciaQtyLen, but priced off the 16'/20'/24' stock tiers
 // instead of the general ladder, since extruded side fascia is only sold in
 // those 3 sizes. `stockFt` is exposed for the material list's Len column,
@@ -230,7 +242,7 @@ function durakingFasciaRateForFt(stockFt: number): number {
 // that (over 24ft on its own, or over 12ft doubled) is rare enough it hasn't
 // come up; flag it if a job ever actually needs one.
 export function extrudedFasciaQtyRate(maxProjection: number): { qty: number; rate: number; stockFt: number } {
-  const isOnePiece = maxProjection <= 12;
+  const isOnePiece = maxProjection < ONE_PIECE_FASCIA_MAX_PROJECTION_FT;
   const neededFt = isOnePiece ? 2 * maxProjection : maxProjection;
   const stockFt = EXTRUDED_STOCK_TIERS.find((t) => neededFt <= t) ?? 24;
   return { qty: isOnePiece ? 1 : 2, rate: extrudedFasciaRateForFt(stockFt), stockFt };
@@ -238,7 +250,7 @@ export function extrudedFasciaQtyRate(maxProjection: number): { qty: number; rat
 
 // Same shape as extrudedFasciaQtyRate above, priced off DuraKing's own fascia tiers.
 export function durakingFasciaQtyRate(maxProjection: number): { qty: number; rate: number; stockFt: number } {
-  const isOnePiece = maxProjection <= 12;
+  const isOnePiece = maxProjection < ONE_PIECE_FASCIA_MAX_PROJECTION_FT;
   const neededFt = isOnePiece ? 2 * maxProjection : maxProjection;
   const stockFt = EXTRUDED_STOCK_TIERS.find((t) => neededFt <= t) ?? 24;
   return { qty: isOnePiece ? 1 : 2, rate: durakingFasciaRateForFt(stockFt), stockFt };

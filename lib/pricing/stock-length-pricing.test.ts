@@ -154,6 +154,23 @@ describe("Extruded gutter/fascia: flat fee per stock tier (16/20/24ft), not per 
     expect(fascia.rate).toBe(RATES.fascia_extruded_16);
   });
 
+  it("Newport: a 11ft projection is still one piece (cut in half) - the 24ft tier", () => {
+    const inp = newportBase();
+    inp.projection1 = 11; // doubled = 22ft -> 24ft tier
+    const fascia = findItem(calcNewport(inp).lineItems, "Extruded Side Fascia")!;
+    expect(fascia.qty).toBe(1);
+    expect(fascia.rate).toBe(RATES.fascia_extruded_24);
+  });
+
+  it("Newport: a 12ft projection moves to two 16ft side fascias (one 24ft cut in half is too tight)", () => {
+    const inp = newportBase();
+    inp.projection1 = 12;
+    const fascia = findItem(calcNewport(inp).lineItems, "Extruded Side Fascia")!;
+    expect(fascia.qty).toBe(2);
+    expect(fascia.rate).toBe(RATES.fascia_extruded_16);
+    expect(fascia.displayLength).toBe(16);
+  });
+
   it("Newport: side fascia over 12ft projection is two separate pieces sized off the projection itself", () => {
     const inp = newportBase();
     inp.projection1 = 18; // -> 20ft tier

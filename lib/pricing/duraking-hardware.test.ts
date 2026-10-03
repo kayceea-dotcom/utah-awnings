@@ -66,11 +66,12 @@ describe("DuraKing hanger/gutter/fascia - its own hardware, distinct from Tri-V'
     const out = calcWPan(inp);
     const gutter = findItem(out.lineItems, "Extruded Gutter 2.5in");
     const fascia = findItem(out.lineItems, "Extruded Side Fascia");
-    // width1=20 -> gutterNeededFt=20 -> 20ft tier; projection1=12 -> one-piece fascia, neededFt=24 -> 24ft tier
+    // width1=20 -> gutterNeededFt=20 -> 20ft tier; projection1=12 -> two separate pieces (12ft+), each sized off the projection -> 16ft tier
     expect(gutter).toBeTruthy();
     expect(gutter!.amount).toBeCloseTo(RATES.gutter_extruded_20, 2);
     expect(fascia).toBeTruthy();
-    expect(fascia!.rate).toBeCloseTo(RATES.fascia_extruded_24, 2);
+    expect(fascia!.qty).toBe(2);
+    expect(fascia!.rate).toBeCloseTo(RATES.fascia_extruded_16, 2);
   });
 
   it("Tri-V: roll form gutter still uses the 2x6 board fascia, unaffected", () => {
@@ -92,7 +93,8 @@ describe("DuraKing hanger/gutter/fascia - its own hardware, distinct from Tri-V'
     const fascia = findItem(out.lineItems, "DuraKing Fascia");
     expect(gutter).toBeTruthy();
     expect(fascia).toBeTruthy();
-    expect(fascia!.rate).toBeCloseTo(RATES.duraking_fascia_24, 2);
+    expect(fascia!.qty).toBe(2);
+    expect(fascia!.rate).toBeCloseTo(RATES.duraking_fascia_16, 2);
     expect(findItem(out.lineItems, "Extruded Gutter 2.5in")).toBeUndefined();
     expect(findItem(out.lineItems, "Extruded Side Fascia")).toBeUndefined();
   });
