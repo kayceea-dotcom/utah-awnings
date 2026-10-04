@@ -201,6 +201,7 @@ export default function ProposalPreviewPage() {
   const [previewError, setPreviewError] = useState("");
   const [printingContract, setPrintingContract] = useState(false);
   const [printingOrder, setPrintingOrder] = useState(false);
+  const [readyShare, setReadyShare] = useState<{ kind: "contract" | "order"; file: File; at: number } | null>(null);
   const [sendingFollowUp, setSendingFollowUp] = useState(false);
   const [followUpError, setFollowUpError] = useState("");
   const [followUpStep, setFollowUpStep] = useState<{ key: string; label: string; actionLabel: string } | null>(null);
@@ -445,19 +446,33 @@ export default function ProposalPreviewPage() {
   }
 
   // Hands the PDF to the device's native share sheet (which on iOS/Android
-  // includes a direct "Print" action) instead of just downloading it - a rep
-  // on a phone otherwise has to download the file first, then separately
-  // open it, before they can even find a print option.
+  // includes Print and print apps like HP Smart) instead of just downloading
+  // it.
   //
-  // Falls back to opening the already-fetched PDF in a new tab wherever file
-  // sharing isn't supported (desktop browsers, older phones), the user
-  // cancels the share sheet, or the browser rejects it. That fallback uses a
-  // synthetic <a> click on an object URL rather than window.open(url) -
-  // window.open() made after an `await` (as this fetch requires) gets
-  // silently popup-blocked in several browsers because the click's user-
-  // activation has already expired by the time it runs; a direct anchor
-  // click doesn't hit the same restriction.
-  async function printOrDownloadPdf(url: string, filename: string) {
+  // Browsers only allow share() within a few seconds of the tap, and the PDF
+  // takes a moment to generate - on a phone that gap regularly expires the
+  // tap (NotAllowedError), which used to drop straight to a plain download.
+  // Now, when that happens, the already-fetched file is held ("ready") and
+  // the button asks for one more tap, which calls share() immediately with
+  // a fresh tap and no fetch in between. A cancelled share does nothing
+  // (not a download). Only browsers that can't share files at all - desktop
+  // mostly - fall back to opening the PDF via a synthetic <a> click on an
+  // object URL (window.open() after an await gets popup-blocked).
+  async function printOrDownloadPdf(kind: "contract" | "order", url: string, filename: string) {
+    const nav = navigator as Navigator & { canShare?: (data: { files: File[] }) => boolean };
+
+    // Second tap: share the held file right away, no await before share().
+    if (readyShare && readyShare.kind === kind && Date.now() - readyShare.at < 5 * 60_000) {
+      const held = readyShare.file;
+      setReadyShare(null);
+      try {
+        await navigator.share({ files: [held], title: filename } as ShareData);
+      } catch (err) {
+        if ((err as Error)?.name !== "AbortError") downloadFile(held);
+      }
+      return;
+    }
+
     let blob: Blob;
     try {
       const res = await fetch(url);
@@ -469,18 +484,26 @@ export default function ProposalPreviewPage() {
     }
 
     const file = new File([blob], filename, { type: "application/pdf" });
-    const nav = navigator as Navigator & { canShare?: (data: { files: File[] }) => boolean };
     if (nav.canShare?.({ files: [file] })) {
       try {
         await navigator.share({ files: [file], title: filename } as ShareData);
         return;
-      } catch {
-        // User cancelled the share sheet, or the browser rejected it - fall
-        // through to just opening the PDF below instead of doing nothing.
+      } catch (err) {
+        const name = (err as Error)?.name;
+        if (name === "AbortError") return; // cancelled the share sheet
+        if (name === "NotAllowedError") {
+          setReadyShare({ kind, file, at: Date.now() });
+          return;
+        }
+        // Any other share failure: fall through to the download below.
       }
     }
 
-    const blobUrl = URL.createObjectURL(blob);
+    downloadFile(file);
+  }
+
+  function downloadFile(file: File) {
+    const blobUrl = URL.createObjectURL(file);
     const a = document.createElement("a");
     a.href = blobUrl;
     a.target = "_blank";
@@ -494,13 +517,13 @@ export default function ProposalPreviewPage() {
   async function handlePrintContract() {
     setPrintingContract(true);
     const isSigned = status === "signed" || status === "accepted" || status === "pending_payment" || status === "ordered";
-    await printOrDownloadPdf("/api/contract?token=" + token, (isSigned ? "Contract-" : "Quote-") + (c.name as string).replace(/\s+/g, "-") + ".pdf");
+    await printOrDownloadPdf("contract", "/api/contract?token=" + token, (isSigned ? "Contract-" : "Quote-") + (c.name as string).replace(/\s+/g, "-") + ".pdf");
     setPrintingContract(false);
   }
 
   async function handlePrintOrderSheet() {
     setPrintingOrder(true);
-    await printOrDownloadPdf("/api/order-sheet?token=" + token, "Order-" + (c.name as string).replace(/\s+/g, "-") + ".pdf");
+    await printOrDownloadPdf("order", "/api/order-sheet?token=" + token, "Order-" + (c.name as string).replace(/\s+/g, "-") + ".pdf");
     setPrintingOrder(false);
   }
 
@@ -1356,7 +1379,7 @@ export default function ProposalPreviewPage() {
             </a>
             <button onClick={handlePrintContract} disabled={printingContract} className="btn-secondary w-full justify-center disabled:opacity-50">
               <Printer size={15} />
-              {printingContract ? "Opening..." : (status === "signed" || status === "accepted" || status === "pending_payment" || status === "ordered" ? "Print / Download Contract PDF" : "Print / Download Quote PDF")}
+              {printingContract ? "Preparing..." : readyShare?.kind === "contract" ? "Ready - tap again to Print / Share" : (status === "signed" || status === "accepted" || status === "pending_payment" || status === "ordered" ? "Print / Download Contract PDF" : "Print / Download Quote PDF")}
             </button>
             <button onClick={handleSend} disabled={sending} className={sent ? "btn-secondary w-full disabled:opacity-50" : "btn-primary w-full disabled:opacity-50"}>
               <Send size={15} />
@@ -1424,7 +1447,7 @@ export default function ProposalPreviewPage() {
             <div className="px-5 py-4 border-t border-gray-100 space-y-2">
               <button onClick={handlePrintOrderSheet} disabled={printingOrder} className="btn-secondary w-full justify-center disabled:opacity-50">
                 <Printer size={15} />
-                {printingOrder ? "Opening..." : "Print / Download PDF"}
+                {printingOrder ? "Preparing..." : readyShare?.kind === "order" ? "Ready - tap again to Print / Share" : "Print / Download PDF"}
               </button>
               <div className="flex gap-3">
                 <button onClick={() => setPreviewHtml(null)} className="btn-secondary flex-1 justify-center">
