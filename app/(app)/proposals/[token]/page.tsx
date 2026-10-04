@@ -201,6 +201,7 @@ export default function ProposalPreviewPage() {
   const [previewError, setPreviewError] = useState("");
   const [printingContract, setPrintingContract] = useState(false);
   const [printingOrder, setPrintingOrder] = useState(false);
+  const [shareNote, setShareNote] = useState("");
   const [readyShare, setReadyShare] = useState<{ kind: "contract" | "order"; file: File; at: number } | null>(null);
   const [sendingFollowUp, setSendingFollowUp] = useState(false);
   const [followUpError, setFollowUpError] = useState("");
@@ -460,6 +461,7 @@ export default function ProposalPreviewPage() {
   // object URL (window.open() after an await gets popup-blocked).
   async function printOrDownloadPdf(kind: "contract" | "order", url: string, filename: string) {
     const nav = navigator as Navigator & { canShare?: (data: { files: File[] }) => boolean };
+    setShareNote("");
 
     // Second tap: share the held file right away, no await before share().
     if (readyShare && readyShare.kind === kind && Date.now() - readyShare.at < 5 * 60_000) {
@@ -468,7 +470,10 @@ export default function ProposalPreviewPage() {
       try {
         await navigator.share({ files: [held], title: filename } as ShareData);
       } catch (err) {
-        if ((err as Error)?.name !== "AbortError") downloadFile(held);
+        if ((err as Error)?.name !== "AbortError") {
+          setShareNote("Share failed (" + describeErr(err) + ") - downloaded instead.");
+          downloadFile(held);
+        }
       }
       return;
     }
@@ -479,6 +484,7 @@ export default function ProposalPreviewPage() {
       if (!res.ok) throw new Error("fetch failed");
       blob = await res.blob();
     } catch {
+      setShareNote("Couldn't fetch the PDF for sharing - opened it directly instead.");
       window.open(url, "_blank", "noopener,noreferrer");
       return;
     }
@@ -495,11 +501,25 @@ export default function ProposalPreviewPage() {
           setReadyShare({ kind, file, at: Date.now() });
           return;
         }
-        // Any other share failure: fall through to the download below.
+        setShareNote("Share failed (" + describeErr(err) + ") - downloaded instead.");
       }
+    } else {
+      setShareNote(
+        typeof nav.canShare !== "function"
+          ? "This browser can't share files here (no share support) - downloaded instead."
+          : "This browser refused to share this PDF file - downloaded instead."
+      );
     }
 
     downloadFile(file);
+  }
+
+  // Shown under the print button whenever it has to fall back to a plain
+  // download, so a rep (or whoever's helping them) can see why the share
+  // sheet didn't open instead of guessing.
+  function describeErr(err: unknown): string {
+    const e = err as { name?: string; message?: string };
+    return (e?.name || "Error") + (e?.message ? ": " + e.message : "");
   }
 
   function downloadFile(file: File) {
@@ -1381,6 +1401,7 @@ export default function ProposalPreviewPage() {
               <Printer size={15} />
               {printingContract ? "Preparing..." : readyShare?.kind === "contract" ? "Ready - tap again to Print / Share" : (status === "signed" || status === "accepted" || status === "pending_payment" || status === "ordered" ? "Print / Download Contract PDF" : "Print / Download Quote PDF")}
             </button>
+            {shareNote && <p className="text-xs text-amber-700 text-center -mt-1">{shareNote}</p>}
             <button onClick={handleSend} disabled={sending} className={sent ? "btn-secondary w-full disabled:opacity-50" : "btn-primary w-full disabled:opacity-50"}>
               <Send size={15} />
               {sending ? "Sending..." : sent ? "Resend Email" : "Email Proposal to " + (c.name as string)}
@@ -1449,6 +1470,7 @@ export default function ProposalPreviewPage() {
                 <Printer size={15} />
                 {printingOrder ? "Preparing..." : readyShare?.kind === "order" ? "Ready - tap again to Print / Share" : "Print / Download PDF"}
               </button>
+              {shareNote && <p className="text-xs text-amber-700 text-center">{shareNote}</p>}
               <div className="flex gap-3">
                 <button onClick={() => setPreviewHtml(null)} className="btn-secondary flex-1 justify-center">
                   Cancel
