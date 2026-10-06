@@ -1332,7 +1332,7 @@ export default function ProposalPreviewPage() {
           <PaymentsPanel
             quoteId={quote.id as string}
             companyId={quote.company_id as string}
-            totalJobSale={q.total_job_sale as number}
+            totalJobSale={(q.total_job_sale as number | null) ?? 0}
             canManage={canTrash(profile, (quote?.created_by as string) || null)}
             recordedBy={profile?.id}
           />

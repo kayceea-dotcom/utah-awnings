@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, Pencil, Trash2, DollarSign } from "lucide-react";
 import { listPayments, addPayment, updatePayment, deletePayment, type Payment, type PaymentMethod } from "@/lib/payments";
 
-const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+const fmt = (n: number | null | undefined) => (n ?? 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
 
 const METHOD_OPTS: { value: PaymentMethod; label: string }[] = [
   { value: "cash", label: "Cash" },
