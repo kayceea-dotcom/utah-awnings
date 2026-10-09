@@ -35,7 +35,7 @@ const HOUSE_ATTACHMENT_LABELS: Record<string, string> = {
 };
 
 const GROUND_ATTACHMENT_LABELS: Record<string, string> = {
-  concrete: "CONCRETE FOOTING",
+  concrete: "ANCHORED TO CONCRETE",
   deck: "DECK MOUNT",
   ground_mount: "GROUND MOUNT (EMBEDDED)",
 };

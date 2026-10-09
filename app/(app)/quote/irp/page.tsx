@@ -75,7 +75,7 @@ const HOUSE_ATTACHMENTS = [
   { value: "angled_eave", label: "Angled Eave" },
 ];
 const GROUND_ATTACHMENTS = [
-  { value: "concrete",     label: "Concrete" },
+  { value: "concrete",     label: "Anchored" },
   { value: "deck",         label: "Deck" },
   { value: "ground_mount", label: "Ground Mount" },
 ];
