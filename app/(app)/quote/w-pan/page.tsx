@@ -678,6 +678,7 @@ export default function WPanQuotePage() {
                   rearBeamType={inp.rearBeamType}
                   rearEndCut={inp.rearBeamEndCut}
                   walls={inp.walls}
+                  beams={inp.beams}
                 />
               </div>
 
@@ -741,6 +742,7 @@ export default function WPanQuotePage() {
                 rearBeamType={inp.rearBeamType}
                 rearEndCut={inp.rearBeamEndCut}
                 walls={inp.walls}
+                beams={inp.beams}
               />
               <PriceSummaryPanel result={effectiveResult} />
               <CommissionPanel materialCost={effectiveResult.materialCost} price={commissionPrice} discount={inp.discount} isCashDiscount={isCashDiscount} tax={effectiveResult.taxes} />

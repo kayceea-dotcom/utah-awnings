@@ -1,3 +1,11 @@
+// An Additional / Multi-Span Beam as the side profile needs it - where it
+// sits along the projection, what it is, and whether it has its own posts.
+export interface SideBeamInput {
+  type: string;
+  positionFromHouse: number;
+  posts: number;
+}
+
 export interface SideProfileGeometryInput {
   projection: number;
   postHeight: number;
@@ -29,6 +37,22 @@ export interface SideProfileGeometryInput {
   isLattice?: boolean;
   latticeType?: string;
   latticeSpacing?: string;
+  /** Additional / Multi-Span Beams - each drawn end-on at its distance from
+   *  the house, level with the main beam, with its own post when it has any. */
+  beams?: SideBeamInput[];
+}
+
+export interface AdditionalBeamGeometry {
+  /** Center X of the beam (and its post). */
+  x: number;
+  topY: number;
+  height: number;
+  width: number;
+  /** Post under the beam - null when the beam has no posts of its own. */
+  post: {
+    topY: number; bottomY: number; embeddedBottomY: number | null;
+    footingX: number; footingWidth: number;
+  } | null;
 }
 
 export interface SideProfileGeometry {
@@ -96,6 +120,8 @@ export interface SideProfileGeometry {
     beamTopY: number; beamHeight: number; beamWidth: number;
     footingX: number; footingWidth: number;
   } | null;
+  /** Additional / Multi-Span Beams, in the order they were added. */
+  additionalBeams: AdditionalBeamGeometry[];
   isEaveMount: boolean;
   /** Soffit board (eave/angled_eave only) - horizontal, wall to fascia,
    *  the eave's real 2ft projection. */
@@ -169,6 +195,7 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
     rearPostHeight,
     rearBeamType,
     rearEndCut,
+    beams = [],
   } = input;
 
   if (!projection || !postHeight) return null;
@@ -346,6 +373,32 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
   // it isn't flush with it.
   const eaveWallX = isEaveMount ? eaveSoffit.x : houseX;
 
+  // Additional / Multi-Span Beams - drawn end-on, level with the main beam
+  // (the panel rests across all of them), at their real distance from the
+  // house (clamped inside the cover, same rule as the top view). A beam's own
+  // post runs from the surface up to the underside of its beam.
+  const additionalBeams: AdditionalBeamGeometry[] = beams
+    .map((b) => {
+      const heightIn = beamHeightInches(b.type);
+      if (heightIn <= 0) return null;
+      const x = houseX + Math.max(0, Math.min(b.positionFromHouse || 0, projection)) * scale;
+      const height = (heightIn / 12) * scale;
+      const hasPost = (b.posts || 0) > 0;
+      return {
+        x, topY: beamTopY, height, width: beamWidth,
+        post: hasPost
+          ? {
+              topY: beamTopY + height,
+              bottomY: surfaceY,
+              embeddedBottomY: isGroundMount ? surfaceY + embedPx : null,
+              footingX: x - footingWidth / 2,
+              footingWidth,
+            }
+          : null,
+      };
+    })
+    .filter((b): b is AdditionalBeamGeometry => b !== null);
+
   return {
     svgW, svgH, groundY, surfaceY, deckY, deckHpx,
     postX, postWidth: 10, postTopY, postBottomY, embeddedBottomY,
@@ -357,6 +410,7 @@ export function computeSideProfileGeometry(input: SideProfileGeometryInput): Sid
     houseAttachment, groundAttachment, deckHeight, postHeight, projection, endCut, rearEndCut: rearEndCut || endCut, showRafterTail,
     isLattice, tubeXs, tubeSize,
     isFreestanding, isRoofMount, roofLineY, rear,
+    additionalBeams,
     isEaveMount, eaveSoffit, eaveFascia, eaveRoofLine, wallStubTopY, eaveWallX,
   };
 }

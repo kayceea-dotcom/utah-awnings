@@ -38,7 +38,7 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
     houseX, roofY, tailStartX, tailW,
     footingX, footingWidth,
     isDeck, isGroundMount, houseAttachment, groundAttachment, deckHeight, postHeight, showRafterTail,
-    isLattice, tubeXs, tubeSize, isFreestanding, isRoofMount, roofLineY, rear, rearEndCut,
+    isLattice, tubeXs, tubeSize, isFreestanding, isRoofMount, roofLineY, rear, additionalBeams, rearEndCut,
     isEaveMount, eaveSoffit, eaveFascia, eaveRoofLine, wallStubTopY, eaveWallX,
   } = geo;
 
@@ -161,6 +161,22 @@ export default function SideProfilePdf({ input, maxWidth = 220, maxHeight = 150 
               </G>
             );
           })()}
+
+          {/* Additional / Multi-Span Beams - same drawing as the on-screen diagram */}
+          {additionalBeams.map((b, i) => (
+            <G key={"extra-beam-" + i}>
+              {b.post && (isGroundMount ? (
+                <Rect x={b.post.footingX} y={b.post.bottomY} width={b.post.footingWidth} height={(b.post.embeddedBottomY ?? b.post.bottomY) - b.post.bottomY}
+                  fill="#e2e8f0" stroke="#64748b" strokeWidth={1} strokeDasharray="3,2" />
+              ) : (
+                <Rect x={b.post.footingX} y={groundY - 3} width={b.post.footingWidth} height={10} fill="#94a3b8" stroke="#64748b" strokeWidth={1} />
+              ))}
+              {b.post && (
+                <Rect x={b.x - postWidth / 2} y={b.post.topY} width={postWidth} height={b.post.bottomY - b.post.topY} fill="#1e293b" stroke="#0f172a" strokeWidth={1} />
+              )}
+              <Rect x={b.x - b.width / 2} y={b.topY} width={b.width} height={b.height} fill="#7c3aed" stroke="#5b21b6" strokeWidth={1} />
+            </G>
+          ))}
 
           {/* Footing / embedded post */}
           {isGroundMount ? (

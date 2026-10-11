@@ -3,7 +3,7 @@
 import { computeSideProfileGeometry } from "@/lib/sideProfileGeometry";
 import { endCutProfilePath } from "@/lib/endCutProfiles";
 import { wallBoardPattern } from "@/lib/pricing/shared";
-import type { WallConfig } from "@/lib/pricing/types";
+import type { BeamConfig, WallConfig } from "@/lib/pricing/types";
 
 interface SideProfileDiagramProps {
   projection: number;
@@ -24,6 +24,7 @@ interface SideProfileDiagramProps {
   rearBeamType?: string;
   rearEndCut?: string;
   walls?: WallConfig[];
+  beams?: BeamConfig[];
   className?: string;
 }
 
@@ -58,11 +59,12 @@ export default function SideProfileDiagram({
   rearBeamType,
   rearEndCut,
   walls = [],
+  beams = [],
   className = "",
 }: SideProfileDiagramProps) {
   const geo = computeSideProfileGeometry({
     projection, postHeight, deckHeight, houseAttachment, groundAttachment, beamType, wrapType, hasPanel, endCut, showRafterTail,
-    isLattice, latticeType, latticeSpacing, mountStyle, rearPostHeight, rearBeamType, rearEndCut,
+    isLattice, latticeType, latticeSpacing, mountStyle, rearPostHeight, rearBeamType, rearEndCut, beams,
   });
 
   if (!geo) {
@@ -82,7 +84,7 @@ export default function SideProfileDiagram({
     houseX, roofY, tailStartX, tailW,
     footingX, footingWidth,
     isDeck, isGroundMount, tubeXs, tubeSize,
-    isFreestanding, isRoofMount, roofLineY, rear,
+    isFreestanding, isRoofMount, roofLineY, rear, additionalBeams,
     isEaveMount, eaveSoffit, eaveFascia, eaveRoofLine, wallStubTopY, eaveWallX,
     rearEndCut: resolvedRearEndCut,
   } = geo;
@@ -243,6 +245,26 @@ export default function SideProfileDiagram({
               </g>
             );
           })}
+
+          {/* Additional / Multi-Span Beams - end-on, level with the main
+              beam, purple to match their dashed line in the top view. A
+              beam with posts gets its own post and footing; one without is
+              just the beam, supported by whatever it spans between. */}
+          {additionalBeams.map((b, i) => (
+            <g key={"extra-beam-" + i}>
+              {b.post && (isGroundMount ? (
+                <rect x={b.post.footingX} y={b.post.bottomY} width={b.post.footingWidth} height={(b.post.embeddedBottomY ?? b.post.bottomY) - b.post.bottomY}
+                  fill="#e2e8f0" stroke="#64748b" strokeWidth="1" strokeDasharray="3,2" />
+              ) : (
+                <rect x={b.post.footingX} y={groundY - 3} width={b.post.footingWidth} height={10} fill="#94a3b8" stroke="#64748b" strokeWidth="1" />
+              ))}
+              {b.post && (
+                <rect x={b.x - postWidth / 2} y={b.post.topY} width={postWidth} height={b.post.bottomY - b.post.topY}
+                  fill="#1e293b" stroke="#0f172a" strokeWidth="1" />
+              )}
+              <rect x={b.x - b.width / 2} y={b.topY} width={b.width} height={b.height} fill="#7c3aed" stroke="#5b21b6" strokeWidth="1" />
+            </g>
+          ))}
 
           {/* Footing (concrete/deck) or embedded post (ground mount) */}
           {isGroundMount ? (

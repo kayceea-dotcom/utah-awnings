@@ -107,6 +107,7 @@ export function buildContractData(proposal: Record<string, unknown>): ContractDa
           rearPostHeight: Number(inputs.rearPostHeight) || 0,
           rearBeamType: String(inputs.rearBeamType || inputs.beamType1 || "3x8"),
           rearEndCut: String(inputs.rearBeamEndCut || inputs.beamEndCut1 || "beveled"),
+          beams: (inputs.beams as BeamConfig[]) || [],
         }
       : null;
 

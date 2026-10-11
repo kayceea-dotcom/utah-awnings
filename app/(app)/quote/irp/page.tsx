@@ -588,6 +588,7 @@ export default function IRPQuotePage() {
                   rearPostHeight={inp.rearPostHeight}
                   rearBeamType={inp.rearBeamType}
                 walls={inp.walls}
+                beams={inp.beams}
                 />
               </div>
 
@@ -649,6 +650,7 @@ export default function IRPQuotePage() {
                 rearPostHeight={inp.rearPostHeight}
                 rearBeamType={inp.rearBeamType}
               walls={inp.walls}
+              beams={inp.beams}
               />
               <PriceSummaryPanel result={effectiveResult} />
               <CommissionPanel materialCost={effectiveResult.materialCost} price={commissionPrice} discount={inp.discount} isCashDiscount={isCashDiscount} tax={effectiveResult.taxes} />

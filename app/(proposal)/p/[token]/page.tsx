@@ -324,6 +324,7 @@ export default function ProposalPage() {
                   rearPostHeight={Number(inp.rearPostHeight) || 0}
                   rearBeamType={String(inp.rearBeamType || inp.beamType1 || "3x8")}
                   rearEndCut={String(inp.rearBeamEndCut || inp.beamEndCut1 || "beveled")}
+                  beams={(inp.beams as BeamConfig[]) || []}
                 />
               </div>
             </div>
