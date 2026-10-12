@@ -446,9 +446,9 @@ export default function ProposalPreviewPage() {
     setSavingMaterials(false);
   }
 
-  // Hands the PDF to the device's native share sheet (which on iOS/Android
-  // includes Print and print apps like HP Smart) instead of just downloading
-  // it.
+  // Phones: hands the PDF to the device's native share sheet (which on
+  // iOS/Android includes Print and print apps like HP Smart) instead of just
+  // downloading it. Desktop opens it in a new tab instead - see below.
   //
   // Browsers only allow share() within a few seconds of the tap, and the PDF
   // takes a moment to generate - on a phone that gap regularly expires the
@@ -462,6 +462,17 @@ export default function ProposalPreviewPage() {
   async function printOrDownloadPdf(kind: "contract" | "order", url: string, filename: string) {
     const nav = navigator as Navigator & { canShare?: (data: { files: File[] }) => boolean };
     setShareNote("");
+
+    // Desktop: just open the PDF in a new tab, like any other site - the
+    // browser's own PDF viewer has a Print button right there. Done
+    // synchronously (no await first) so it counts as the click and isn't
+    // popup-blocked. The share sheet below is phone-only: desktop Chrome/
+    // Windows also support it, but it shows the OS share panel (Outlook,
+    // Teams...) instead of anything print-related.
+    if (!isMobileDevice()) {
+      window.open(url, "_blank", "noopener,noreferrer");
+      return;
+    }
 
     // Second tap: share the held file right away, no await before share().
     if (readyShare && readyShare.kind === kind && Date.now() - readyShare.at < 5 * 60_000) {
@@ -512,6 +523,11 @@ export default function ProposalPreviewPage() {
     }
 
     downloadFile(file);
+  }
+
+  function isMobileDevice(): boolean {
+    const ua = navigator.userAgent || "";
+    return /Android|iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
   }
 
   // Shown under the print button whenever it has to fall back to a plain
