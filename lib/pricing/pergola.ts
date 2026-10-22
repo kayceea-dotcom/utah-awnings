@@ -2,7 +2,7 @@ import { RATES } from "./rates";
 import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, MountStyle, BeamConfig, WallConfig } from "./types";
 import {
   li, nextStockLength, anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge,
-  finalizePricing, shadeBeamItems, wallItems, beamTypeLabel, END_CUT_LABELS, roundUpToBag,
+  finalizePricing, shadeBeamItems, wallItems, beamTypeLabel, END_CUT_LABELS, roundUpToBag, beamPieces,
 } from "./shared";
 
 // Mirrors newport.ts/wpan.ts's beamLabel() - the side is always spelled out
@@ -107,18 +107,18 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
 
   // ── BEAMS — "none" buys neither the beam nor its steel insert ──
   if (inp.beamLength > 0 && inp.beamQty > 0 && inp.beamType !== "none") {
-    items.push(li("Beam (" + beamTypeLabel(inp.beamType) + ")", inp.beamQty, inp.beamLength, RATES.beam_3x8, "", inp.colorPergola));
+    items.push(li("Beam (" + beamTypeLabel(inp.beamType) + ")", inp.beamQty * beamPieces(inp.beamType), inp.beamLength, RATES.beam_3x8, "", inp.colorPergola));
     if (inp.beamType !== "3x8_no_insert") {
       const steelStock = nextStockLength(inp.beamLength);
-      items.push(li("Steel Insert", inp.beamQty, steelStock, RATES.steel_3x8_14ga_ft));
+      items.push(li("Steel Insert", inp.beamQty * beamPieces(inp.beamType), steelStock, RATES.steel_3x8_14ga_ft));
     }
   }
 
   // ── REAR BEAM — freestanding or roof mount only, replaces the house-side ledger ──
   if ((isFreestanding || isRoofMount) && inp.rearBeamLength > 0) {
-    items.push(li("Beam Rear (" + beamTypeLabel(inp.rearBeamType) + ")", 1, inp.rearBeamLength, RATES.beam_3x8, "", inp.colorPergola));
+    items.push(li("Beam Rear (" + beamTypeLabel(inp.rearBeamType) + ")", beamPieces(inp.rearBeamType), inp.rearBeamLength, RATES.beam_3x8, "", inp.colorPergola));
     if (inp.rearBeamType !== "3x8_no_insert") {
-      items.push(li("Steel Insert Rear", 1, nextStockLength(inp.rearBeamLength), RATES.steel_3x8_14ga_ft));
+      items.push(li("Steel Insert Rear", beamPieces(inp.rearBeamType), nextStockLength(inp.rearBeamLength), RATES.steel_3x8_14ga_ft));
     }
   }
 
@@ -153,11 +153,11 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
   (inp.beams || []).forEach((beam, idx) => {
     const num = idx + 2;
     if (beam.length > 0 && beam.qty > 0 && beam.type !== "none") {
-      items.push(li("Beam #" + num + " (" + beamTypeLabel(beam.type) + ")", beam.qty, beam.length, RATES.beam_3x8, "", inp.colorPergola));
+      items.push(li("Beam #" + num + " (" + beamTypeLabel(beam.type) + ")", beam.qty * beamPieces(beam.type), beam.length, RATES.beam_3x8, "", inp.colorPergola));
       if (beam.type !== "3x8_no_insert") {
-        items.push(li("Steel Insert #" + num, beam.qty, nextStockLength(beam.length), RATES.steel_3x8_14ga_ft));
+        items.push(li("Steel Insert #" + num, beam.qty * beamPieces(beam.type), nextStockLength(beam.length), RATES.steel_3x8_14ga_ft));
       }
-      items.push(li("3x8 Beam End Caps #" + num, beam.qty * 2, 0, RATES.endcap_3x8, "", inp.colorPergola));
+      items.push(li("3x8 Beam End Caps #" + num, beam.qty * 2 * beamPieces(beam.type), 0, RATES.endcap_3x8, "", inp.colorPergola));
     }
     if (beam.posts > 0) {
       const lenN = postMaterialLength(beam.postHeight, inp.groundAttachment);
@@ -241,10 +241,10 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
 
   // ── BEAM END CAPS — 2 per beam, none for "no beam" ──
   if (inp.beamLength > 0 && inp.beamQty > 0 && inp.beamType !== "none") {
-    items.push(li("3x8 Beam End Caps", inp.beamQty * 2, 0, RATES.endcap_3x8, "", inp.colorPergola));
+    items.push(li("3x8 Beam End Caps", inp.beamQty * 2 * beamPieces(inp.beamType), 0, RATES.endcap_3x8, "", inp.colorPergola));
   }
   if ((isFreestanding || isRoofMount) && inp.rearBeamLength > 0) {
-    items.push(li("3x8 Beam End Caps Rear", 2, 0, RATES.endcap_3x8, "", inp.colorPergola));
+    items.push(li("3x8 Beam End Caps Rear", 2 * beamPieces(inp.rearBeamType), 0, RATES.endcap_3x8, "", inp.colorPergola));
   }
 
   // ── SILICONE ──

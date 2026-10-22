@@ -4,7 +4,7 @@ import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, 
 import {
   li, nextStockLength, rollFormGutterPieces, wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen,
   anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, wallItems, beamTypeLabel,
-  END_CUT_LABELS, extrudedStockPieces, extrudedGutterRateForFt, extrudedFasciaQtyRate, roundUpToBag,
+  END_CUT_LABELS, beamPieces, extrudedStockPieces, extrudedGutterRateForFt, extrudedFasciaQtyRate, roundUpToBag,
   durakingGutterRateForFt, durakingFasciaQtyRate, durakingHangerRate,
 } from "./shared";
 
@@ -109,7 +109,7 @@ function panelWidthFt(type: WPanType): number {
 // cut - it isn't a report a rep reads on-screen, so there's no room for an
 // implied default the way the UI can afford.
 function beamLabel(type: string, endCut: string, endCutSide?: string): string {
-  const takesEndCut = type === "3x8" || type === "3x8_no_insert";
+  const takesEndCut = type === "3x8" || type === "3x8_no_insert" || type === "double_3x8";
   if (!takesEndCut || !endCut) return beamTypeLabel(type);
   const sideLabel = endCutSide === "one_end" ? "One End Cut" : "Both Ends Cut";
   return beamTypeLabel(type) + ", " + (END_CUT_LABELS[endCut] ?? endCut) + ", " + sideLabel;
@@ -242,27 +242,27 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
 
   if (inp.beamLength1 > 0) {
     const bq1 = inp.beamQty1 || 1;
-    items.push(li("Beam #1 (" + beamLabel(inp.beamType1, inp.beamEndCut1, inp.beamEndCutSide1) + ")", bq1, inp.beamLength1, beamRate(inp.beamType1), "", inp.colorPostsBeam));
+    items.push(li("Beam #1 (" + beamLabel(inp.beamType1, inp.beamEndCut1, inp.beamEndCutSide1) + ")", bq1 * beamPieces(inp.beamType1), inp.beamLength1, beamRate(inp.beamType1), "", inp.colorPostsBeam));
     const steelRate1 = steelRate(inp.beamType1);
     if (steelRate1 > 0) {
-      items.push(li("Steel Insert #1", bq1, nextStockLength(inp.beamLength1), steelRate1));
+      items.push(li("Steel Insert #1", bq1 * beamPieces(inp.beamType1), nextStockLength(inp.beamLength1), steelRate1));
     }
   }
   if (inp.beamLength2 > 0 && inp.beamType2) {
     const bq2 = inp.beamQty2 || 1;
-    items.push(li("Beam #2 (" + beamLabel(inp.beamType2, inp.beamEndCut2, inp.beamEndCutSide2) + ")", bq2, inp.beamLength2, beamRate(inp.beamType2), "", inp.colorPostsBeam));
+    items.push(li("Beam #2 (" + beamLabel(inp.beamType2, inp.beamEndCut2, inp.beamEndCutSide2) + ")", bq2 * beamPieces(inp.beamType2), inp.beamLength2, beamRate(inp.beamType2), "", inp.colorPostsBeam));
     const steelRate2 = steelRate(inp.beamType2);
     if (steelRate2 > 0) {
-      items.push(li("Steel Insert #2", bq2, nextStockLength(inp.beamLength2), steelRate2));
+      items.push(li("Steel Insert #2", bq2 * beamPieces(inp.beamType2), nextStockLength(inp.beamLength2), steelRate2));
     }
   }
 
   // ── REAR BEAM — freestanding or roof mount only, replaces the house-side Hanger ──
   if ((isFreestanding || isRoofMount) && inp.rearBeamLength > 0) {
-    items.push(li("Beam Rear (" + beamLabel(inp.rearBeamType, inp.rearBeamEndCut, inp.rearBeamEndCutSide) + ")", 1, inp.rearBeamLength, beamRate(inp.rearBeamType), "", inp.colorPostsBeam));
+    items.push(li("Beam Rear (" + beamLabel(inp.rearBeamType, inp.rearBeamEndCut, inp.rearBeamEndCutSide) + ")", beamPieces(inp.rearBeamType), inp.rearBeamLength, beamRate(inp.rearBeamType), "", inp.colorPostsBeam));
     const steelRateRear = steelRate(inp.rearBeamType);
     if (steelRateRear > 0) {
-      items.push(li("Steel Insert Rear", 1, nextStockLength(inp.rearBeamLength), steelRateRear));
+      items.push(li("Steel Insert Rear", beamPieces(inp.rearBeamType), nextStockLength(inp.rearBeamLength), steelRateRear));
     }
   }
 
@@ -299,13 +299,13 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   (inp.beams || []).forEach((beam, idx) => {
     const num = idx + 3;
     if (beam.length > 0 && beam.qty > 0) {
-      items.push(li("Beam #" + num + " (" + beamTypeLabel(beam.type) + ")", beam.qty, beam.length, beamRate(beam.type), "", inp.colorPostsBeam));
+      items.push(li("Beam #" + num + " (" + beamTypeLabel(beam.type) + ")", beam.qty * beamPieces(beam.type), beam.length, beamRate(beam.type), "", inp.colorPostsBeam));
       const steelRateN = steelRate(beam.type);
       if (steelRateN > 0) {
-        items.push(li("Steel Insert #" + num, beam.qty, nextStockLength(beam.length), steelRateN));
+        items.push(li("Steel Insert #" + num, beam.qty * beamPieces(beam.type), nextStockLength(beam.length), steelRateN));
       }
       if (beam.type !== "none") {
-        items.push(li("Beam End Caps #" + num, beam.qty * 2, 0, RATES.endcap_3x3, "", inp.colorPostsBeam));
+        items.push(li("Beam End Caps #" + num, beam.qty * 2 * beamPieces(beam.type), 0, RATES.endcap_3x3, "", inp.colorPostsBeam));
       }
     }
     if (beam.posts > 0) {
@@ -389,13 +389,13 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
 
   // ── BEAM END CAPS — no beam, no end cap ──
   if (inp.beamLength1 > 0 && inp.beamType1 !== "none") {
-    items.push(li("Beam End Caps #1", 2, 0, RATES.endcap_3x3, "", inp.colorPostsBeam));
+    items.push(li("Beam End Caps #1", 2 * beamPieces(inp.beamType1), 0, RATES.endcap_3x3, "", inp.colorPostsBeam));
   }
   if (inp.beamLength2 > 0) {
-    items.push(li("Beam End Caps #2", 2, 0, RATES.endcap_3x3, "", inp.colorPostsBeam));
+    items.push(li("Beam End Caps #2", 2 * beamPieces(inp.beamType2), 0, RATES.endcap_3x3, "", inp.colorPostsBeam));
   }
   if ((isFreestanding || isRoofMount) && inp.rearBeamLength > 0) {
-    items.push(li("Beam End Caps Rear", 2, 0, RATES.endcap_3x3, "", inp.colorPostsBeam));
+    items.push(li("Beam End Caps Rear", 2 * beamPieces(inp.rearBeamType), 0, RATES.endcap_3x3, "", inp.colorPostsBeam));
   }
 
   // ── SILICONE — based on combined beam length ──

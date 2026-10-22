@@ -53,7 +53,7 @@ const END_CUT_OPTS = [
 const BEAM_TYPE_OPTS: Record<string, { value: string; label: string }[]> = {
   pergola: [
     { value: "none", label: "No Beam" }, { value: "3x8", label: "3x8 Beam" },
-    { value: "3x8_no_insert", label: "3x8 Beam (No Insert)" }, { value: "3x3", label: "3x3 Beam" },
+    { value: "3x8_no_insert", label: "3x8 Beam (No Insert)" }, { value: "double_3x8", label: "Double 3x8 Beam" }, { value: "3x3", label: "3x3 Beam" },
     { value: "4_i_beam", label: "4in I-Beam" }, { value: "7_i_beam", label: "7in I-Beam" },
   ],
   flat_panel: [
@@ -63,12 +63,12 @@ const BEAM_TYPE_OPTS: Record<string, { value: string; label: string }[]> = {
   ],
   irp: [
     { value: "none", label: "No Beam" }, { value: "3x8", label: "3x8 Beam" },
-    { value: "3x8_no_insert", label: "3x8 Beam (No Insert)" }, { value: "3x3", label: "3x3 Beam" },
+    { value: "3x8_no_insert", label: "3x8 Beam (No Insert)" }, { value: "double_3x8", label: "Double 3x8 Beam" }, { value: "3x3", label: "3x3 Beam" },
     { value: "4_i_beam", label: "4in I-Beam" }, { value: "7_i_beam", label: "7in I-Beam" },
   ],
   w_pan: [
     { value: "none", label: "No Beam" }, { value: "3x3", label: "3x3 Beam" }, { value: "3x8", label: "3x8 Beam" },
-    { value: "3x8_no_insert", label: "3x8 Beam (No Insert)" }, { value: "4_i_beam", label: "4in I-Beam" }, { value: "7_i_beam", label: "7in I-Beam" },
+    { value: "3x8_no_insert", label: "3x8 Beam (No Insert)" }, { value: "double_3x8", label: "Double 3x8 Beam" }, { value: "4_i_beam", label: "4in I-Beam" }, { value: "7_i_beam", label: "7in I-Beam" },
   ],
 };
 
