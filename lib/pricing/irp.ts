@@ -1,7 +1,7 @@
 import { RATES } from "./rates";
 import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, MountStyle, BeamConfig, WallConfig } from "./types";
 import {
-  li, nextStockLength, beamMaterialRate, steelInsertRate, beamEndcapRate, beamTypeLabel, anchorQty,
+  li, nextStockLength, beamMaterialRate, beamPieces, steelInsertRate, beamEndcapRate, beamTypeLabel, anchorQty,
   wrapKitRates, wrapKitFinishingItems, deckHeightSurcharge, postMaterialLength, groundMountSurcharge,
   finalizePricing, shadeBeamItems, wallItems, roundUpToBag,
 } from "./shared";
@@ -180,36 +180,36 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
 
   // ── BEAMS ──
   if (inp.beamLength1 > 0) {
-    items.push(li("Beam #1 (" + beamTypeLabel(inp.beamType1) + ")", 1, inp.beamLength1, beamMaterialRate(inp.beamType1), "", inp.colorPostsBeam));
+    items.push(li("Beam #1 (" + beamTypeLabel(inp.beamType1) + ")", beamPieces(inp.beamType1), inp.beamLength1, beamMaterialRate(inp.beamType1), "", inp.colorPostsBeam));
     const steelRate1 = steelInsertRate(inp.beamType1);
     if (steelRate1 > 0) {
-      items.push(li("Steel Insert #1", 1, nextStockLength(inp.beamLength1), steelRate1));
+      items.push(li("Steel Insert #1", beamPieces(inp.beamType1), nextStockLength(inp.beamLength1), steelRate1));
     }
   }
   if (inp.beamLength2 > 0 && inp.beamType2) {
-    items.push(li("Beam #2 (" + beamTypeLabel(inp.beamType2) + ")", 1, inp.beamLength2, beamMaterialRate(inp.beamType2), "", inp.colorPostsBeam));
+    items.push(li("Beam #2 (" + beamTypeLabel(inp.beamType2) + ")", beamPieces(inp.beamType2), inp.beamLength2, beamMaterialRate(inp.beamType2), "", inp.colorPostsBeam));
     const steelRate2 = steelInsertRate(inp.beamType2);
     if (steelRate2 > 0) {
-      items.push(li("Steel Insert #2", 1, nextStockLength(inp.beamLength2), steelRate2));
+      items.push(li("Steel Insert #2", beamPieces(inp.beamType2), nextStockLength(inp.beamLength2), steelRate2));
     }
   }
 
   // ── BEAM END CAPS — sized to the beam's own type, zero for I-beams ──
   if (inp.beamLength1 > 0) {
-    items.push(li("Beam End Caps #1", 2, 0, beamEndcapRate(inp.beamType1), "", inp.colorPostsBeam));
+    items.push(li("Beam End Caps #1", 2 * beamPieces(inp.beamType1), 0, beamEndcapRate(inp.beamType1), "", inp.colorPostsBeam));
   }
   if (inp.beamLength2 > 0 && inp.beamType2) {
-    items.push(li("Beam End Caps #2", 2, 0, beamEndcapRate(inp.beamType2), "", inp.colorPostsBeam));
+    items.push(li("Beam End Caps #2", 2 * beamPieces(inp.beamType2), 0, beamEndcapRate(inp.beamType2), "", inp.colorPostsBeam));
   }
 
   // ── REAR BEAM — freestanding or roof mount only, replaces the house-side LRP Hanger ──
   if ((isFreestanding || isRoofMount) && inp.rearBeamLength > 0) {
-    items.push(li("Beam Rear (" + beamTypeLabel(inp.rearBeamType) + ")", 1, inp.rearBeamLength, beamMaterialRate(inp.rearBeamType), "", inp.colorPostsBeam));
+    items.push(li("Beam Rear (" + beamTypeLabel(inp.rearBeamType) + ")", beamPieces(inp.rearBeamType), inp.rearBeamLength, beamMaterialRate(inp.rearBeamType), "", inp.colorPostsBeam));
     const steelRateRear = steelInsertRate(inp.rearBeamType);
     if (steelRateRear > 0) {
-      items.push(li("Steel Insert Rear", 1, nextStockLength(inp.rearBeamLength), steelRateRear));
+      items.push(li("Steel Insert Rear", beamPieces(inp.rearBeamType), nextStockLength(inp.rearBeamLength), steelRateRear));
     }
-    items.push(li("Beam End Caps Rear", 2, 0, beamEndcapRate(inp.rearBeamType), "", inp.colorPostsBeam));
+    items.push(li("Beam End Caps Rear", 2 * beamPieces(inp.rearBeamType), 0, beamEndcapRate(inp.rearBeamType), "", inp.colorPostsBeam));
   }
 
   // ── POSTS ──
@@ -245,12 +245,12 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
   (inp.beams || []).forEach((beam, idx) => {
     const num = idx + 3;
     if (beam.length > 0 && beam.qty > 0) {
-      items.push(li("Beam #" + num + " (" + beamTypeLabel(beam.type) + ")", beam.qty, beam.length, beamMaterialRate(beam.type), "", inp.colorPostsBeam));
+      items.push(li("Beam #" + num + " (" + beamTypeLabel(beam.type) + ")", beam.qty * beamPieces(beam.type), beam.length, beamMaterialRate(beam.type), "", inp.colorPostsBeam));
       const steelRateN = steelInsertRate(beam.type);
       if (steelRateN > 0) {
-        items.push(li("Steel Insert #" + num, beam.qty, nextStockLength(beam.length), steelRateN));
+        items.push(li("Steel Insert #" + num, beam.qty * beamPieces(beam.type), nextStockLength(beam.length), steelRateN));
       }
-      items.push(li("Beam End Caps #" + num, beam.qty * 2, 0, beamEndcapRate(beam.type), "", inp.colorPostsBeam));
+      items.push(li("Beam End Caps #" + num, beam.qty * 2 * beamPieces(beam.type), 0, beamEndcapRate(beam.type), "", inp.colorPostsBeam));
     }
     if (beam.posts > 0) {
       const lenN = postMaterialLength(beam.postHeight, inp.groundAttachment);

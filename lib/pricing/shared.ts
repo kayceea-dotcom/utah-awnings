@@ -267,16 +267,22 @@ export function durakingHangerRate(hangerType: string, hangerLen: number): numbe
 
 // "double_3x8" is two 3x8 beams mounted to the front and back of the posts
 // (instead of one beam sitting on top) to get more span between posts - not a
-// distinct catalog rate, just 2x a single 3x8 beam's material/insert/endcap.
+// distinct catalog rate, just 2x a single 3x8 beam's material/insert/endcap -
+// so it's ordered as two pieces (beamPieces below) at the plain 3x8 rates,
+// not as one line at a doubled price.
 // "3x8_no_insert" is a plain 3x8 beam ordered without its steel insert (same
 // beam material and end cap - only the insert itself is skipped).
 
 // Beam material rate depends on the selected beam type. "none" (no beam at
 // all - the front gutter is what's structural instead) prices at $0, no
 // physical beam purchased.
+export function beamPieces(beamType: string): number {
+  return beamType === "double_3x8" ? 2 : 1;
+}
+
 export function beamMaterialRate(beamType: string): number {
   if (beamType === "none") return 0;
-  if (beamType === "double_3x8") return RATES.beam_3x8 * 2;
+  if (beamType === "double_3x8") return RATES.beam_3x8;
   if (beamType === "3x3") return RATES.beam_3x3;
   if (beamType === "4_i_beam") return RATES.beam_4_i_beam;
   if (beamType === "7_i_beam") return RATES.beam_7_i_beam;
@@ -287,7 +293,7 @@ export function beamMaterialRate(beamType: string): number {
 // and "3x8_no_insert" opts out of it on purpose (falls through to the 0 default).
 // "none" falls through the same way - no beam, no insert.
 export function steelInsertRate(beamType: string): number {
-  if (beamType === "double_3x8") return RATES.steel_3x8_14ga_ft * 2;
+  if (beamType === "double_3x8") return RATES.steel_3x8_14ga_ft;
   if (beamType === "3x3") return RATES.steel_3x3_g_beam_ft;
   if (beamType === "3x8") return RATES.steel_3x8_14ga_ft;
   return 0;
@@ -298,7 +304,7 @@ export function steelInsertRate(beamType: string): number {
 // physical beam, just shipped without the insert. "none" falls through the
 // same way - no beam, no end cap.
 export function beamEndcapRate(beamType: string): number {
-  if (beamType === "double_3x8") return RATES.endcap_3x8 * 2;
+  if (beamType === "double_3x8") return RATES.endcap_3x8;
   if (beamType === "3x3") return RATES.endcap_3x3;
   if (beamType === "3x8" || beamType === "3x8_no_insert") return RATES.endcap_3x8;
   return 0;
