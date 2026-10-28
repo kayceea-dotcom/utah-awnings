@@ -153,7 +153,7 @@ const DEFAULT: WPanInputs = {
   markup: 1.9, taxRate: 0.0745,
 };
 
-type SectionId = "job" | "dimensions" | "structure" | "attachment" | "posts" | "colors" | "extras" | "pricing";
+type SectionId = "job" | "dimensions" | "structure" | "attachment" | "posts" | "colors" | "extras" | "misc" | "pricing";
 
 function SectionCard({ id, title, open, onToggle, children }: {
   id: SectionId; title: string; open: boolean;
@@ -356,7 +356,7 @@ function PriceSummaryPanel({ result, onClose }: { result: ReturnType<typeof calc
 export default function WPanQuotePage() {
   const [inp, setInp] = useState<WPanInputs>(DEFAULT);
   const [open, setOpen] = useState<Set<SectionId>>(
-    new Set(["job","dimensions","structure","attachment","posts","colors","extras","pricing"] as SectionId[])
+    new Set(["job","dimensions","structure","attachment","posts","colors","extras","misc","pricing"] as SectionId[])
   );
   const [showMaterials, setShowMaterials] = useState(false);
   const [showPricePanel, setShowPricePanel] = useState(false);
@@ -630,6 +630,14 @@ export default function WPanQuotePage() {
                 <NumInput label="Shade Beam Length (ft)" value={inp.shadeBeamLength} onChange={(v) => setField("shadeBeamLength", v)} />
               </SectionCard>
 
+              <SectionCard id="misc" title="Misc" open={open.has("misc")} onToggle={toggleSection}>
+                <NumInput label="Footings ($)" value={inp.footings} onChange={(v) => setField("footings", v)} />
+                <NumInput label="Roof Mounts ($)" value={inp.roofMounts} onChange={(v) => setField("roofMounts", v)} />
+                <NumInput label="Misc ($)" value={inp.misc} onChange={(v) => setField("misc", v)}
+                  hint={groundMountAddOn > 0 ? `+$${groundMountAddOn} auto-added for ground-mount concrete/labor (${groundMountHoles} holes @ $100)` : undefined} />
+                <NumInput label="Tear Down ($)" value={inp.tearDown} onChange={(v) => setField("tearDown", v)} />
+              </SectionCard>
+
               <SectionCard id="pricing" title="Pricing Adjustments" open={open.has("pricing")} onToggle={toggleSection}>
                 <MarkupTierSelect tier={markupTier.tier} onTierChange={markupTier.setTier}
                   markup={inp.markup} onMarkupChange={(v) => setField("markup", v)} />
@@ -638,11 +646,6 @@ export default function WPanQuotePage() {
                   discount={inp.discount} onDiscountChange={(v) => setField("discount", v)} />
                 <CustomTotalOverride value={inp.customTotal} onChange={(v) => setField("customTotal", v)}
                   autoTotal={effectiveResult.totalJobSale - effectiveResult.customTotalAdjustment} />
-                <NumInput label="Footings ($)" value={inp.footings} onChange={(v) => setField("footings", v)} />
-                <NumInput label="Roof Mounts ($)" value={inp.roofMounts} onChange={(v) => setField("roofMounts", v)} />
-                <NumInput label="Misc ($)" value={inp.misc} onChange={(v) => setField("misc", v)}
-                  hint={groundMountAddOn > 0 ? `+$${groundMountAddOn} auto-added for ground-mount concrete/labor (${groundMountHoles} holes @ $100)` : undefined} />
-                <NumInput label="Tear Down ($)" value={inp.tearDown} onChange={(v) => setField("tearDown", v)} />
               </SectionCard>
 
               <div className="hidden lg:block">
