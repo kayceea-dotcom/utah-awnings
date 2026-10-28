@@ -6,6 +6,7 @@ import {
   anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, wallItems, beamTypeLabel,
   END_CUT_LABELS, beamPieces, extrudedStockPieces, extrudedGutterRateForFt, extrudedFasciaQtyRate, roundUpToBag,
   durakingGutterRateForFt, durakingFasciaQtyRate, durakingHangerRate,
+  houseFastenerItem,
 } from "./shared";
 
 export type WPanType = "wpan_032" | "duraking_025" | "duraking_032" | "duraking_040";
@@ -373,7 +374,7 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   const totalPanels = p1Qty + p2Qty;
   if (totalPanels > 0) {
     const lagQty = totalPanels * 4;
-    items.push(li("Lag Screws",            lagQty, 0, RATES.lag_screw));
+    items.push(houseFastenerItem(inp.houseAttachment, !isFreestanding && !isRoofMount, lagQty));
     items.push(li("#14x1 Colored Screws",  roundUpToBag(lagQty), 0, RATES.screw_14x1_colored,  "", inp.colorPostsBeam));
     items.push(li("#14x1 Washered Screws", roundUpToBag(lagQty), 0, RATES.screw_14x1_washered, "", inp.colorPostsBeam));
     const panScrewQty = roundUpToBag(totalPanels * 20);

@@ -106,6 +106,7 @@ const POST_HEIGHTS = [8, 10, 12, 14, 16, 20];
 const HOUSE_ATTACHMENTS = [
   { value: "stucco",      label: "Stucco" },
   { value: "siding",      label: "Siding" },
+  { value: "brick",       label: "Brick" },
   { value: "eave",        label: "Eave" },
   { value: "angled_eave", label: "Angled Eave" },
 ];

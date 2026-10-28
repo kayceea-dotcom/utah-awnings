@@ -119,6 +119,7 @@ const COLOR_OPTS = COLORS.map((c) => ({ value: c, label: c }));
 const HOUSE_ATTACHMENTS = [
   { value: "stucco",      label: "Stucco" },
   { value: "siding",      label: "Siding" },
+  { value: "brick",       label: "Brick" },
   { value: "eave",        label: "Eave" },
   { value: "angled_eave", label: "Angled Eave" },
 ];

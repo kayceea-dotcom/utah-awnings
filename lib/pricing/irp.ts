@@ -4,6 +4,7 @@ import {
   li, nextStockLength, beamMaterialRate, beamPieces, steelInsertRate, beamEndcapRate, beamTypeLabel, anchorQty,
   wrapKitRates, wrapKitFinishingItems, deckHeightSurcharge, postMaterialLength, groundMountSurcharge,
   finalizePricing, shadeBeamItems, wallItems, roundUpToBag,
+  houseFastenerItem,
 } from "./shared";
 
 export type IRPType = "lrp_3_024" | "lrp_3_032" | "lrp_4_032";
@@ -329,7 +330,7 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
   // ── FASTENERS ──
   const totalPanels = p1Qty + p2Qty;
   if (totalPanels > 0) {
-    items.push(li("Lag Screws",           totalPanels, 0, RATES.lag_screw));
+    items.push(houseFastenerItem(inp.houseAttachment, !isFreestanding && !isRoofMount, totalPanels));
     items.push(li("#14x1 Colored Screws", roundUpToBag(totalPanels), 0, RATES.screw_14x1_colored, "", inp.colorPostsBeam));
     const panScrewQty = roundUpToBag(totalPanels * 5.5);
     items.push(li("#8x1/2 Pan Color", panScrewQty, 0, RATES.screw_8x0_5_color));

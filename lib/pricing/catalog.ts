@@ -105,6 +105,7 @@ export const CATALOG: CatalogEntry[] = [
   { key: "screw_8x0_5_extruded", label: "#8x1/2 Pan Screw - Extruded", category: "Hardware", unit: "ea" },
   { key: "plug_5_8", label: "Plug 5/8in", category: "Hardware", unit: "ea" },
   { key: "anchor_wedge", label: "Wedge Anchor", category: "Hardware", unit: "ea" },
+  { key: "anchor_brick", label: "Brick Anchor", category: "Hardware", unit: "ea" },
   { key: "freestanding_bracket", label: "Freestanding Bracket", category: "Hardware", unit: "ea" },
   { key: "foam_gasket_ft", label: "Foam Gasket", category: "Hardware", unit: "ft" },
   { key: "pan_clip", label: "Pan Clip", category: "Hardware", unit: "ea" },

@@ -13,6 +13,16 @@ export function li(
   return { name, qty, length, unit, rate, amount: qty * (length || 1) * rate, color, displayLength };
 }
 
+// What fastens the cover's house-side hardware into the wall. Lag screws go
+// into siding/stucco/framing, but brick can't take them - it gets anchors
+// instead, same count. Only when actually attached to the house: freestanding
+// and roof mount have no house wall, so they keep the lags they always had.
+export function houseFastenerItem(houseAttachment: string, attachedToHouse: boolean, qty: number): LineItem {
+  return houseAttachment === "brick" && attachedToHouse
+    ? li("Brick Anchors", qty, 0, RATES.anchor_brick)
+    : li("Lag Screws", qty, 0, RATES.lag_screw);
+}
+
 // Strips positional labels ("#1", "#2", "Rear") off a line item name so two
 // rows for the same physical material - e.g. "Beam #1 (3x8, Beveled)" (front)
 // and "Beam Rear (3x8, Beveled)" - collapse to the same grouping key. The

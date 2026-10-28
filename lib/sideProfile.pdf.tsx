@@ -13,6 +13,7 @@ const bold = { fontFamily: "Helvetica-Bold" };
 const HOUSE_ATTACHMENT_LABELS: Record<string, string> = {
   stucco: "STUCCO WALL",
   siding: "SIDING WALL",
+  brick: "BRICK WALL",
   eave: "EAVE MOUNT",
   angled_eave: "ANGLED EAVE",
 };

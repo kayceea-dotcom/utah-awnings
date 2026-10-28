@@ -3,6 +3,7 @@ import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, 
 import {
   li, nextStockLength, anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge,
   finalizePricing, shadeBeamItems, wallItems, beamTypeLabel, END_CUT_LABELS, roundUpToBag, beamPieces,
+  houseFastenerItem,
 } from "./shared";
 
 // Mirrors newport.ts/wpan.ts's beamLabel() - the side is always spelled out
@@ -224,7 +225,7 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
 
   // ── LAGS — one per rafter ──
   if (rafterQty > 0) {
-    items.push(li("Lag Screws", rafterQty, 0, RATES.lag_screw));
+    items.push(houseFastenerItem(inp.houseAttachment, !isFreestanding && !isRoofMount, rafterQty));
     items.push(li("#14x1 Colored Screws", roundUpToBag(rafterQty * 10), 0, RATES.screw_14x1_colored, "", inp.colorPergola));
   }
 

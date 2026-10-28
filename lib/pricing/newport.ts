@@ -6,6 +6,7 @@ import {
   wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen, deckHeightSurcharge,
   postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, wallItems, END_CUT_LABELS,
   extrudedStockPieces, extrudedGutterRateForFt, extrudedFasciaQtyRate, roundUpToBag,
+  houseFastenerItem,
 } from "./shared";
 
 function panelRate(type: string): number {
@@ -320,7 +321,7 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
   // ── LAGS — combined width * 2 ──
   const fastenerQty = combinedWidth * 2;
   if (fastenerQty > 0) {
-    items.push(li("Lag Screws",            fastenerQty, 0, RATES.lag_screw));
+    items.push(houseFastenerItem(inp.houseAttachment, !isFreestanding && !isRoofMount, fastenerQty));
     items.push(li("#14x1 Colored Screws",  roundUpToBag(fastenerQty), 0, RATES.screw_14x1_colored,  "", inp.colorPostsBeam));
     items.push(li("#14x1 Washered Screws", roundUpToBag(fastenerQty), 0, RATES.screw_14x1_washered, "", inp.colorPostsBeam));
   }

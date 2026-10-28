@@ -107,6 +107,9 @@ export const RATES = {
   screw_8x0_5_extruded:   0.18,
   plug_5_8:               0.39,
   anchor_wedge:           4.42,
+  // Anchors that replace the lag screws when the house wall is brick - priced
+  // the same as a wedge anchor until a separate price is set.
+  anchor_brick:           4.42,
   foam_gasket_ft:         0.89,
   gutter_splice:          8.62,
   gutter_dam:             0.92,
