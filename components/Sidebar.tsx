@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import {
   Calculator, Users, Briefcase, FileText,
-  BarChart2, Settings, ChevronRight, Menu, X, LogOut, User
+  BarChart2, Settings, ChevronRight, Menu, X, LogOut, User, HardHat
 } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useProfile";
 import { createClient } from "@/lib/supabase/client";
@@ -17,6 +17,13 @@ const nav = [
   { href: "/proposals", icon: FileText,    label: "Proposals" },
   { href: "/reports",   icon: BarChart2,   label: "Reports" },
   { href: "/settings",  icon: Settings,    label: "Settings" },
+];
+
+// Installers only get their own assigned jobs and their profile - none of the
+// sales tools (see InstallerGuard for the matching redirect).
+const installerNav = [
+  { href: "/installer",         icon: HardHat, label: "My Jobs" },
+  { href: "/settings/profile",  icon: User,    label: "My Profile" },
 ];
 
 export default function Sidebar() {
@@ -93,7 +100,7 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {nav.map(({ href, icon: Icon, label }) => {
+        {(profile?.role === "installer" ? installerNav : nav).map(({ href, icon: Icon, label }) => {
           const active = pathname.startsWith(href);
           return (
             <Link

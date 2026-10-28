@@ -81,6 +81,7 @@ export async function POST(request: NextRequest) {
     // Role display label
     const roleLabel = role === "admin" ? "Admin"
       : role === "manager" ? "Manager"
+      : role === "installer" ? "Installer"
       : "Sales Rep";
 
     // Send our own branded email via Resend

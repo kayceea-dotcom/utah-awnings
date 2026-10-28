@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/client";
 export interface Profile {
   id: string;
   full_name: string;
-  role: "admin" | "manager" | "sales_rep";
+  role: "admin" | "manager" | "sales_rep" | "installer";
   company_id: string;
   phone: string | null;
   email: string | null;

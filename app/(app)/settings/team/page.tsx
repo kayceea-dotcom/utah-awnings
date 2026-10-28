@@ -94,12 +94,14 @@ export default function TeamPage() {
   const roleLabel = (role: string) => {
     if (role === "admin") return "Admin";
     if (role === "manager") return "Manager";
+    if (role === "installer") return "Installer";
     return "Sales Rep";
   };
 
   const roleColor = (role: string) => {
     if (role === "admin") return "bg-red-100 text-red-700";
     if (role === "manager") return "bg-blue-100 text-blue-700";
+    if (role === "installer") return "bg-amber-100 text-amber-700";
     return "bg-gray-100 text-gray-600";
   };
 
@@ -177,6 +179,7 @@ export default function TeamPage() {
                   >
                     <option value="sales_rep">Sales Rep</option>
                     <option value="manager">Manager</option>
+                    <option value="installer">Installer</option>
                     {profile?.role === "admin" && (
                       <option value="admin">Admin</option>
                     )}

@@ -13,6 +13,7 @@ import FollowUpBadge from "@/components/FollowUpBadge";
 import { useProfile } from "@/lib/hooks/useProfile";
 import { canTrash, trashProposal } from "@/lib/trash";
 import PaymentsPanel from "@/components/quote/PaymentsPanel";
+import InstallerAssignment from "@/components/quote/InstallerAssignment";
 import { listPayments } from "@/lib/payments";
 import { calcNewport } from "@/lib/pricing/newport";
 import { calcWPan } from "@/lib/pricing/wpan";
@@ -1351,6 +1352,12 @@ export default function ProposalPreviewPage() {
             totalJobSale={(q.total_job_sale as number | null) ?? 0}
             canManage={canTrash(profile, (quote?.created_by as string) || null)}
             recordedBy={profile?.id}
+          />
+
+          <InstallerAssignment
+            quoteId={quote.id as string}
+            companyId={quote.company_id as string}
+            canManage={canTrash(profile, (quote?.created_by as string) || null)}
           />
 
           {(status === "signed" || status === "accepted") && (
