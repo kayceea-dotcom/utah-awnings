@@ -117,6 +117,8 @@ export interface NewportInputs {
   rearPosts: number;
   rearPostHeight: number;
   skyliftPosts: number;
+  // Freestanding / Roof Mount only - brackets at $150 each, qty entered by the rep.
+  freestandingBrackets?: number;
   fanBeamQty: number;
   fanBeamLength: number;
   shadeBeamQty: number;

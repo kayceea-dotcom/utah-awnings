@@ -46,6 +46,7 @@ export interface IRPInputs {
   rearPosts: number;
   rearPostHeight: number;
   skyliftPosts: number;
+  freestandingBrackets?: number;
   shadeBeamQty: number;
   shadeBeamLength: number;
   beams: BeamConfig[];
@@ -237,6 +238,11 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
   // finishing entirely - self-contained hardware, priced per riser. ──
   if (isRoofMount && inp.skyliftPosts > 0) {
     items.push(li("SkyLift Post", inp.skyliftPosts, 0, RATES.skylift_post));
+  }
+
+  // ── FREESTANDING BRACKETS — freestanding or roof mount only, flat fee each ──
+  if ((isFreestanding || isRoofMount) && (inp.freestandingBrackets || 0) > 0) {
+    items.push(li("Freestanding Brackets", inp.freestandingBrackets as number, 0, RATES.freestanding_bracket));
   }
 
   // ── MULTI-SPAN BEAMS — additional beams beyond the two primary runs (Additional /

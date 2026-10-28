@@ -241,6 +241,11 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     items.push(li("SkyLift Post", inp.skyliftPosts, 0, RATES.skylift_post));
   }
 
+  // ── FREESTANDING BRACKETS — freestanding or roof mount only, flat fee each ──
+  if ((isFreestanding || isRoofMount) && (inp.freestandingBrackets || 0) > 0) {
+    items.push(li("Freestanding Brackets", inp.freestandingBrackets as number, 0, RATES.freestanding_bracket));
+  }
+
   // ── MULTI-SPAN BEAMS — additional beams beyond the two primary runs (Additional /
   // Multi-Span Beams section), each with its own posts. Numbered #3, #4... to
   // continue from the two primary beams, matching the builder UI's "Beam {idx+3}" label. ──

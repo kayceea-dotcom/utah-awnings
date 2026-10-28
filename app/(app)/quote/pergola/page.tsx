@@ -106,7 +106,7 @@ const DEFAULT: PergolaInputs = {
   houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
   mountStyle: "attached",
   rearBeamType: "3x8", rearBeamLength: 0,
-  rearPosts: 0, rearPostHeight: 10, skyliftPosts: 0,
+  rearPosts: 0, rearPostHeight: 10, skyliftPosts: 0, freestandingBrackets: 0,
   shadeBeamQty: 0, shadeBeamLength: 16,
   beams: [], walls: [],
   discount: 0, customTotal: null, footings: 0, roofMounts: 0, misc: 0, tearDown: 0,
@@ -479,6 +479,10 @@ export default function PergolaQuotePage() {
                     <NumInput label="SkyLift Posts (qty)" value={inp.skyliftPosts} onChange={(v) => setField("skyliftPosts", v)}
                       hint="$150 each" />
                   </>
+                )}
+                {(inp.mountStyle === "freestanding" || inp.mountStyle === "roof_mount") && (
+                  <NumInput label="Freestanding Brackets (qty)" value={inp.freestandingBrackets ?? 0} onChange={(v) => setField("freestandingBrackets", v)}
+                    hint="$150 each" />
                 )}
               </SectionCard>
 

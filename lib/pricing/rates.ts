@@ -31,6 +31,10 @@ export const RATES = {
   // literal ground/deck post
   skylift_post:      150.00,
 
+  // Freestanding / Roof Mount bracket - flat fee each, added on top of the
+  // posts/risers the rep picks above
+  freestanding_bracket: 150.00,
+
   // Hangers (roll form is cut to length, priced per ft; extruded/A-Rail are
   // only sold in these fixed stock lengths - flat fee per piece regardless of
   // the run's actual needed length, same as elevated_roof_mount already was)

@@ -144,7 +144,7 @@ const DEFAULT: WPanInputs = {
   houseAttachment: "stucco", groundAttachment: "concrete", deckHeight: 0,
   mountStyle: "attached",
   rearBeamType: "3x3", rearBeamEndCut: "beveled", rearBeamEndCutSide: "both_ends", rearBeamLength: 0,
-  rearPosts: 0, rearPostHeight: 10, skyliftPosts: 0,
+  rearPosts: 0, rearPostHeight: 10, skyliftPosts: 0, freestandingBrackets: 0,
   fanBeamQty: 0, fanBeamLength: 16,
   shadeBeamQty: 0, shadeBeamLength: 16,
   beams: [], walls: [],
@@ -593,6 +593,10 @@ export default function WPanQuotePage() {
                     <NumInput label="SkyLift Posts (qty)" value={inp.skyliftPosts} onChange={(v) => setField("skyliftPosts", v)}
                       hint="$150 each" />
                   </>
+                )}
+                {(inp.mountStyle === "freestanding" || inp.mountStyle === "roof_mount") && (
+                  <NumInput label="Freestanding Brackets (qty)" value={inp.freestandingBrackets ?? 0} onChange={(v) => setField("freestandingBrackets", v)}
+                    hint="$150 each" />
                 )}
                 <NumInput label="Downspouts" value={inp.downspouts} onChange={(v) => setField("downspouts", v)}
                   hint={inp.jogType === "deck" && inp.projection2 > 0 && inp.width2 > 0 ? "Min 2 - one per gutter section" : undefined} />
