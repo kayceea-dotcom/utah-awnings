@@ -123,3 +123,51 @@ describe("DuraKing hanger/gutter/fascia - its own hardware, distinct from Tri-V'
     expect(findItem(aRail.lineItems, "DuraKing A-Rail")!.rate).toBeCloseTo(RATES.hanger_a_rail_10, 2);
   });
 });
+
+describe("DuraKing color plates - gutter/fascia only come in white", () => {
+  function dk() {
+    const inp = wpanBase();
+    inp.panelType = "duraking_032";
+    inp.hangerType = "duraking_hanger";
+    inp.wrapType = "none";
+    return inp;
+  }
+
+  it("white gutter/fascia gets no plates", () => {
+    const inp = dk(); inp.colorGutterFascia = "White";
+    const out = calcWPan(inp);
+    expect(findItem(out.lineItems, "DuraKing Front Plate (2x6)")).toBeUndefined();
+    expect(findItem(out.lineItems, "DuraKing Side Plates (2x6)")).toBeUndefined();
+  });
+
+  it("any other color adds a 2x6 front plate and side plates in that color", () => {
+    const inp = dk(); inp.colorGutterFascia = "Ebony";
+    const out = calcWPan(inp);
+    const front = findItem(out.lineItems, "DuraKing Front Plate (2x6)")!;
+    const side = findItem(out.lineItems, "DuraKing Side Plates (2x6)")!;
+    expect(front.color).toBe("Ebony");
+    expect(front.length).toBe(inp.width1 + 1);
+    expect(front.rate).toBe(RATES.fascia_extruded_2x6_ft);
+    expect(side.color).toBe("Ebony");
+    expect(side.qty).toBeGreaterThan(0);
+  });
+
+  it("a wrap kit already has its own front plate, so only side plates are added", () => {
+    const inp = dk(); inp.colorGutterFascia = "Ebony"; inp.wrapType = "2x6";
+    const out = calcWPan(inp);
+    expect(findItem(out.lineItems, "DuraKing Front Plate (2x6)")).toBeUndefined();
+    expect(findItem(out.lineItems, "DuraKing Side Plates (2x6)")).toBeTruthy();
+  });
+
+  it("freestanding adds a rear front plate too", () => {
+    const inp = dk(); inp.colorGutterFascia = "Ebony";
+    inp.mountStyle = "freestanding"; inp.rearBeamLength = 20; inp.rearPosts = 2;
+    expect(findItem(calcWPan(inp).lineItems, "DuraKing Front Plate Rear (2x6)")).toBeTruthy();
+  });
+
+  it("Tri-V is unaffected - its gutter comes in colors", () => {
+    const inp = wpanBase(); inp.colorGutterFascia = "Ebony";
+    const out = calcWPan(inp);
+    expect(out.lineItems.some((i) => i.name.startsWith("DuraKing"))).toBe(false);
+  });
+});

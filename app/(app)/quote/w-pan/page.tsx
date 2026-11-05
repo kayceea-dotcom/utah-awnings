@@ -609,7 +609,8 @@ export default function WPanQuotePage() {
 
               <SectionCard id="colors" title="Colors" open={open.has("colors")} onToggle={toggleSection}>
                 <SelectInput label="Pan Color" value={inp.colorPans} onChange={(v) => setField("colorPans", v)} options={COLOR_OPTS} />
-                <SelectInput label="Gutter / Fascia" value={inp.colorGutterFascia} onChange={(v) => setField("colorGutterFascia", v)} options={COLOR_OPTS} />
+                <SelectInput label="Gutter / Fascia" value={inp.colorGutterFascia} onChange={(v) => setField("colorGutterFascia", v)} options={COLOR_OPTS}
+                  hint={inp.panelType !== "wpan_032" && inp.colorGutterFascia !== "White" ? "DuraKing gutter/fascia only come in white - 2x6 front and side plates in this color are added" : undefined} />
                 <SelectInput label="Posts / Beam" value={inp.colorPostsBeam} onChange={(v) => setField("colorPostsBeam", v)} options={COLOR_OPTS} span={2} />
               </SectionCard>
 

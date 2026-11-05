@@ -227,6 +227,21 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     }
   }
 
+  // ── DURAKING COLOR PLATES — DuraKing's gutter and fascia only come in white.
+  // Any other gutter/fascia color means 2x6 boards (in that color) on the
+  // front and sides to cover them; white goes without. A wrap kit already
+  // adds its own front plate, so only the side plates are added then. ──
+  if (isDuraKing && inp.colorGutterFascia && inp.colorGutterFascia !== "White") {
+    const sidePlates = fasciaQtyLen(maxProjection, 1);
+    items.push(li("DuraKing Side Plates (2x6)", sidePlates.qty, sidePlates.length, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
+    if (!hasWrap) {
+      items.push(li("DuraKing Front Plate (2x6)", 1, totalWidth + 1, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
+      if (isFreestanding || isRoofMount) {
+        items.push(li("DuraKing Front Plate Rear (2x6)", 1, totalWidth + 1, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
+      }
+    }
+  }
+
   // ── BEAMS — "none" (front gutter acts as the beam) buys no beam material
   // or insert, matching lib/pricing/shared.ts's beamMaterialRate/
   // steelInsertRate for the products that share those. ──
