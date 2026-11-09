@@ -5,6 +5,7 @@ import {
   li, nextStockLength, rollFormGutterPieces, wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen,
   anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, wallItems, beamTypeLabel,
   END_CUT_LABELS, beamPieces, extrudedStockPieces, extrudedGutterRateForFt, extrudedFasciaQtyRate, roundUpToBag,
+  downspoutPieceQty, flashingQty, panClipQty, PAN_SCREWS_8X05_PER_PANEL, PAN_SCREWS_14X1_PER_PANEL,
   durakingGutterRateForFt, durakingFasciaQtyRate, durakingHangerRate,
   houseFastenerItem,
 } from "./shared";
@@ -378,15 +379,15 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
 
   // ── DOWNSPOUTS ──
   if (inp.downspouts > 0) {
-    items.push(li("Downspouts 2x3 10ft",  inp.downspouts,     0, RATES.downspout_2x3_10, "", inp.colorGutterFascia));
+    items.push(li("Downspouts 2x3 10ft",  downspoutPieceQty(inp.downspouts, [inp.posts1 > 0 ? inp.postHeight1 : 0, inp.posts2 > 0 ? inp.postHeight2 : 0]), 0, RATES.downspout_2x3_10, "", inp.colorGutterFascia));
     items.push(li("Elbows 2x3",           inp.downspouts * 3, 0, RATES.elbow_2x3,        "", inp.colorGutterFascia));
     items.push(li("Dropouts",             inp.downspouts,     0, RATES.dropout));
     items.push(li("Downspout Straps",     inp.downspouts * 2, 0, RATES.downspout_strap,  "", inp.colorGutterFascia));
   }
 
-  // ── FLASHING — wall attachment posts only (posts1) ──
-  if (inp.posts1 > 0) {
-    items.push(li("Flashing", inp.posts1, 0, RATES.flashing));
+  // ── FLASHING — 10' pieces that overlap, so one per 9' of hanger (house-attached only) ──
+  if (!isFreestanding && !isRoofMount && hangerLen > 0) {
+    items.push(li("Flashing", flashingQty(hangerLen), 0, RATES.flashing));
   }
 
   // ── FASTENERS ──
@@ -394,9 +395,10 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
   if (totalPanels > 0) {
     const lagQty = totalPanels * 4;
     items.push(houseFastenerItem(inp.houseAttachment, !isFreestanding && !isRoofMount, lagQty));
-    items.push(li("#14x1 Colored Screws",  roundUpToBag(lagQty), 0, RATES.screw_14x1_colored,  "", inp.colorPostsBeam));
-    items.push(li("#14x1 Washered Screws", roundUpToBag(lagQty), 0, RATES.screw_14x1_washered, "", inp.colorPostsBeam));
-    const panScrewQty = roundUpToBag(totalPanels * 20);
+    const screw14Qty = roundUpToBag(totalPanels * PAN_SCREWS_14X1_PER_PANEL);
+    items.push(li("#14x1 Colored Screws",  screw14Qty, 0, RATES.screw_14x1_colored,  "", inp.colorPostsBeam));
+    items.push(li("#14x1 Washered Screws", screw14Qty, 0, RATES.screw_14x1_washered, "", inp.colorPostsBeam));
+    const panScrewQty = roundUpToBag(totalPanels * PAN_SCREWS_8X05_PER_PANEL);
     items.push(li("#8x1/2 Pan Color",  panScrewQty, 0, RATES.screw_8x0_5_color,    "", inp.colorPans));
     items.push(li("#8x1/2 Extruded",   panScrewQty, 0, RATES.screw_8x0_5_extruded, "", inp.colorPostsBeam));
   }
@@ -432,7 +434,8 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
 
   // ── PAN CLIPS ──
   if (totalPanels > 0) {
-    items.push(li("Pan Clips", Math.ceil(totalPanels / 2), 0, RATES.pan_clip));
+    const hasBeam = (inp.beamLength1 > 0 && inp.beamType1 !== "none") || inp.beamLength2 > 0;
+    items.push(li("Pan Clips", panClipQty(Math.ceil(totalPanels / 2), hasBeam), 0, RATES.pan_clip));
   }
 
   // ── FAN BEAM ──

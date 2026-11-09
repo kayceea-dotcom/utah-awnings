@@ -4,6 +4,7 @@ import {
   li, nextStockLength, beamMaterialRate, beamPieces, steelInsertRate, beamEndcapRate, beamTypeLabel, anchorQty,
   wrapKitRates, wrapKitFinishingItems, deckHeightSurcharge, postMaterialLength, groundMountSurcharge,
   finalizePricing, shadeBeamItems, wallItems, roundUpToBag,
+  downspoutPieceQty, flashingQty, PAN_SCREWS_8X05_PER_PANEL, PAN_SCREWS_14X1_PER_PANEL,
   houseFastenerItem,
 } from "./shared";
 
@@ -316,23 +317,23 @@ export function calcIRP(inp: IRPInputs): QuoteResult {
   // ── DOWNSPOUTS ──
   items.push(li("Gutter Dams", inp.downspouts * 2, 0, RATES.gutter_dam));
   if (inp.downspouts > 0) {
-    items.push(li("Downspouts 2x3 10ft",  inp.downspouts,     0, RATES.downspout_2x3_10));
+    items.push(li("Downspouts 2x3 10ft",  downspoutPieceQty(inp.downspouts, [inp.posts1 > 0 ? inp.postHeight1 : 0, inp.posts2 > 0 ? inp.postHeight2 : 0]), 0, RATES.downspout_2x3_10));
     items.push(li("Elbows 2x3",           inp.downspouts * 3, 0, RATES.elbow_2x3));
     items.push(li("Dropouts",             inp.downspouts,     0, RATES.dropout));
     items.push(li("Downspout Straps",     inp.downspouts * 2, 0, RATES.downspout_strap));
   }
 
-  // ── FLASHING ──
-  if (totalPosts > 0) {
-    items.push(li("Flashing", totalPosts, 0, RATES.flashing));
+  // ── FLASHING — 10' pieces that overlap, so one per 9' of hanger (house-attached only) ──
+  if (!isFreestanding && !isRoofMount && combinedBeamLength > 0) {
+    items.push(li("Flashing", flashingQty(combinedBeamLength), 0, RATES.flashing));
   }
 
   // ── FASTENERS ──
   const totalPanels = p1Qty + p2Qty;
   if (totalPanels > 0) {
     items.push(houseFastenerItem(inp.houseAttachment, !isFreestanding && !isRoofMount, totalPanels));
-    items.push(li("#14x1 Colored Screws", roundUpToBag(totalPanels), 0, RATES.screw_14x1_colored, "", inp.colorPostsBeam));
-    const panScrewQty = roundUpToBag(totalPanels * 5.5);
+    items.push(li("#14x1 Colored Screws", roundUpToBag(totalPanels * PAN_SCREWS_14X1_PER_PANEL), 0, RATES.screw_14x1_colored, "", inp.colorPostsBeam));
+    const panScrewQty = roundUpToBag(totalPanels * PAN_SCREWS_8X05_PER_PANEL);
     items.push(li("#8x1/2 Pan Color", panScrewQty, 0, RATES.screw_8x0_5_color));
   }
 

@@ -213,6 +213,33 @@ const ONE_PIECE_FASCIA_MAX_PROJECTION_FT = 12;
 export function roundUpToBag(qty: number, bagSize = 100): number {
   return Math.ceil(qty / bagSize) * bagSize;
 }
+
+// Downspouts only come in 10' pieces. A post taller than 8' (once the elbows
+// and the run out to the post are accounted for) needs a second piece per
+// downspout.
+export const DOWNSPOUT_ONE_PIECE_MAX_POST_FT = 8;
+export function downspoutPieceQty(downspouts: number, postHeights: number[]): number {
+  const tall = postHeights.some((h) => h > DOWNSPOUT_ONE_PIECE_MAX_POST_FT);
+  return downspouts * (tall ? 2 : 1);
+}
+
+// Flashing is sold in 10' pieces and each piece has to overlap the next a
+// little, so one piece per 9' of hanger.
+export const FLASHING_COVER_FT = 9;
+export function flashingQty(hangerFt: number): number {
+  return hangerFt > 0 ? Math.ceil(hangerFt / FLASHING_COVER_FT) : 0;
+}
+
+// Per-panel fasteners: 6 of the #8x1/2 and 2 of the #14x1, bagged by 100.
+export const PAN_SCREWS_8X05_PER_PANEL = 6;
+export const PAN_SCREWS_14X1_PER_PANEL = 2;
+
+// Pan clips: with no beam on the job nothing else holds the panels down, so
+// the clip count doubles.
+export function panClipQty(baseQty: number, hasBeam: boolean): number {
+  return hasBeam ? baseQty : baseQty * 2;
+}
+
 export function extrudedStockPieces(neededFt: number): number[] {
   const singleFit = EXTRUDED_STOCK_TIERS.find((t) => neededFt <= t);
   if (singleFit) return [singleFit];

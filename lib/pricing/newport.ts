@@ -6,6 +6,7 @@ import {
   wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen, deckHeightSurcharge,
   postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, wallItems, END_CUT_LABELS,
   extrudedStockPieces, extrudedGutterRateForFt, extrudedFasciaQtyRate, roundUpToBag,
+  downspoutPieceQty, flashingQty, panClipQty, PAN_SCREWS_8X05_PER_PANEL, PAN_SCREWS_14X1_PER_PANEL,
   houseFastenerItem,
 } from "./shared";
 
@@ -311,27 +312,31 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
 
   // ── DOWNSPOUTS ──
   if (inp.downspouts > 0) {
-    items.push(li("Downspouts 2x3 10ft",  inp.downspouts,     0, RATES.downspout_2x3_10, "", inp.colorGutterFascia));
+    items.push(li("Downspouts 2x3 10ft",  downspoutPieceQty(inp.downspouts, [inp.posts1 > 0 ? inp.postHeight1 : 0, inp.posts2 > 0 ? inp.postHeight2 : 0]), 0, RATES.downspout_2x3_10, "", inp.colorGutterFascia));
     items.push(li("Elbows 2x3",           inp.downspouts * 3, 0, RATES.elbow_2x3,        "", inp.colorGutterFascia));
     items.push(li("Dropouts",             inp.downspouts,     0, RATES.dropout));
     items.push(li("Downspout Straps",     inp.downspouts * 2, 0, RATES.downspout_strap,  "", inp.colorGutterFascia));
   }
 
-  // ── FLASHING — combined width / 10, rounded up ──
-  if (combinedWidth > 0) {
-    items.push(li("Flashing", Math.ceil(combinedWidth / 10), 0, RATES.flashing));
+  // ── FLASHING — 10' pieces that overlap, so one per 9' of hanger (house-attached only) ──
+  if (!isFreestanding && !isRoofMount && combinedWidth > 0) {
+    items.push(li("Flashing", flashingQty(combinedWidth), 0, RATES.flashing));
   }
 
   // ── LAGS — combined width * 2 ──
   const fastenerQty = combinedWidth * 2;
   if (fastenerQty > 0) {
     items.push(houseFastenerItem(inp.houseAttachment, !isFreestanding && !isRoofMount, fastenerQty));
-    items.push(li("#14x1 Colored Screws",  roundUpToBag(fastenerQty), 0, RATES.screw_14x1_colored,  "", inp.colorPostsBeam));
-    items.push(li("#14x1 Washered Screws", roundUpToBag(fastenerQty), 0, RATES.screw_14x1_washered, "", inp.colorPostsBeam));
   }
 
-  // ── PAN SCREWS — combined width * 10, rounded up to the nearest 100 ──
-  const panScrewQty = roundUpToBag(combinedWidth * 10);
+  // ── PANEL SCREWS — per panel (2 x #14x1, 6 x #8x1/2), rounded up to the nearest 100 ──
+  const totalPanels = p1Qty + p2Qty;
+  const screw14Qty = roundUpToBag(totalPanels * PAN_SCREWS_14X1_PER_PANEL);
+  if (screw14Qty > 0) {
+    items.push(li("#14x1 Colored Screws",  screw14Qty, 0, RATES.screw_14x1_colored,  "", inp.colorPostsBeam));
+    items.push(li("#14x1 Washered Screws", screw14Qty, 0, RATES.screw_14x1_washered, "", inp.colorPostsBeam));
+  }
+  const panScrewQty = roundUpToBag(totalPanels * PAN_SCREWS_8X05_PER_PANEL);
   if (panScrewQty > 0) {
     items.push(li("#8x1/2 Pan Color",  panScrewQty, 0, RATES.screw_8x0_5_color,    "", inp.colorPans));
     items.push(li("#8x1/2 Extruded",   panScrewQty, 0, RATES.screw_8x0_5_extruded, "", inp.colorPostsBeam));
@@ -372,7 +377,8 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
 
   // ── PAN CLIPS ──
   if (p1Qty > 0) {
-    items.push(li("Pan Clips", Math.ceil(p1Qty / 4), 0, RATES.pan_clip));
+    const hasBeam = inp.beamLength1 > 0 || inp.beamLength2 > 0;
+    items.push(li("Pan Clips", panClipQty(Math.ceil(p1Qty / 4), hasBeam), 0, RATES.pan_clip));
   }
 
   // ── FAN BEAM ──
