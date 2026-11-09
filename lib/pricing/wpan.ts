@@ -194,6 +194,10 @@ export function calcWPan(inp: WPanInputs): QuoteResult {
     // Gets an extra 1ft past the projection to cut to fit on site.
     const { qty: rollFasciaQty, length: rollFasciaStockLen } = fasciaQtyLen(maxProjection, 1);
     items.push(li("Side Fascia (2x6)", rollFasciaQty, rollFasciaStockLen, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
+    // One beveled 2x6 end cap on the exposed end of each side plate (two sides,
+    // even when a single piece is cut in half to make both) - and again on the
+    // far end when freestanding/roof mount leaves it exposed.
+    items.push(li("End Caps (2x6, Beveled) - Side Plates", isFreestanding || isRoofMount ? 4 : 2, 0, RATES.endcap_2x6, "", inp.colorGutterFascia));
     if (isFreestanding || isRoofMount) {
       items.push(li("Roll Form Gutter Rear", rollPieces.qty, rollPieces.length, RATES.gutter_roll_form_ft, "", inp.colorGutterFascia));
     }

@@ -318,3 +318,14 @@ describe("LRP 3in .024 panel - new lighter gauge alongside the existing .032", (
     expect(findItem(calcIRP(inp4).lineItems, "LRP Panel #1 (4.25in .032)")).toBeTruthy();
   });
 });
+
+describe("Newport roll form gutter - beveled 2x6 end caps on the side plates", () => {
+  it("adds 2 with the 2x6 side fascia, none for extruded", () => {
+    const rf = newportBase(); rf.gutterType = "roll_form";
+    const caps = findItem(calcNewport(rf).lineItems, "End Caps (2x6, Beveled) - Side Plates")!;
+    expect(caps.qty).toBe(2);
+    expect(caps.rate).toBe(RATES.endcap_2x6);
+    const ex = newportBase(); ex.gutterType = "extruded";
+    expect(findItem(calcNewport(ex).lineItems, "End Caps (2x6, Beveled) - Side Plates")).toBeUndefined();
+  });
+});

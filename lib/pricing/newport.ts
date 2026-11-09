@@ -141,6 +141,10 @@ export function calcNewport(inp: NewportInputs): QuoteResult {
     } else if (inp.gutterType === "roll_form") {
       const { qty: fasciaQty, length: fasciaLen } = fasciaQtyLen(maxProjection, 1);
       items.push(li("Side Fascia (2x6)", fasciaQty, fasciaLen, RATES.fascia_extruded_2x6_ft, "", inp.colorGutterFascia));
+      // One beveled 2x6 end cap on the exposed end of each side plate (two
+      // sides, even when a single piece is cut in half to make both) - and
+      // again on the far end when freestanding/roof mount leaves it exposed.
+      items.push(li("End Caps (2x6, Beveled) - Side Plates", isFreestanding || isRoofMount ? 4 : 2, 0, RATES.endcap_2x6, "", inp.colorGutterFascia));
     }
   }
 

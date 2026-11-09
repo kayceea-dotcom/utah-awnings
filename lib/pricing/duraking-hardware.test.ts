@@ -171,3 +171,25 @@ describe("DuraKing color plates - gutter/fascia only come in white", () => {
     expect(out.lineItems.some((i) => i.name.startsWith("DuraKing"))).toBe(false);
   });
 });
+
+describe("Roll form gutter - beveled 2x6 end caps on the side plates", () => {
+  it("V-Panel: roll form adds 2 end caps with the side fascia", () => {
+    const inp = wpanBase(); inp.gutterType = "roll_form";
+    const out = calcWPan(inp);
+    const caps = findItem(out.lineItems, "End Caps (2x6, Beveled) - Side Plates")!;
+    expect(caps.qty).toBe(2);
+    expect(caps.rate).toBe(RATES.endcap_2x6);
+    expect(findItem(out.lineItems, "Side Fascia (2x6)")).toBeTruthy();
+  });
+
+  it("V-Panel: extruded gutter doesn't get them", () => {
+    const inp = wpanBase(); inp.gutterType = "extruded";
+    expect(findItem(calcWPan(inp).lineItems, "End Caps (2x6, Beveled) - Side Plates")).toBeUndefined();
+  });
+
+  it("V-Panel: freestanding exposes the far end too, so 4", () => {
+    const inp = wpanBase(); inp.gutterType = "roll_form";
+    inp.mountStyle = "freestanding"; inp.rearBeamLength = 20; inp.rearPosts = 2;
+    expect(findItem(calcWPan(inp).lineItems, "End Caps (2x6, Beveled) - Side Plates")!.qty).toBe(4);
+  });
+});
