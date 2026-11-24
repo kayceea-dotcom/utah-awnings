@@ -18,10 +18,12 @@ import type { NewportInputs } from "@/lib/pricing/types";
 import TopBar from "@/components/TopBar";
 import Field from "@/components/quote/Field";
 import MaterialList from "@/components/quote/MaterialList";
-import { ChevronDown, ChevronUp, RefreshCw, DollarSign, Send } from "lucide-react";
+import { ChevronDown, ChevronUp, RefreshCw, DollarSign, Send, PencilRuler } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useProfile";
 import { useRouter } from "next/navigation";
 import SaveQuoteModal from "@/components/quote/SaveQuoteModal";
+import CoverSketchModal from "@/components/quote/CoverSketchModal";
+import type { SketchRuns } from "@/lib/coverSketch";
 import CoverDiagram from "@/components/quote/CoverDiagram";
 import SideProfileDiagram from "@/components/quote/SideProfileDiagram";
 import CommissionPanel from "@/components/quote/CommissionPanel";
@@ -436,6 +438,7 @@ export default function FlatPanelQuotePage() {
   const [showMaterials, setShowMaterials] = useState(false);
   const [showPricePanel, setShowPricePanel] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showSketch, setShowSketch] = useState(false);
   const [siteSnowLoad, setSiteSnowLoad] = useState<SiteSnowLoad | null>(null);
   const { profile } = useProfile();
   const router = useRouter();
@@ -540,6 +543,37 @@ export default function FlatPanelQuotePage() {
     setInp((p) => ({ ...p, width2: v, beamLength2: Math.max(0, v - 0.5) }));
   }
 
+  // The drawing only ever fills in the same numbers typed below. A second run
+  // needs the same companions the form would ask for (panel, beam, posts), so
+  // they're copied from run 1 - adjustable afterwards like anything else.
+  function applySketch(r: SketchRuns) {
+    setInp((p) => {
+      const hasRun2 = r.jog !== "none" && r.width2 > 0 && r.projection2 > 0;
+      const next: NewportInputs = {
+        ...p,
+        width1: r.width1, projection1: r.projection1,
+        width2: hasRun2 ? r.width2 : 0, projection2: hasRun2 ? r.projection2 : 0,
+        beamLength1: Math.max(0, r.width1 - 0.5),
+        beamLength2: hasRun2 ? Math.max(0, r.width2 - 0.5) : 0,
+      };
+      if (hasRun2) {
+        next.jogType = r.jog === "house" ? "house" : "ground";
+        if (!next.panelType2) next.panelType2 = p.panelType1;
+        if (!next.beamType2) { next.beamType2 = p.beamType1; next.beamEndCut2 = p.beamEndCut1; }
+        if (next.posts2 === 0) next.posts2 = 2;
+      } else if (p.width2 > 0) {
+        next.posts2 = 0;
+      }
+      return next;
+    });
+  }
+  function sketchNote(r: SketchRuns): string | null {
+    const hasRun2 = r.jog !== "none" && r.width2 > 0 && r.projection2 > 0;
+    if (hasRun2 && !(inp.width2 > 0)) return "Adds a second run: Panel and Beam #2 copy run 1 and it gets 2 posts. Adjust them under Structure and Posts.";
+    if (!hasRun2 && inp.width2 > 0) return "Removes the second run and its posts.";
+    return null;
+  }
+
   function toggleSection(s: SectionId) {
     setOpen((prev) => {
       const next = new Set(prev);
@@ -574,6 +608,11 @@ export default function FlatPanelQuotePage() {
 
               <SectionCard id="dimensions" title="Dimensions" open={open.has("dimensions")} onToggle={toggleSection}>
                 <SnowLoadCard value={siteSnowLoad} onChange={setSiteSnowLoad} />
+                <div className="col-span-2">
+                  <button type="button" onClick={() => setShowSketch(true)} className="btn-secondary w-full text-sm py-2.5">
+                    <PencilRuler size={15} /> Draw the cover
+                  </button>
+                </div>
                 <NumInput label="Projection #1 (ft)" value={inp.projection1} onChange={(v) => setField("projection1", v)} hint="Depth of cover" />
                 <NumInput label="Width #1 (ft)" value={inp.width1} onChange={handleWidth1Change} hint="Along the house" />
                 <NumInput label="Projection #2 (ft)" value={inp.projection2} onChange={(v) => setField("projection2", v)} hint="0 if single run" />
@@ -900,6 +939,17 @@ export default function FlatPanelQuotePage() {
             </div>
           </div>
         </div>
+      )}
+      {showSketch && (
+        <CoverSketchModal
+          initial={{
+            width1: inp.width1, projection1: inp.projection1, width2: inp.width2, projection2: inp.projection2,
+            jog: inp.width2 > 0 && inp.projection2 > 0 ? (inp.jogType === "house" ? "house" : "ground") : "none",
+          }}
+          onApply={applySketch}
+          onClose={() => setShowSketch(false)}
+          applyNote={sketchNote}
+        />
       )}
       {showSaveModal && (
         <SaveQuoteModal
