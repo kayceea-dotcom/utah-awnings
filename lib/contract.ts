@@ -2,7 +2,7 @@ import { beamTypeLabel } from "./pricing/shared";
 import { TERMS } from "./contractTerms";
 import type { CoverDiagramGeometryInput } from "./coverDiagramGeometry";
 import type { SideProfileGeometryInput } from "./sideProfileGeometry";
-import type { BeamConfig } from "./pricing/types";
+import type { BeamConfig, PostLayout } from "./pricing/types";
 
 export interface ContractData {
   companyName: string;
@@ -87,6 +87,7 @@ export function buildContractData(proposal: Record<string, unknown>): ContractDa
           beamType2: String(inputs.beamType2 || "3x8"),
           mountStyle: String(inputs.mountStyle || "attached"),
           rearPosts: inputs.mountStyle === "roof_mount" ? Number(inputs.skyliftPosts) || 0 : Number(inputs.rearPosts) || 0,
+          postLayout: (inputs.postLayout as PostLayout | undefined) || undefined,
         }
       : null;
 

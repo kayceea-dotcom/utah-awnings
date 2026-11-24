@@ -12,7 +12,7 @@ import SideProfileDiagram from "@/components/quote/SideProfileDiagram";
 import { consolidateLineItems } from "@/lib/pricing/shared";
 import { resizeImage } from "@/lib/imageResize";
 import { INSTALL_CHECKLIST, checklistComplete, checklistDoneCount, type InstallChecklistState } from "@/lib/installChecklist";
-import type { BeamConfig, LineItem, WallConfig } from "@/lib/pricing/types";
+import type { BeamConfig, LineItem, WallConfig, PostLayout } from "@/lib/pricing/types";
 import { ArrowLeft, Phone, MapPin, CalendarDays, Camera, X, CheckCircle2, Loader2 } from "lucide-react";
 
 interface JobQuote {
@@ -197,6 +197,7 @@ export default function InstallerJobPage() {
                 beamType2={String(inp.beamType2 || "3x8")}
                 mountStyle={String(inp.mountStyle || "attached")}
                 rearPosts={Number(inp.rearPosts) || 0}
+                postLayout={inp.postLayout as PostLayout | undefined}
               />
               <SideProfileDiagram
                 projection={Number(inp.projection1) || 0}

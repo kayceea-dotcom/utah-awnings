@@ -1,6 +1,6 @@
 import { RATES } from "./rates";
 import { CATALOG_BY_KEY } from "./catalog";
-import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, EndCut, EndCutSide, MountStyle, BeamConfig, WallConfig } from "./types";
+import type { LineItem, QuoteResult, HouseAttachmentType, GroundAttachmentType, EndCut, EndCutSide, MountStyle, BeamConfig, WallConfig, PostLayout } from "./types";
 import {
   li, nextStockLength, rollFormGutterPieces, wrapKitRates, wrapKitFinishingItems, wrapKitRafterItems, fasciaQtyLen,
   anchorQty, deckHeightSurcharge, postMaterialLength, groundMountSurcharge, finalizePricing, shadeBeamItems, wallItems, beamTypeLabel,
@@ -65,6 +65,7 @@ export interface WPanInputs {
   shadeBeamLength: number;
   beams: BeamConfig[];
   walls: WallConfig[];
+  postLayout?: PostLayout;
   discount: number;
   customTotal: number | null;
   footings: number;

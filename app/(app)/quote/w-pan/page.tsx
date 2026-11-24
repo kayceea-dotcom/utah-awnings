@@ -27,6 +27,7 @@ import { useRouter } from "next/navigation";
 import SaveQuoteModal from "@/components/quote/SaveQuoteModal";
 import CoverSketchModal from "@/components/quote/CoverSketchModal";
 import type { SketchRuns } from "@/lib/coverSketch";
+import { postLayoutOf, type CoverLayout } from "@/lib/coverLayout";
 import AdditionalBeamsSection from "@/components/quote/AdditionalBeamsSection";
 import WallsSection from "@/components/quote/WallsSection";
 import SnowLoadCard, { type SiteSnowLoad } from "@/components/quote/SnowLoadCard";
@@ -473,7 +474,7 @@ export default function WPanQuotePage() {
   // The drawing only ever fills in the same numbers typed below, with the same
   // beam-length rules as the width fields. A second run needs the companions
   // the form would ask for (beam #2, posts), copied from run 1.
-  function applySketch(r: SketchRuns) {
+  function applySketch(r: SketchRuns, layout: CoverLayout | null) {
     setInp((p) => {
       const hasRun2 = r.jog !== "none" && r.width2 > 0 && r.projection2 > 0;
       const isHouse = hasRun2 && r.jog === "house";
@@ -490,6 +491,29 @@ export default function WPanQuotePage() {
         if (next.posts2 === 0) next.posts2 = 2;
       } else if (p.width2 > 0) {
         next.posts2 = 0;
+      }
+      const shapeChanged = next.width1 !== p.width1 || next.projection1 !== p.projection1
+        || next.width2 !== p.width2 || next.projection2 !== p.projection2 || (hasRun2 && next.jogType !== p.jogType);
+      if (layout) {
+        // Beams and posts drawn on the cover: beam types, counts, and exact spots.
+        next.beamType1 = layout.beamType1 as never;
+        next.posts1 = layout.xs1.length;
+        next.posts2 = hasRun2 ? layout.xs2.length : 0;
+        if (hasRun2) {
+          next.beamType2 = layout.beamType2 as never;
+          if (next.beamType2 && !next.beamEndCut2) next.beamEndCut2 = p.beamEndCut1;
+        }
+        if (p.mountStyle !== "attached") {
+          next.rearBeamType = layout.rearBeamType as never;
+          if (p.mountStyle === "roof_mount") next.skyliftPosts = layout.rearXs.length;
+          else next.rearPosts = layout.rearXs.length;
+        }
+        next.beams = layout.extra;
+        next.postLayout = postLayoutOf(layout);
+      } else if (shapeChanged) {
+        // Old exact post spots don't fit a new shape.
+        next.postLayout = undefined;
+        next.beams = (p.beams || []).map((b) => ({ ...b, postXs: undefined }));
       }
       return next;
     });
@@ -711,6 +735,7 @@ export default function WPanQuotePage() {
                   beamType2={inp.beamType2}
                   mountStyle={inp.mountStyle}
                   rearPosts={inp.mountStyle === "roof_mount" ? inp.skyliftPosts : inp.rearPosts}
+                  postLayout={inp.postLayout}
                 />
                 <SideProfileDiagram
                   projection={inp.projection1}
@@ -775,6 +800,7 @@ export default function WPanQuotePage() {
                 beamType2={inp.beamType2}
                 mountStyle={inp.mountStyle}
                 rearPosts={inp.mountStyle === "roof_mount" ? inp.skyliftPosts : inp.rearPosts}
+                  postLayout={inp.postLayout}
               />
               <SideProfileDiagram
                 projection={inp.projection1}
@@ -822,6 +848,14 @@ export default function WPanQuotePage() {
           onApply={applySketch}
           onClose={() => setShowSketch(false)}
           applyNote={sketchNote}
+          layoutInit={{
+            mountStyle: inp.mountStyle, beamType1: inp.beamType1, beamType2: inp.beamType2, rearBeamType: inp.rearBeamType,
+            posts1: inp.posts1, posts2: inp.posts2,
+            rearCount: inp.mountStyle === "roof_mount" ? inp.skyliftPosts : inp.mountStyle === "freestanding" ? inp.rearPosts : 0,
+            postLayout: inp.postLayout, beams: inp.beams,
+          }}
+          beamOptions={{ primary: BEAM_TYPES_1, secondary: [{ value: "", label: "None" }, ...BEAM_TYPES], plain: BEAM_TYPES }}
+          defaultPostHeight={inp.postHeight1}
         />
       )}
       {showSaveModal && (

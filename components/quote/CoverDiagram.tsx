@@ -1,6 +1,6 @@
 "use client";
 
-import type { BeamConfig, WallConfig } from "@/lib/pricing/types";
+import type { BeamConfig, WallConfig, PostLayout } from "@/lib/pricing/types";
 import { computeCoverDiagramGeometry } from "@/lib/coverDiagramGeometry";
 
 // Small triangular arrowhead for a dimension line, pointing outward (away
@@ -33,6 +33,7 @@ interface CoverDiagramProps {
   latticeSpacing?: string;
   mountStyle?: string;
   rearPosts?: number;
+  postLayout?: PostLayout;
   className?: string;
 }
 
@@ -54,12 +55,13 @@ export default function CoverDiagram({
   latticeSpacing = "1x",
   mountStyle = "attached",
   rearPosts = 0,
+  postLayout,
   className = "",
 }: CoverDiagramProps) {
   const geo = computeCoverDiagramGeometry({
     projection1, width1, projection2, width2, posts1, posts2,
     downspouts, downspoutSide, showRafterTails, jogType, beams, beamType1, beamType2,
-    isLattice, latticeType, latticeSpacing, mountStyle, rearPosts,
+    isLattice, latticeType, latticeSpacing, mountStyle, rearPosts, postLayout,
   });
 
   if (!geo) {

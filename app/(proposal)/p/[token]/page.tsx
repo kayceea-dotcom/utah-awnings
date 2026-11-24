@@ -7,7 +7,7 @@ import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { CheckCircle, Check, PenLine, CreditCard, Banknote, Phone } from "lucide-react";
 import { estimateMonthlyPayment, HEARTH_PREQUALIFY_URL, FINANCING_APR, FINANCING_TERM_YEARS } from "@/lib/financing";
-import type { BeamConfig } from "@/lib/pricing/types";
+import type { BeamConfig, PostLayout } from "@/lib/pricing/types";
 import { beamTypeLabel } from "@/lib/pricing/shared";
 import { TERMS } from "@/lib/contractTerms";
 
@@ -307,6 +307,7 @@ export default function ProposalPage() {
                 beamType2={String(inp.beamType2 || "3x8")}
                 mountStyle={String(inp.mountStyle || "attached")}
                 rearPosts={Number(inp.rearPosts) || 0}
+                postLayout={inp.postLayout as PostLayout | undefined}
               />
               <div className="mt-4">
                 <SideProfileDiagram

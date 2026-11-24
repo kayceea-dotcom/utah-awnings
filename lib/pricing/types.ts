@@ -38,6 +38,19 @@ export interface BeamConfig {
   positionFromHouse: number;
   posts: number;
   postHeight: number;
+  /** Exact post spots along this beam (ft from the cover's left edge), set by
+   *  the cover sketch. Only drawn when its length matches `posts` - the
+   *  count is still what prices. */
+  postXs?: number[];
+}
+
+/** Exact post spots from the cover sketch, in feet from the cover's left edge.
+ *  Counts (posts1/posts2/rear) still drive pricing; these only place the posts
+ *  on the diagram, and are ignored if a count no longer matches. */
+export interface PostLayout {
+  xs1?: number[];
+  xs2?: number[];
+  rearXs?: number[];
 }
 
 // Optional horizontal-2x6-board privacy wall, filling the gap between the
@@ -82,6 +95,7 @@ export interface NewportInputs {
   beamEndCutSide2: EndCutSide;
   beams: BeamConfig[];
   walls: WallConfig[];
+  postLayout?: PostLayout;
   gutterType: GutterType;
   hangerType: HangerType;
   posts1: number;

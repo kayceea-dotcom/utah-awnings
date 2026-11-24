@@ -1,4 +1,12 @@
-import type { BeamConfig } from "./pricing/types";
+import type { BeamConfig, PostLayout } from "./pricing/types";
+
+// Post spots drawn in the cover sketch (feet from the cover's left edge) -> px,
+// but only when they still fit the beam: right count, inside its span.
+function customPostXs(xs: number[] | undefined, count: number, minFt: number, maxFt: number, ox: number, scale: number): number[] | null {
+  if (!Array.isArray(xs) || xs.length !== count) return null;
+  if (!xs.every((x) => Number.isFinite(x) && x >= minFt - 0.01 && x <= maxFt + 0.01)) return null;
+  return xs.map((x) => ox + x * scale);
+}
 
 export interface CoverDiagramGeometryInput {
   projection1: number;
@@ -32,6 +40,10 @@ export interface CoverDiagramGeometryInput {
   /** Rear beam's own post (or SkyLift riser) count - spaced across the full
    *  combined width, same rule as the front run's posts. */
   rearPosts?: number;
+  /** Exact post spots from the cover sketch. Each list is only used when its
+   *  length still matches the matching post count; otherwise that beam's posts
+   *  fall back to the even spacing below. */
+  postLayout?: PostLayout;
 }
 
 export interface CoverDiagramGeometry {
@@ -132,6 +144,7 @@ export function computeCoverDiagramGeometry(input: CoverDiagramGeometryInput): C
     latticeSpacing = "1x",
     mountStyle = "attached",
     rearPosts = 0,
+    postLayout,
   } = input;
 
   if (!projection1 || !width1) return null;
@@ -206,10 +219,14 @@ export function computeCoverDiagramGeometry(input: CoverDiagramGeometryInput): C
   // within just one run's own portion - matching the single real beam
   // that's actually there. A ground jog keeps each run's own posts fully
   // separate, since the beam itself literally steps between them.
+  const custom1 = customPostXs(postLayout?.xs1, posts1, 0, isHouseJog ? totalWidth : width1, ox, scale);
+  const custom2 = hasRun2
+    ? (customPostXs(postLayout?.xs2, posts2, isHouseJog ? 0 : width1, totalWidth, ox, scale) ?? (posts2 === 0 && custom1 ? [] : null))
+    : null;
   const postPositions = isHouseJog
-    ? spacedPostXs(posts1 + posts2, totalWidth, ox, totalW)
-    : spacedPostXs(posts1, width1, ox, coverW1);
-  const postPositions2 = isHouseJog ? [] : hasRun2 ? spacedPostXs(posts2, width2, ox + coverW1, coverW2) : [];
+    ? (custom1 && custom2 ? [...custom1, ...custom2].sort((a, b) => a - b) : spacedPostXs(posts1 + posts2, totalWidth, ox, totalW))
+    : (custom1 ?? spacedPostXs(posts1, width1, ox, coverW1));
+  const postPositions2 = isHouseJog ? [] : hasRun2 ? (custom2 ?? spacedPostXs(posts2, width2, ox + coverW1, coverW2)) : [];
 
   // Freestanding/Roof Mount - a rear beam + its own posts (or SkyLift roof
   // risers) along the house-wall edge, spanning the full combined width as
@@ -219,14 +236,16 @@ export function computeCoverDiagramGeometry(input: CoverDiagramGeometryInput): C
   // roof" only matters in the side profile.
   const isFreestanding = mountStyle === "freestanding" || mountStyle === "roof_mount";
   const rearBeamY = oy + 1.5 * scale;
-  const rearPostPositions = isFreestanding ? spacedPostXs(rearPosts, totalWidth, ox, totalW) : [];
+  const rearPostPositions = isFreestanding
+    ? (customPostXs(postLayout?.rearXs, rearPosts, 0, totalWidth, ox, scale) ?? spacedPostXs(rearPosts, totalWidth, ox, totalW))
+    : [];
 
   // Multi-span beams (Additional / Multi-Span Beams) - run 1 only. Y position is
   // measured from the house wall (0 = at the house), clamped inside the cover so
   // an out-of-range value doesn't draw off the diagram.
   const multiSpanBeams = beams.map((b) => {
     const y = run1TopY + Math.max(0, Math.min(b.positionFromHouse, projection1)) * scale;
-    return { y, postXs: spacedPostXs(b.posts, width1, ox, coverW1) };
+    return { y, postXs: customPostXs(b.postXs, b.posts, 0, width1, ox, scale) ?? spacedPostXs(b.posts, width1, ox, coverW1) };
   });
 
   const tailCount = Math.round(width1 / 2);
