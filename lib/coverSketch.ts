@@ -78,7 +78,7 @@ function cross(a: Pt, b: Pt, c: Pt): number {
 /** Drops duplicate and collinear points and slides the outline so its top-left
  *  bounding corner sits at (0,0). */
 export function normalizeShape(pts: Pt[]): Pt[] {
-  let cur = pts.map((p) => ({ x: p.x, y: p.y }));
+  const cur = pts.map((p) => ({ x: p.x, y: p.y }));
   let changed = true;
   while (changed && cur.length > 2) {
     changed = false;
