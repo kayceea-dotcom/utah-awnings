@@ -1,7 +1,7 @@
 "use client";
 
 import type { SceneConfig, RunConfig } from "@/lib/scene/types";
-import { computeFrontEdgeHeightFt, wrapColumnSizeFt } from "@/lib/scene/geometry";
+import { computeFrontEdgeHeightFt, wrapColumnSizeFt, ROOF_PANEL_THICKNESS_FT } from "@/lib/scene/geometry";
 import { getBeamProfile } from "@/lib/scene/beamProfiles";
 import Posts from "./Posts";
 import Beam from "./Beam";
@@ -49,9 +49,9 @@ export default function CoverAssembly({ scene, showDimensions }: { scene: SceneC
   // A ground/deck jog steps the FRONT, so each run gets its own gutter at its own front edge.
   const steppedFront = scene.jog === "ground" && scene.runs.length > 1;
   const frontRuns = steppedFront
-    ? scene.runs.map((r) => ({ xOffsetFt: r.originOffsetFt, widthFt: r.widthFt, zFt: r.zOffsetFt + r.projectionFt, heightFt: frontEdgeHeight(r) }))
+    ? scene.runs.map((r) => ({ xOffsetFt: r.originOffsetFt, widthFt: r.widthFt, zFt: r.zOffsetFt + r.projectionFt, heightFt: frontEdgeHeight(r) + ROOF_PANEL_THICKNESS_FT }))
     : scene.runs.length > 0
-      ? [{ xOffsetFt: 0, widthFt: totalWidthFt, zFt: frontZFt, heightFt: roofHeightFt }]
+      ? [{ xOffsetFt: 0, widthFt: totalWidthFt, zFt: frontZFt, heightFt: roofHeightFt + ROOF_PANEL_THICKNESS_FT }]
       : [];
 
   const downspoutXs =
@@ -62,7 +62,7 @@ export default function CoverAssembly({ scene, showDimensions }: { scene: SceneC
         : [DOWNSPOUT_END_INSET_FT, totalWidthFt - DOWNSPOUT_END_INSET_FT];
   const downspouts = downspoutXs.map((x) => {
     const run = scene.runs.find((r) => x >= r.originOffsetFt - 0.001 && x <= r.originOffsetFt + r.widthFt + 0.001) ?? scene.runs[0];
-    return { x, zFt: run.zOffsetFt + run.projectionFt, heightFt: frontEdgeHeight(run) };
+    return { x, zFt: run.zOffsetFt + run.projectionFt, heightFt: frontEdgeHeight(run) + ROOF_PANEL_THICKNESS_FT };
   });
   const firstRun = scene.runs[0];
 
@@ -100,13 +100,16 @@ export default function CoverAssembly({ scene, showDimensions }: { scene: SceneC
             />
           )}
           {run.rafterTails.enabled && (
-            <RafterTails
-              xs={run.rafterTails.positions.map((p) => run.originOffsetFt + p.x)}
-              zFt={run.projectionFt}
-              heightFt={computeFrontEdgeHeightFt(run.postHeightFt, run.projectionFt, run.roofPitchDeg)}
-              colorName={scene.colors.postsBeam}
-              style={tailStyleFor(run.beamEndCut)}
-            />
+            // The tails are the roof's own rafters poking out, so they tilt with it.
+            <group position={[0, run.postHeightFt, 0]} rotation={[(run.roofPitchDeg * Math.PI) / 180, 0, 0]}>
+              <RafterTails
+                xs={run.rafterTails.positions.map((p) => run.originOffsetFt + p.x)}
+                zFt={run.projectionFt}
+                heightFt={ROOF_PANEL_THICKNESS_FT}
+                colorName={scene.colors.postsBeam}
+                style={tailStyleFor(run.beamEndCut)}
+              />
+            </group>
           )}
           {showDimensions && <DimensionOverlay run={run} />}
         </group>
@@ -145,13 +148,16 @@ export default function CoverAssembly({ scene, showDimensions }: { scene: SceneC
       )}
 
       {firstRun?.hasWrap && (
-        <group position={[0, 0, firstRun.zOffsetFt]}>
+        // Side trim follows the roof's slope (hung off its top edge), not a level line.
+        <group position={[0, firstRun.postHeightFt, firstRun.zOffsetFt]} rotation={[(firstRun.roofPitchDeg * Math.PI) / 180, 0, 0]}>
           <SidePlates
             xLeftFt={firstRun.originOffsetFt}
             xRightFt={firstRun.originOffsetFt + firstRun.widthFt}
             projectionFt={firstRun.projectionFt}
             topYFt={
-              scene.gutterType === "extruded" ? roofHeightFt - SIDE_FASCIA_HEIGHT_FT : getGutterTopY(roofHeightFt)
+              scene.gutterType === "extruded"
+                ? ROOF_PANEL_THICKNESS_FT - SIDE_FASCIA_HEIGHT_FT
+                : getGutterTopY(ROOF_PANEL_THICKNESS_FT)
             }
             wrapType={firstRun.wrapType}
             colorName={scene.colors.postsBeam}
@@ -182,12 +188,12 @@ export default function CoverAssembly({ scene, showDimensions }: { scene: SceneC
         </group>
       ))}
       {firstRun && scene.gutterType === "extruded" && (
-        <group position={[0, 0, firstRun.zOffsetFt]}>
+        <group position={[0, firstRun.postHeightFt, firstRun.zOffsetFt]} rotation={[(firstRun.roofPitchDeg * Math.PI) / 180, 0, 0]}>
           <SideFascia
             xLeftFt={firstRun.originOffsetFt}
             xRightFt={firstRun.originOffsetFt + firstRun.widthFt}
             projectionFt={firstRun.projectionFt}
-            heightFt={roofHeightFt}
+            heightFt={ROOF_PANEL_THICKNESS_FT}
             colorName={scene.colors.gutterFascia}
           />
         </group>

@@ -2,8 +2,9 @@
 
 import type { RunConfig } from "@/lib/scene/types";
 import { getMaterial } from "@/lib/scene/colors";
+import { ROOF_PANEL_THICKNESS_FT } from "@/lib/scene/geometry";
 
-const THICKNESS_FT = 0.08;
+const THICKNESS_FT = ROOF_PANEL_THICKNESS_FT;
 const RIB_HEIGHT_FT = 0.14;
 const RIB_WIDTH_FT = 0.07;
 

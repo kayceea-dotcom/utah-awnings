@@ -81,6 +81,10 @@ export function wrapColumnSizeFt(wrapType: string): number {
   return 0;
 }
 
+// The cover's roof is a real panel with some depth, not a sheet of paper: the
+// edge trim (side fascia, plates, rafter tails, gutter) is hung off its top edge.
+export const ROOF_PANEL_THICKNESS_FT = 0.2;
+
 export function formatFeetInches(ft: number): string {
   const totalInches = Math.round(ft * 12);
   const feet = Math.floor(totalInches / 12);
