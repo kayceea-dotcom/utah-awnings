@@ -72,6 +72,15 @@ export function computeFrontEdgeHeightFt(postHeightFt: number, projectionFt: num
   return postHeightFt - projectionFt * Math.tan((roofPitchDeg * Math.PI) / 180);
 }
 
+// A wrap kit boxes each post (and the beam) in mitered aluminum plates, so the
+// finished column is as wide as the plate: a 2x6 kit makes a 5.5" square
+// column, a 3x8 kit a 7.25" one (the plate's real face width).
+export function wrapColumnSizeFt(wrapType: string): number {
+  if (wrapType === "3x8") return 7.25 / 12;
+  if (wrapType === "2x6") return 5.5 / 12;
+  return 0;
+}
+
 export function formatFeetInches(ft: number): string {
   const totalInches = Math.round(ft * 12);
   const feet = Math.floor(totalInches / 12);

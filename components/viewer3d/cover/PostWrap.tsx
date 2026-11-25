@@ -13,6 +13,7 @@ interface PostWrapProps {
   postHeightFt: number;
   beamHeightFt: number; // real beam profile height (e.g. 8" for 3x8) — beam sits on top of the post
   colorName: string;
+  sizeFt?: number; // outer width of the finished column (defaults to a slim 0.32ft)
 }
 
 // Decorative aluminum bent-plate sleeve — same material/rate as SidePlates
@@ -20,11 +21,11 @@ interface PostWrapProps {
 // installed differently. Covers the full post height (foundation to
 // underside of beam) PLUS the beam's own height, since the beam sits on top
 // of the post and the plate wraps up to cover its side face too.
-export default function PostWrap({ xs, zFt, postHeightFt, beamHeightFt, colorName }: PostWrapProps) {
+export default function PostWrap({ xs, zFt, postHeightFt, beamHeightFt, colorName, sizeFt = WRAP_SIZE_FT }: PostWrapProps) {
   const totalHeightFt = postHeightFt + beamHeightFt;
   const geometry = useMemo(
-    () => new THREE.BoxGeometry(WRAP_SIZE_FT, totalHeightFt, WRAP_SIZE_FT),
-    [totalHeightFt]
+    () => new THREE.BoxGeometry(sizeFt, totalHeightFt, sizeFt),
+    [totalHeightFt, sizeFt]
   );
   const material = getMaterial(colorName, { roughness: 0.55 });
 

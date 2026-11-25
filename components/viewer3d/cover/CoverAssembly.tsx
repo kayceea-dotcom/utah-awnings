@@ -1,7 +1,7 @@
 "use client";
 
 import type { SceneConfig, RunConfig } from "@/lib/scene/types";
-import { computeFrontEdgeHeightFt } from "@/lib/scene/geometry";
+import { computeFrontEdgeHeightFt, wrapColumnSizeFt } from "@/lib/scene/geometry";
 import { getBeamProfile } from "@/lib/scene/beamProfiles";
 import Posts from "./Posts";
 import Beam from "./Beam";
@@ -10,7 +10,7 @@ import MultiSpanBeams from "./MultiSpanBeams";
 import Gutter, { getGutterTopY, getGutterDepthFt } from "./Gutter";
 import FrontPlate from "./FrontPlate";
 import SideFascia, { SIDE_FASCIA_HEIGHT_FT } from "./SideFascia";
-import RafterTails from "./RafterTails";
+import RafterTails, { tailStyleFor } from "./RafterTails";
 import FanBeam from "./FanBeam";
 import PostWrap from "./PostWrap";
 import SidePlates from "./SidePlates";
@@ -24,6 +24,14 @@ import HouseWall from "./HouseWall";
 
 // Downspouts hang just inside each end of the front.
 const DOWNSPOUT_END_INSET_FT = 0.4;
+
+// With a wrap kit the beam is boxed in the same mitered plate as the posts, so
+// its face is as deep as the finished column and flush with it.
+function wrapProfile(beamType: string, wrapType: string) {
+  const column = wrapColumnSizeFt(wrapType);
+  if (!column) return undefined;
+  return { widthInches: column * 12, heightInches: getBeamProfile(beamType).heightInches };
+}
 
 function frontEdgeHeight(run: RunConfig): number {
   return computeFrontEdgeHeightFt(run.postHeightFt, run.projectionFt, run.roofPitchDeg);
@@ -72,6 +80,7 @@ export default function CoverAssembly({ scene, showDimensions }: { scene: SceneC
               zFt={run.beamZFt}
               colorName={scene.colors.postsBeam}
               beamType={run.beamType}
+              profileOverride={wrapProfile(run.beamType, run.hasWrap ? run.wrapType : "none")}
             />
           )}
           <Posts
@@ -87,6 +96,7 @@ export default function CoverAssembly({ scene, showDimensions }: { scene: SceneC
               postHeightFt={run.postTopHeightFt}
               beamHeightFt={run.hasBeam ? getBeamProfile(run.beamType).heightInches / 12 : 0}
               colorName={scene.colors.postsBeam}
+              sizeFt={wrapColumnSizeFt(run.wrapType) || undefined}
             />
           )}
           {run.rafterTails.enabled && (
@@ -95,6 +105,7 @@ export default function CoverAssembly({ scene, showDimensions }: { scene: SceneC
               zFt={run.projectionFt}
               heightFt={computeFrontEdgeHeightFt(run.postHeightFt, run.projectionFt, run.roofPitchDeg)}
               colorName={scene.colors.postsBeam}
+              style={tailStyleFor(run.beamEndCut)}
             />
           )}
           {showDimensions && <DimensionOverlay run={run} />}
@@ -117,6 +128,7 @@ export default function CoverAssembly({ scene, showDimensions }: { scene: SceneC
             zFt={scene.rearBeam.zFt}
             colorName={scene.colors.postsBeam}
             beamType={scene.rearBeam.type}
+            profileOverride={wrapProfile(scene.rearBeam.type, firstRun?.hasWrap ? firstRun.wrapType : "none")}
           />
           <Posts xs={scene.rearBeam.postXs} zFt={scene.rearBeam.zFt} heightFt={scene.rearBeam.topHeightFt} colorName={scene.colors.postsBeam} />
           {firstRun?.hasWrap && (
@@ -126,6 +138,7 @@ export default function CoverAssembly({ scene, showDimensions }: { scene: SceneC
               postHeightFt={scene.rearBeam.topHeightFt}
               beamHeightFt={getBeamProfile(scene.rearBeam.type).heightInches / 12}
               colorName={scene.colors.postsBeam}
+              sizeFt={wrapColumnSizeFt(firstRun.wrapType) || undefined}
             />
           )}
         </group>
