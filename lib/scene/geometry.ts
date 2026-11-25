@@ -27,6 +27,21 @@ export function computePostXPositions(widthFt: number, postsQty: number): number
   return xs;
 }
 
+// Exact post spots from the cover sketch (absolute feet from the cover's left
+// edge) -> spots relative to a run's own origin, but only while they still fit
+// that run: right count, inside its span. Otherwise the caller's even spacing.
+export function resolvePostXs(
+  stored: number[] | undefined,
+  qty: number,
+  originFt: number,
+  widthFt: number,
+  fallback: number[],
+): number[] {
+  if (!Array.isArray(stored) || stored.length !== qty) return fallback;
+  const ok = stored.every((x) => Number.isFinite(x) && x >= originFt - 0.01 && x <= originFt + widthFt + 0.01);
+  return ok ? stored.map((x) => x - originFt) : fallback;
+}
+
 // Matches the rafter-tail quantity convention used by lib/pricing/newport.ts
 // (rtQty = Math.round(width1 / 2)) — a nominal 2ft pitch.
 export function computeRafterTailCount(widthFt: number): number {

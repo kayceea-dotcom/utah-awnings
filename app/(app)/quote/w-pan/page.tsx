@@ -3,6 +3,11 @@
 export const dynamic = "force-dynamic";
 
 import { useState, useMemo, useEffect } from "react";
+import dynamicImport from "next/dynamic";
+import { wpanToScene } from "@/lib/scene/adapters/wpan";
+import type { CosmeticOverrides } from "@/lib/scene/types";
+import { SHOW_3D_VIEWER } from "@/lib/scene/featureFlags";
+import CosmeticControls from "@/components/viewer3d/CosmeticControls";
 import { calcWPan } from "@/lib/pricing/wpan";
 import { groundMountSurcharge, commissionBasisPrice } from "@/lib/pricing/shared";
 import { estimateMonthlyPayment, BID_FINANCING_OPTIONS } from "@/lib/financing";
@@ -33,6 +38,15 @@ import WallsSection from "@/components/quote/WallsSection";
 import SnowLoadCard, { type SiteSnowLoad } from "@/components/quote/SnowLoadCard";
 import SpanWarning from "@/components/quote/SpanWarning";
 import { checkWPanSpan } from "@/lib/spanTables/lookup";
+
+const Viewer3DPanel = dynamicImport(() => import("@/components/viewer3d/Viewer3DPanel"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full aspect-square rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center text-sm text-slate-400">
+      Loading 3D view…
+    </div>
+  ),
+});
 
 const COLORS = ["White","Siennawood","Slate","Driftwood","Beechwood","Maplewood","Ebony","Sandlewood"];
 const COLOR_OPTS = COLORS.map((c) => ({ value: c, label: c }));
@@ -365,11 +379,15 @@ export default function WPanQuotePage() {
   const [showPricePanel, setShowPricePanel] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showSketch, setShowSketch] = useState(false);
+  const [viewMode, setViewMode] = useState<"2d" | "3d">("2d");
+  const [cosmetic, setCosmetic] = useState<CosmeticOverrides>({});
+  const [capturedRenderUrl, setCapturedRenderUrl] = useState("");
   const [siteSnowLoad, setSiteSnowLoad] = useState<SiteSnowLoad | null>(null);
   const { profile } = useProfile();
   const router = useRouter();
 
   const result = useMemo(() => calcWPan(inp), [inp]);
+  const sceneConfig = useMemo(() => wpanToScene(inp, cosmetic), [inp, cosmetic]);
   const groundMountHoles = inp.posts1 + inp.posts2;
   const groundMountAddOn = groundMountSurcharge(inp.groundAttachment, groundMountHoles);
   const editableList = useEditableMaterialList(result, inp);
@@ -474,8 +492,9 @@ export default function WPanQuotePage() {
   // The drawing only ever fills in the same numbers typed below, with the same
   // beam-length rules as the width fields. A second run needs the companions
   // the form would ask for (beam #2, posts), copied from run 1.
-  function applySketch(r: SketchRuns, layout: CoverLayout | null) {
-    setInp((p) => {
+  // What the quote's inputs become once a drawing is applied - also what the
+  // sketch's 3D tab shows, so the model always matches what "Use this drawing" does.
+  function sketchedInputs(p: WPanInputs, r: SketchRuns, layout: CoverLayout | null): WPanInputs {
       const hasRun2 = r.jog !== "none" && r.width2 > 0 && r.projection2 > 0;
       const isHouse = hasRun2 && r.jog === "house";
       const next: WPanInputs = {
@@ -516,7 +535,9 @@ export default function WPanQuotePage() {
         next.beams = (p.beams || []).map((b) => ({ ...b, postXs: undefined }));
       }
       return next;
-    });
+  }
+  function applySketch(r: SketchRuns, layout: CoverLayout | null) {
+    setInp((p) => sketchedInputs(p, r, layout));
   }
   function sketchNote(r: SketchRuns): string | null {
     const hasRun2 = r.jog !== "none" && r.width2 > 0 && r.projection2 > 0;
@@ -783,6 +804,23 @@ export default function WPanQuotePage() {
             </div>
 
             <div className="hidden lg:block w-80 flex-shrink-0 sticky top-20 space-y-4">
+              {SHOW_3D_VIEWER && (
+                <div className="flex justify-center gap-1 rounded-md bg-slate-100 p-1 text-sm">
+                  {(["2d", "3d"] as const).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setViewMode(m)}
+                      className={`flex-1 rounded px-3 py-1 font-medium transition ${
+                        viewMode === m ? "bg-white shadow-sm" : "text-slate-500"
+                      }`}
+                    >
+                      {m === "2d" ? "2D" : "3D"}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {!SHOW_3D_VIEWER || viewMode === "2d" ? (
               <CoverDiagram
                 projection1={inp.projection1}
                 width1={inp.width1}
@@ -802,6 +840,13 @@ export default function WPanQuotePage() {
                 rearPosts={inp.mountStyle === "roof_mount" ? inp.skyliftPosts : inp.rearPosts}
                   postLayout={inp.postLayout}
               />
+              ) : (
+                <>
+                  <Viewer3DPanel scene={sceneConfig} onRenderCaptured={setCapturedRenderUrl} />
+                  <CosmeticControls value={cosmetic} onChange={setCosmetic} />
+                </>
+              )}
+              {(!SHOW_3D_VIEWER || viewMode === "2d") && (
               <SideProfileDiagram
                 projection={inp.projection1}
                 postHeight={inp.postHeight1}
@@ -819,6 +864,7 @@ export default function WPanQuotePage() {
                 walls={inp.walls}
                 beams={inp.beams}
               />
+              )}
               <PriceSummaryPanel result={effectiveResult} />
               <CommissionPanel materialCost={effectiveResult.materialCost} price={commissionPrice} discount={inp.discount} isCashDiscount={isCashDiscount} tax={effectiveResult.taxes} />
             </div>
@@ -856,11 +902,13 @@ export default function WPanQuotePage() {
           }}
           beamOptions={{ primary: BEAM_TYPES_1, secondary: [{ value: "", label: "None" }, ...BEAM_TYPES], plain: BEAM_TYPES }}
           defaultPostHeight={inp.postHeight1}
+          previewScene={(r, l) => wpanToScene(sketchedInputs(inp, r, l), cosmetic)}
         />
       )}
       {showSaveModal && (
         <SaveQuoteModal
           productType="w_pan"
+          renderUrl={capturedRenderUrl || undefined}
           inputs={inp as unknown as Record<string, unknown>}
           lineItems={effectiveResult.lineItems}
           materialCost={effectiveResult.materialCost}

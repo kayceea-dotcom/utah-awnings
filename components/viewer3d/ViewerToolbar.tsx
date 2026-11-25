@@ -18,6 +18,8 @@ interface ViewerToolbarProps {
   generatingRender?: boolean;
   showDimensions?: boolean;
   onToggleDimensions?: () => void;
+  /** Small one-row bar for tight spaces (the cover sketch). */
+  compact?: boolean;
 }
 
 export default function ViewerToolbar({
@@ -26,9 +28,12 @@ export default function ViewerToolbar({
   generatingRender,
   showDimensions,
   onToggleDimensions,
+  compact,
 }: ViewerToolbarProps) {
   return (
-    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex flex-wrap justify-center gap-1 rounded-md border border-slate-200 bg-white/90 px-2 py-1 shadow-sm backdrop-blur">
+    <div className={compact
+      ? "flex flex-wrap justify-center gap-0.5 rounded-md border border-slate-200 bg-white px-1.5 py-1"
+      : "absolute bottom-2 left-1/2 -translate-x-1/2 flex flex-wrap justify-center gap-1 rounded-md border border-slate-200 bg-white/90 px-2 py-1 shadow-sm backdrop-blur"}>
       {VIEW_BUTTONS.map((b) => (
         <button
           key={b.preset}

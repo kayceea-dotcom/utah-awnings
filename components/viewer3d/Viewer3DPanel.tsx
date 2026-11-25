@@ -12,9 +12,11 @@ import CaptureBridge, { type CaptureHandle } from "./capture/CaptureBridge";
 interface Viewer3DPanelProps {
   scene: SceneConfig;
   onRenderCaptured?: (url: string) => void;
+  /** Just look around - no "Generate Proposal Render" button (used inside the cover sketch). */
+  compact?: boolean;
 }
 
-export default function Viewer3DPanel({ scene, onRenderCaptured }: Viewer3DPanelProps) {
+export default function Viewer3DPanel({ scene, onRenderCaptured, compact }: Viewer3DPanelProps) {
   const cameraRigRef = useRef<CameraRigHandle>(null);
   const captureRef = useRef<CaptureHandle>(null);
   const [generatingRender, setGeneratingRender] = useState(false);
@@ -64,14 +66,17 @@ export default function Viewer3DPanel({ scene, onRenderCaptured }: Viewer3DPanel
           <CameraRig ref={cameraRigRef} bbox={scene.bboxFt} />
           <CaptureBridge ref={captureRef} />
         </Canvas>
-        <ViewerToolbar
-          onSetView={handleSetView}
-          onGenerateRender={handleGenerateRender}
-          generatingRender={generatingRender}
-          showDimensions={showDimensions}
-          onToggleDimensions={() => setShowDimensions((v) => !v)}
-        />
+        {!compact && (
+          <ViewerToolbar
+            onSetView={handleSetView}
+            onGenerateRender={handleGenerateRender}
+            generatingRender={generatingRender}
+            showDimensions={showDimensions}
+            onToggleDimensions={() => setShowDimensions((v) => !v)}
+          />
+        )}
       </div>
+      {compact && <ViewerToolbar compact onSetView={handleSetView} />}
       {renderError && <p className="text-xs text-red-600">{renderError}</p>}
       {renderPreviewUrl && (
         <a href={renderPreviewUrl} target="_blank" rel="noreferrer" className="block text-xs text-blue-600 underline">

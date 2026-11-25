@@ -547,8 +547,9 @@ export default function FlatPanelQuotePage() {
   // The drawing only ever fills in the same numbers typed below. A second run
   // needs the same companions the form would ask for (panel, beam, posts), so
   // they're copied from run 1 - adjustable afterwards like anything else.
-  function applySketch(r: SketchRuns, layout: CoverLayout | null) {
-    setInp((p) => {
+  // What the quote's inputs become once a drawing is applied - also what the
+  // sketch's 3D tab shows, so the model always matches what "Use this drawing" does.
+  function sketchedInputs(p: NewportInputs, r: SketchRuns, layout: CoverLayout | null): NewportInputs {
       const hasRun2 = r.jog !== "none" && r.width2 > 0 && r.projection2 > 0;
       const next: NewportInputs = {
         ...p,
@@ -589,7 +590,9 @@ export default function FlatPanelQuotePage() {
         next.beams = (p.beams || []).map((b) => ({ ...b, postXs: undefined }));
       }
       return next;
-    });
+  }
+  function applySketch(r: SketchRuns, layout: CoverLayout | null) {
+    setInp((p) => sketchedInputs(p, r, layout));
   }
   function sketchNote(r: SketchRuns): string | null {
     const hasRun2 = r.jog !== "none" && r.width2 > 0 && r.projection2 > 0;
@@ -983,6 +986,7 @@ export default function FlatPanelQuotePage() {
           }}
           beamOptions={{ primary: BEAM_TYPES_1, secondary: [{ value: "", label: "None" }, ...BEAM_TYPES], plain: BEAM_TYPES }}
           defaultPostHeight={inp.postHeight1}
+          previewScene={(r, l) => newportToScene(sketchedInputs(inp, r, l), cosmetic)}
         />
       )}
       {showSaveModal && (

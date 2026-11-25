@@ -11,6 +11,7 @@ const FRONT_PLATE_PROFILES: Record<string, { thicknessInches: number; heightInch
 
 interface FrontPlateProps {
   totalWidthFt: number;
+  xOffsetFt?: number; // left edge along X (default 0)
   gutterOuterZFt: number; // Z of the gutter's outer (forward-facing) face
   topYFt: number; // attaches at the gutter's height, extending down
   wrapType: string;
@@ -22,13 +23,13 @@ interface FrontPlateProps {
 // front-to-back is panel -> gutter -> front plate -> rafter tail). Only
 // needed with an extruded gutter (a roll-form gutter is tall enough to serve
 // as its own front plate).
-export default function FrontPlate({ totalWidthFt, gutterOuterZFt, topYFt, wrapType, colorName }: FrontPlateProps) {
+export default function FrontPlate({ totalWidthFt, xOffsetFt = 0, gutterOuterZFt, topYFt, wrapType, colorName }: FrontPlateProps) {
   const material = getMaterial(colorName, { roughness: 0.5 });
   const profile = FRONT_PLATE_PROFILES[wrapType] ?? FRONT_PLATE_PROFILES["2x6"];
   const heightFt = profile.heightInches / 12;
   const thicknessFt = profile.thicknessInches / 12;
   return (
-    <mesh position={[totalWidthFt / 2, topYFt - heightFt / 2, gutterOuterZFt + thicknessFt / 2]} material={material}>
+    <mesh position={[xOffsetFt + totalWidthFt / 2, topYFt - heightFt / 2, gutterOuterZFt + thicknessFt / 2]} material={material}>
       <boxGeometry args={[totalWidthFt, heightFt, thicknessFt]} />
     </mesh>
   );

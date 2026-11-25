@@ -33,18 +33,19 @@ export function getGutterDepthFt(gutterType: string): number {
 
 interface GutterProps {
   totalWidthFt: number;
+  xOffsetFt?: number; // left edge of the gutter along X (default 0)
   zFt: number;
   heightFt: number;
   colorName: string;
   gutterType: string;
 }
 
-export default function Gutter({ totalWidthFt, zFt, heightFt, colorName, gutterType }: GutterProps) {
+export default function Gutter({ totalWidthFt, xOffsetFt = 0, zFt, heightFt, colorName, gutterType }: GutterProps) {
   const gutterHeightFt = getGutterHeightFt(gutterType);
   const gutterDepthFt = (GUTTER_PROFILES[gutterType] ?? GUTTER_PROFILES.roll_form).depthInches / 12;
   const material = getMaterial(colorName, { roughness: 0.5 });
   return (
-    <mesh position={[totalWidthFt / 2, heightFt - gutterHeightFt / 2, zFt]} material={material}>
+    <mesh position={[xOffsetFt + totalWidthFt / 2, heightFt - gutterHeightFt / 2, zFt]} material={material}>
       <boxGeometry args={[totalWidthFt, gutterHeightFt, gutterDepthFt]} />
     </mesh>
   );

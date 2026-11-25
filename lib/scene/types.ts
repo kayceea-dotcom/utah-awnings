@@ -16,6 +16,9 @@ export interface RunConfig {
   widthFt: number;
   projectionFt: number;
   originOffsetFt: number; // where this run starts along the house wall (run2 = run1.widthFt)
+  zOffsetFt: number; // how far this run's house edge sits out from z=0 (a house-wall jog steps the wall while the front stays flush)
+  ribSpacingFt?: number; // V-Panel: spacing of the raised ribs across the width (= panel width)
+  hasBeam: boolean; // false for "no beam" - the posts stand at the front edge instead
   roofType: RoofType;
   roofPitchDeg: number; // fixed per product type (1/2"/ft for solid covers, 0 for pergola) — not user-adjustable
   postHeightFt: number; // height at the house-wall starting point
@@ -49,6 +52,17 @@ export interface MultiSpanBeamConfig {
   // posts rather than bearing on top — post plates stop at the post height
   // instead of extending up to cover the beam too.
   mountedOnSide: boolean;
+}
+
+// Rear beam of a freestanding / roof-mount cover - same construction as the
+// front beam, sitting just in from the house-side edge.
+export interface RearBeamConfig {
+  type: string;
+  xOffsetFt: number;
+  lengthFt: number;
+  zFt: number;
+  topHeightFt: number; // top of the posts / underside of the beam
+  postXs: number[]; // absolute X
 }
 
 export interface FanBeamConfig {
@@ -85,6 +99,10 @@ export interface SceneConfig {
   productType: "newport" | "flat_pan" | "pergola" | "w_pan" | "irp";
   runs: RunConfig[];
   multiSpanBeams: MultiSpanBeamConfig[];
+  rearBeam: RearBeamConfig | null;
+  houseWall: boolean; // attached covers have a house wall behind them
+  downspoutSide: "left" | "right";
+  jog: "none" | "ground" | "house";
   fanBeam: FanBeamConfig | null;
   gutterType: string;
   downspoutsQty: number;

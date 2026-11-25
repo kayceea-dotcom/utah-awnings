@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import type { SceneConfig } from "@/lib/scene/types";
 import { X, Plus, Minus, ArrowLeftRight, ArrowUpDown, Undo2, Trash2 } from "lucide-react";
 import {
   analyzeShape, shapeFromRuns, moveVertex, setEdgeLength, addStep, removeStep, normalizeShape,
@@ -19,14 +21,23 @@ const HOUSE_H = 14;  // thickness of the house-wall bar
 const RED = "#CC2229";
 const FALLBACK: SketchRuns = { width1: 20, projection1: 12, width2: 0, projection2: 0, jog: "none" };
 
-type Tab = "shape" | "beams";
+type Tab = "shape" | "beams" | "3d";
+
+const Viewer3DPanel = dynamic(() => import("@/components/viewer3d/Viewer3DPanel"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full aspect-square rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center text-sm text-slate-400">
+      Loading 3D view…
+    </div>
+  ),
+});
 type BeamOption = { value: string; label: string };
 
 // Draw the cover instead of typing its dimensions, then place the beams and
 // posts on it. This only ever produces the same numbers the form takes (two
 // runs + jog type, beam types, post counts, additional beams) plus the exact
 // post spots - the form and the pricing engine stay exactly as they are.
-export default function CoverSketchModal({ initial, onApply, onClose, applyNote, layoutInit, beamOptions, defaultPostHeight }: {
+export default function CoverSketchModal({ initial, onApply, onClose, applyNote, layoutInit, beamOptions, defaultPostHeight, previewScene }: {
   initial: SketchRuns;
   /** `layout` is null when nothing on the Beams & posts tab was touched. */
   onApply: (runs: SketchRuns, layout: CoverLayout | null) => void;
@@ -36,6 +47,8 @@ export default function CoverSketchModal({ initial, onApply, onClose, applyNote,
   layoutInit: Omit<LayoutSource, "runs">;
   beamOptions: Record<BeamTypeSet, BeamOption[]>;
   defaultPostHeight: number;
+  /** Builds the 3D model of the drawing as it stands (shape + beams + posts). */
+  previewScene?: (runs: SketchRuns, layout: CoverLayout) => SceneConfig;
 }) {
   // Start from what the quote already has, or a typical 20 x 12 to sketch on.
   const startRuns = initial.width1 > 0 && initial.projection1 > 0 ? initial : FALLBACK;
@@ -215,6 +228,9 @@ export default function CoverSketchModal({ initial, onApply, onClose, applyNote,
   for (let g = gridStep; g < vh; g += gridStep) gridLinesY.push(g);
 
   const onBeams = tab === "beams" && !!runs;
+  const onShape = tab === "shape";
+  const on3d = tab === "3d" && !!runs && !!previewScene;
+  const scene3d = on3d && runs && previewScene ? previewScene(runs, layout) : null;
   const spans = activeRow ? spansOf(activeRow) : [];
   const selPostRow = selPost ? rows.find((r) => r.id === selPost.rowId) : undefined;
   const selPostX = selPost && selPostRow ? selPostRow.xs[selPost.idx] : undefined;
@@ -227,15 +243,15 @@ export default function CoverSketchModal({ initial, onApply, onClose, applyNote,
           <div>
             <p className="font-bold text-gray-900">Draw the cover</p>
             <p className="text-xs text-gray-500">
-              {onBeams ? "Tap a beam to add a post. Drag a post to move it." : "Drag the dots. The top edge is the house wall."}
+              {on3d ? "Drag to turn the model. Pinch or scroll to zoom." : onBeams ? "Tap a beam to add a post. Drag a post to move it." : "Drag the dots. The top edge is the house wall."}
             </p>
           </div>
           <button onClick={onClose} className="p-2 -mr-2 text-gray-500" aria-label="Close"><X size={20} /></button>
         </div>
 
-        <div className="grid grid-cols-2 gap-1 p-2 border-b border-gray-100 bg-gray-50">
-          {([["shape", "1. Shape"], ["beams", "2. Beams & posts"]] as [Tab, string][]).map(([t, label]) => (
-            <button key={t} onClick={() => { setTab(t); setPlacingBeam(false); }} disabled={t === "beams" && !runs}
+        <div className={"grid gap-1 p-2 border-b border-gray-100 bg-gray-50 " + (previewScene ? "grid-cols-3" : "grid-cols-2")}>
+          {([["shape", "1. Shape"], ["beams", "2. Beams & posts"], ...(previewScene ? [["3d", "3. 3D"]] : [])] as [Tab, string][]).map(([t, label]) => (
+            <button key={t} onClick={() => { setTab(t); setPlacingBeam(false); }} disabled={t !== "shape" && !runs}
               className={"text-sm font-semibold rounded-lg py-2 transition " +
                 (tab === t ? "bg-white shadow text-gray-900" : "text-gray-500 disabled:opacity-40")}>
               {label}
@@ -247,7 +263,7 @@ export default function CoverSketchModal({ initial, onApply, onClose, applyNote,
           <svg
             ref={svgRef}
             viewBox={`0 0 ${VBW} ${VBH}`}
-            className="w-full rounded-xl bg-gray-50 border border-gray-200 select-none"
+            className={"w-full rounded-xl bg-gray-50 border border-gray-200 select-none " + (tab === "3d" ? "hidden" : "")}
             style={{ touchAction: "none" }}
             onPointerMove={onMove}
             onPointerUp={endDrag}
@@ -282,7 +298,7 @@ export default function CoverSketchModal({ initial, onApply, onClose, applyNote,
               return <line x1={px(rects[0].w)} y1={py(top)} x2={px(rects[0].w)} y2={py(bottom)}
                 stroke={RED} strokeWidth={1.5} strokeDasharray="5 4" opacity={0.6} />;
             })()}
-            {!onBeams && rects.length === 2 && rects.map((r, k) => (
+            {onShape && rects.length === 2 && rects.map((r, k) => (
               <g key={"run" + k}>
                 <circle cx={px(r.x + r.w / 2)} cy={py(r.y + r.h / 2)} r={11} fill="white" stroke={RED} strokeWidth={1.5} />
                 <text x={px(r.x + r.w / 2)} y={py(r.y + r.h / 2) + 4} textAnchor="middle" fontSize={11} fontWeight={700} fill={RED}>{k + 1}</text>
@@ -293,11 +309,11 @@ export default function CoverSketchModal({ initial, onApply, onClose, applyNote,
             {edges.map((e) => (
               <line key={"e" + e.i} x1={px(e.a.x)} y1={py(e.a.y)} x2={px(e.b.x)} y2={py(e.b.y)}
                 stroke={e.kind === "house" ? "#6b7280" : RED}
-                strokeWidth={onBeams ? 2 : selEdge === e.i ? 5 : e.kind === "house" ? 4 : 3} strokeLinecap="round" />
+                strokeWidth={!onShape ? 2 : selEdge === e.i ? 5 : e.kind === "house" ? 4 : 3} strokeLinecap="round" />
             ))}
 
             {/* ── Shape tab: edge lengths (tap one to type an exact number) and corner handles ── */}
-            {!onBeams && edges.map((e) => {
+            {onShape && edges.map((e) => {
               const { mx, my, label, w } = labelBoxes[e.i];
               return (
                 <g key={"l" + e.i} onClick={() => selectEdge(e.i)} style={{ cursor: "pointer" }}>
@@ -308,7 +324,7 @@ export default function CoverSketchModal({ initial, onApply, onClose, applyNote,
                 </g>
               );
             })}
-            {!onBeams && shape.map((p, i) => (
+            {onShape && shape.map((p, i) => (
               <g key={"h" + i}>
                 <circle cx={px(p.x)} cy={py(p.y)} r={9} fill="white" stroke={RED} strokeWidth={3} />
                 <circle cx={px(p.x)} cy={py(p.y)} r={22} fill="transparent" style={{ cursor: "grab", touchAction: "none" }}
@@ -386,8 +402,10 @@ export default function CoverSketchModal({ initial, onApply, onClose, applyNote,
             )}
           </svg>
 
+          {scene3d && <Viewer3DPanel scene={scene3d} compact />}
+
           {/* ── Shape tab controls ── */}
-          {!onBeams && selEdge !== null && selEdge < shape.length && (
+          {onShape && selEdge !== null && selEdge < shape.length && (
             <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
               <span className="text-sm text-gray-600 flex-1">Exact length of this edge</span>
               <input type="number" inputMode="decimal" step={0.5} min={1} value={editVal}
@@ -397,7 +415,7 @@ export default function CoverSketchModal({ initial, onApply, onClose, applyNote,
             </div>
           )}
 
-          {!onBeams && (
+          {onShape && (
             <div className="flex flex-wrap gap-2">
               {runs && runs.jog === "none" && (
                 <button className="btn-secondary text-xs px-3 py-2" onClick={() => { settle(addStep(shape)); setSelEdge(null); }}>
