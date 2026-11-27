@@ -391,7 +391,6 @@ export interface WrapKitRates {
   endcapRate: number;
   insideBrktRate: number;
   outsideBrktRate: number;
-  miterCapRate: number;
   rafterRate: number;
 }
 
@@ -404,7 +403,6 @@ export function wrapKitRates(wrapType: string): WrapKitRates {
     endcapRate:      is3x8 ? RATES.endcap_3x8          : RATES.endcap_2x6,
     insideBrktRate:  is3x8 ? RATES.inside_brkt_3x8     : RATES.inside_brkt_2x6,
     outsideBrktRate: is3x8 ? RATES.outside_brkt_3x8    : RATES.outside_brkt_2x6,
-    miterCapRate:    is3x8 ? RATES.mitered_cap_3x8     : RATES.mitered_cap_2x6,
     rafterRate:      is3x8 ? RATES.rafter_tail_3x8_ft  : RATES.rafter_tail_2x6_ft,
   };
 }
@@ -495,7 +493,7 @@ export function wallItems(walls: WallConfig[]): LineItem[] {
 }
 
 // Post/beam finishing pieces every wrap-kit product gets: post plates, sideplates,
-// mitered caps, foam inserts, end caps, plugs. Independent of hanger/gutter type,
+// post plate end caps, foam inserts, end caps, plugs. Independent of hanger/gutter type,
 // so it applies the same whether the product has a generic gutter system (Flat
 // Panel, W-Pan) or its own dedicated one (IRP/LRP).
 export function wrapKitFinishingItems(rates: WrapKitRates, opts: {
@@ -503,7 +501,7 @@ export function wrapKitFinishingItems(rates: WrapKitRates, opts: {
   posts2: number; postHeight2: number;
   // Freestanding jobs only - a third post group (rear beam's own posts) that
   // needs its own Post Plates line (own height) but otherwise counts toward
-  // the same totals (Mitered Caps, Foam Inserts) as posts1/posts2.
+  // the same totals (post plate End Caps, Foam Inserts) as posts1/posts2.
   postsRear?: number; postHeightRear?: number;
   projection1: number;
   width1: number;
@@ -534,21 +532,23 @@ export function wrapKitFinishingItems(rates: WrapKitRates, opts: {
   const totalPosts = opts.posts1 + opts.posts2 + postsRear;
   const dim = wrapDim(rates);
 
+  // Post plates are square-cut (no end cut) and finished with a beveled end
+  // cap on top, instead of the old mitered end cut + mitered cap.
   if (opts.posts1 > 0) {
-    items.push(li("Post Plates #1 (" + dim + ", Mitered)", opts.posts1 * 2, opts.postHeight1 + 1, rates.wrapRate, "", opts.colorPostsBeam));
+    items.push(li("Post Plates #1 (" + dim + ")", opts.posts1 * 2, opts.postHeight1 + 1, rates.wrapRate, "", opts.colorPostsBeam));
   }
   if (opts.posts2 > 0) {
-    items.push(li("Post Plates #2 (" + dim + ", Mitered)", opts.posts2 * 2, opts.postHeight2 + 1, rates.wrapRate, "", opts.colorPostsBeam));
+    items.push(li("Post Plates #2 (" + dim + ")", opts.posts2 * 2, opts.postHeight2 + 1, rates.wrapRate, "", opts.colorPostsBeam));
   }
   if (postsRear > 0) {
-    items.push(li("Post Plates Rear (" + dim + ", Mitered)", postsRear * 2, postHeightRear + 1, rates.wrapRate, "", opts.colorPostsBeam));
+    items.push(li("Post Plates Rear (" + dim + ")", postsRear * 2, postHeightRear + 1, rates.wrapRate, "", opts.colorPostsBeam));
   }
   if (opts.projection1 > 0) {
     const sideplateLen = opts.projection1 + 2 + (opts.isFreestanding ? 2 : 0);
     items.push(li("Sideplates Cut One Side (" + dim + endCutSuffix(opts.endCut) + ")", 2, sideplateLen, rates.sideRate, "", opts.colorPostsBeam));
   }
   if (totalPosts > 0) {
-    items.push(li("Mitered Caps (" + dim + ")", totalPosts * 2, 0, rates.miterCapRate, "", opts.colorPostsBeam));
+    items.push(li("End Caps (" + dim + ", Beveled) - Post Plates", totalPosts * 2, 0, rates.endcapRate, "", opts.colorPostsBeam));
     items.push(li("Foam Inserts 2x6", totalPosts * 2, 0, RATES.foam_insert_2x6, "ea"));
   }
   if (opts.includeEndCaps && opts.width1 > 0) {

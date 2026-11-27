@@ -3,6 +3,7 @@ import { calcNewport } from "./newport";
 import { calcWPan } from "./wpan";
 import { calcIRP } from "./irp";
 import { calcPergola } from "./pergola";
+import { RATES } from "./rates";
 import type { NewportInputs, LineItem } from "./types";
 import type { WPanInputs } from "./wpan";
 import type { IRPInputs } from "./irp";
@@ -129,7 +130,7 @@ describe("Freestanding mount style", () => {
     expect(findItem(free.lineItems, "Hanger")).toBeUndefined();
     expect(findItem(free.lineItems, "Beam Rear (3x8, Beveled, Both Ends Cut)")).toBeTruthy();
     expect(findItem(free.lineItems, "3x3 Post Sleeve Rear")?.qty).toBe(2);
-    expect(findItem(free.lineItems, "Post Plates Rear (2x6, Mitered)")?.qty).toBe(4);
+    expect(findItem(free.lineItems, "Post Plates Rear (2x6)")?.qty).toBe(4);
 
     // totalPosts (2 front + 2 rear = 4) drives anchors/brackets - both should
     // double vs. the attached case's 2-post total.
@@ -181,10 +182,10 @@ describe("Freestanding mount style", () => {
 
     expect(findItem(free.lineItems, "Beam Rear (3x8)")).toBeTruthy();
     expect(findItem(free.lineItems, "3x3 Post Sleeve Rear")?.qty).toBe(2);
-    expect(findItem(free.lineItems, "2x6 Post Plates Rear (Mitered)")?.length).toBe(13);
+    expect(findItem(free.lineItems, "2x6 Post Plates Rear")?.length).toBe(13);
 
-    const attachedCaps = findItem(attached.lineItems, "Mitered Caps")?.qty ?? 0;
-    const freeCaps = findItem(free.lineItems, "Mitered Caps")?.qty ?? 0;
+    const attachedCaps = findItem(attached.lineItems, "End Caps (2x6, Beveled) - Post Plates")?.qty ?? 0;
+    const freeCaps = findItem(free.lineItems, "End Caps (2x6, Beveled) - Post Plates")?.qty ?? 0;
     expect(freeCaps).toBe(attachedCaps * 2);
   });
 
@@ -355,5 +356,17 @@ describe("Roof Mount mount style", () => {
     expect(findItem(roof.lineItems, "2x6 Outside Brackets Rear")).toBeTruthy();
     expect(findItem(roof.lineItems, "SkyLift Post")?.qty).toBe(2);
     expect(findItem(roof.lineItems, "3x3 Post Sleeve Rear")).toBeUndefined();
+  });
+});
+
+describe("Post plates: square-cut with a beveled end cap (no mitered end cut / mitered cap)", () => {
+  it("Flat Panel wrap kit lists plain post plates and one beveled end cap per plate", () => {
+    const out = calcNewport(newportBase());
+    expect(out.lineItems.some((i) => i.name.includes("Mitered"))).toBe(false);
+    const plates = out.lineItems.find((i) => i.name.startsWith("Post Plates #1"))!;
+    expect(plates.name).toBe("Post Plates #1 (2x6)");
+    const caps = out.lineItems.find((i) => i.name === "End Caps (2x6, Beveled) - Post Plates")!;
+    expect(caps.qty).toBe(plates.qty);
+    expect(caps.rate).toBeCloseTo(RATES.endcap_2x6, 2);
   });
 });

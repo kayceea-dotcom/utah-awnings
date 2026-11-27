@@ -132,14 +132,14 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
     const postLen = postMaterialLength(inp.postHeight, inp.groundAttachment);
     items.push(li("3x3 Post Sleeve", inp.posts, postLen, RATES.post_3x3_sleeve_ft, "", inp.colorPergola));
     items.push(li("3x3 Steel Post", inp.posts, postLen, RATES.post_3x3_steel_ft));
-    // Post plates mitered one end
-    items.push(li("2x6 Post Plates (Mitered)", inp.posts * 2, inp.postHeight + 1, RATES.post_plate_2x6_ft, "", inp.colorPergola));
+    // Post plates are square-cut, finished with a beveled end cap on top
+    items.push(li("2x6 Post Plates", inp.posts * 2, inp.postHeight + 1, RATES.post_plate_2x6_ft, "", inp.colorPergola));
   }
   if (rearPosts > 0) {
     const rearPostLen = postMaterialLength(inp.rearPostHeight, inp.groundAttachment);
     items.push(li("3x3 Post Sleeve Rear", rearPosts, rearPostLen, RATES.post_3x3_sleeve_ft, "", inp.colorPergola));
     items.push(li("3x3 Steel Post Rear", rearPosts, rearPostLen, RATES.post_3x3_steel_ft));
-    items.push(li("2x6 Post Plates Rear (Mitered)", rearPosts * 2, inp.rearPostHeight + 1, RATES.post_plate_2x6_ft, "", inp.colorPergola));
+    items.push(li("2x6 Post Plates Rear", rearPosts * 2, inp.rearPostHeight + 1, RATES.post_plate_2x6_ft, "", inp.colorPergola));
   }
 
   // ── SKYLIFT POSTS — roof mount only. Flat-fee roof risers, not literal
@@ -170,13 +170,13 @@ export function calcPergola(inp: PergolaInputs): QuoteResult {
       const lenN = postMaterialLength(beam.postHeight, inp.groundAttachment);
       items.push(li("3x3 Post Sleeve #" + num, beam.posts, lenN, RATES.post_3x3_sleeve_ft, "", inp.colorPergola));
       items.push(li("3x3 Steel Post #" + num,  beam.posts, lenN, RATES.post_3x3_steel_ft));
-      items.push(li("2x6 Post Plates #" + num + " (Mitered)", beam.posts * 2, beam.postHeight + 1, RATES.post_plate_2x6_ft, "", inp.colorPergola));
+      items.push(li("2x6 Post Plates #" + num, beam.posts * 2, beam.postHeight + 1, RATES.post_plate_2x6_ft, "", inp.colorPergola));
     }
   });
 
-  // ── MITERED CAPS ──
+  // ── POST PLATE END CAPS — one beveled cap per post plate ──
   if (totalPosts > 0) {
-    items.push(li("Mitered Caps", totalPosts * 2, 0, RATES.mitered_cap_2x6, "", inp.colorPergola));
+    items.push(li("End Caps (2x6, Beveled) - Post Plates", totalPosts * 2, 0, RATES.endcap_2x6, "", inp.colorPergola));
   }
 
   // ── INSIDE BRACKETS — one per rafter ──

@@ -17,7 +17,7 @@ interface PostWrapProps {
 }
 
 // Decorative aluminum bent-plate sleeve — same material/rate as SidePlates
-// and FrontPlate ("Post Plates (Mitered)" pricing line item), just cut and
+// and FrontPlate ("Post Plates" pricing line item, square-cut with a beveled end cap), just cut and
 // installed differently. Covers the full post height (foundation to
 // underside of beam) PLUS the beam's own height, since the beam sits on top
 // of the post and the plate wraps up to cover its side face too.

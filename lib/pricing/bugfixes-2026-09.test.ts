@@ -68,7 +68,7 @@ describe("Issue 1 - Flat Panel: No Rafter Tails drops rafter-tail-only materials
     inp.rafterTails = false;
     const out = calcNewport(inp);
     expect(hasNameStartingWith(out.lineItems, "Rafter Tails")).toBe(false);
-    expect(hasNameStartingWith(out.lineItems, "End Caps")).toBe(false);
+    expect(out.lineItems.some((i) => i.name.startsWith("End Caps") && !i.name.endsWith("- Post Plates"))).toBe(false);
     expect(hasNameStartingWith(out.lineItems, "Inside Brackets")).toBe(false);
     expect(hasNameStartingWith(out.lineItems, "Outside Brackets")).toBe(false);
   });
@@ -76,7 +76,7 @@ describe("Issue 1 - Flat Panel: No Rafter Tails drops rafter-tail-only materials
   it("rafterTails=true still includes Rafter Tails, End Caps, and Brackets", () => {
     const out = calcNewport(newportBase());
     expect(hasNameStartingWith(out.lineItems, "Rafter Tails")).toBe(true);
-    expect(hasNameStartingWith(out.lineItems, "End Caps")).toBe(true);
+    expect(out.lineItems.some((i) => i.name.startsWith("End Caps") && !i.name.endsWith("- Post Plates"))).toBe(true);
     expect(hasNameStartingWith(out.lineItems, "Inside Brackets")).toBe(true);
     expect(hasNameStartingWith(out.lineItems, "Outside Brackets")).toBe(true);
   });
@@ -173,7 +173,7 @@ describe("Issue 5 - LRP: rafter tails require a Wrap Kit, and don't double-count
     expect(findItem(out.lineItems, "Rafter Tails (2x6)")).toBeTruthy();
     expect(findItem(out.lineItems, "Inside Brackets (2x6)")).toBeTruthy();
     expect(findItem(out.lineItems, "Outside Brackets (2x6)")).toBeTruthy();
-    const endCapMatches = out.lineItems.filter((i) => i.name.startsWith("End Caps"));
+    const endCapMatches = out.lineItems.filter((i) => i.name.startsWith("End Caps") && !i.name.endsWith("- Post Plates"));
     expect(endCapMatches.length).toBe(1);
   });
 
@@ -183,7 +183,7 @@ describe("Issue 5 - LRP: rafter tails require a Wrap Kit, and don't double-count
     inp.rafterTails = false;
     const out = calcIRP(inp);
     expect(findItem(out.lineItems, "Rafter Tails (2x6)")).toBeUndefined();
-    const endCapMatches = out.lineItems.filter((i) => i.name.startsWith("End Caps"));
+    const endCapMatches = out.lineItems.filter((i) => i.name.startsWith("End Caps") && !i.name.endsWith("- Post Plates"));
     expect(endCapMatches.length).toBe(1);
   });
 });
